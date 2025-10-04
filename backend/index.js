@@ -4,7 +4,6 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { Server } = require('socket.io');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -14,7 +13,10 @@ const Message = require('./models/Message');
 const Chat = require('./models/Chat');
 
 const app = express();
+
+const { Server } = require('socket.io');
 const server = http.createServer(app);
+// const { WebSocketServer } = require("ws");         // This is a different thing than socket.io
 
 const connectDB = async () => {
     try {
@@ -36,7 +38,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/chats', chatRoutes);
 
 const io = new Server(server, {
-    cors: { origin: process.env.CLIENT_URL || 'http://localhost:3000' }
+    cors: { origin: "*" }
 });
 
 app.get("/", (req, res) => {
@@ -50,6 +52,7 @@ io.on('connection', (socket) => {
     // when client sends 'user:online' we store mapping
     socket.on('user:online', (userId) => {
         onlineUsers.set(userId, socket.id);
+        console.log(onlineUsers);
         // optionally broadcast online status
     });
 
