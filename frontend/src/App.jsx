@@ -1,16 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ChatPage from './pages/ChatPage';
+import { socket } from './socket';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+
+  useEffect(() => {
+    if (user) {
+      // connect socket and notify online
+      socket.auth = { token: localStorage.getItem('token') };
+      socket.connect();
+      socket.emit('user:online', user.id);
+    } else {
+      socket.disconnect();
+    }
+    return () => socket.disconnect();
+  }, [user]);
 
   return (
-    <>
-      <h1>This is Saqlain Mansab</h1>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/register" element={<Register setUser={setUser} />} />
+        <Route path="/chat" element={user ? <ChatPage user={user} /> : <Navigate to="/login" />} />
+        <Route path="*" element={<Navigate to={user ? "/chat" : "/login"} />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
+export default App;

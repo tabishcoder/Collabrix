@@ -8,12 +8,17 @@ const router = express.Router();
 // Create or get 1-1 chat between two users
 // POST /api/chats/private  { userId }
 router.post('/private', auth, async (req, res) => {
-  const userA = req.user.id, userB = req.body.userId;
+  const userA = req.user._id, userB = req.body.userId;
   try {
     let chat = await Chat.findOne({ isGroup: false, participants: { $all: [userA, userB], $size: 2 } });
     if (!chat) chat = await Chat.create({ participants: [userA, userB] });
     res.json(chat);
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/', auth, async (req, res) => { 
+  const chats = await Chat.find({ participants: { $in: [req.user._id] } }).populate('participants', '_id name email');
+  res.json(chats);
 });
 
 // Get messages for a chat

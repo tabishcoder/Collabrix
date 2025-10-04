@@ -13,7 +13,7 @@ router.get('/me', auth, async (req, res) => {
 // GET /api/users?search=...
 router.get('/', auth, async (req, res) => {
   const q = req.query.search || '';
-  const users = await User.find({ name: q }).limit(20).select('-passwordHash');
+  const users = await User.find({ email: q }).limit(20).select('-passwordHash');
   res.json(users);
 });
 

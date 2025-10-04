@@ -52,7 +52,7 @@ io.on('connection', (socket) => {
     // when client sends 'user:online' we store mapping
     socket.on('user:online', (userId) => {
         onlineUsers.set(userId, socket.id);
-        console.log(onlineUsers);
+        // console.log(onlineUsers);
         // optionally broadcast online status
     });
 
