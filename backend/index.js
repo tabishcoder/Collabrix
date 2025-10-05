@@ -4,6 +4,9 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const axios = require('axios');
+const crypto = require('crypto');
+const bodyParser = require('body-parser');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -43,7 +46,83 @@ const io = new Server(server, {
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
-})
+});
+
+// Load credentials from .env
+const SDK_KEY = process.env.ZOOM_CLIENT_ID; // Client ID
+const SDK_SECRET = process.env.ZOOM_CLIENT_SECRET; // Client Secret
+const ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID;
+
+// Generate Meeting Signature (for Web SDK)
+app.get("/signature", (req, res) => {
+  const meetingNumber = req.query.meetingNumber;
+  const role = req.query.role || 0;
+
+  const timestamp = new Date().getTime() - 30000;
+  const msg = Buffer.from(SDK_KEY + meetingNumber + timestamp + role).toString(
+    "base64"
+  );
+  const hash = crypto
+    .createHmac("sha256", SDK_SECRET)
+    .update(msg)
+    .digest("base64");
+  const signature = Buffer.from(
+    `${SDK_KEY}.${meetingNumber}.${timestamp}.${role}.${hash}`
+  ).toString("base64");
+
+  res.json({ signature });
+});
+
+// Get Access Token (for Zoom API calls like Create Meeting)
+async function getAccessToken() {
+  const response = await axios.post(
+    `https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${ACCOUNT_ID}`,
+    {},
+    {
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${SDK_KEY}:${SDK_SECRET}`
+        ).toString("base64")}`,
+      },
+    }
+  );
+  return response.data.access_token;
+}
+
+// Create a Meeting
+app.post("/create-meeting", async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const result = await axios.post(
+      "https://api.zoom.us/v2/users/me/meetings",
+      {
+        topic: req.body.topic || "MERN App Meeting",
+        type: 1, // Instant meeting
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    res.json(result.data);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to create meeting" });
+  }
+});
+
+// List Meetings
+app.get("/meetings", async (req, res) => {
+  try {
+    const token = await getAccessToken();
+    const result = await axios.get("https://api.zoom.us/v2/users/me/meetings", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    res.json(result.data);
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to list meetings" });
+  }
+});
 
 // Map to store online users: userId -> socketId
 const onlineUsers = new Map();
@@ -92,6 +171,59 @@ io.on('connection', (socket) => {
             }
         }
     });
+});
+
+const TRELLO_KEY = process.env.TRELLO_KEY;
+const TRELLO_TOKEN = process.env.TRELLO_TOKEN;
+const MEMBER_ID = "68dcbbf686582c853dd25c18";  // ✅ From your data
+const BOARD_ID = "68e20dd5c636e8634f1119ab";   // ✅ Your first board
+
+// ✅ Route to get all boards of the user
+app.get("/api/boards", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.trello.com/1/members/${MEMBER_ID}/boards?key=${TRELLO_KEY}&token=${TRELLO_TOKEN}`
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch boards" });
+  }
+});
+
+// ✅ Route to get specific board details
+app.get("/api/board", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.trello.com/1/boards/${BOARD_ID}?key=${TRELLO_KEY}&token=${TRELLO_TOKEN}`
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch board" });
+  }
+});
+
+// ✅ Route to get lists (To Do / In Progress / Done)
+app.get("/api/board/lists", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.trello.com/1/boards/${BOARD_ID}/lists?key=${TRELLO_KEY}&token=${TRELLO_TOKEN}`
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch board lists" });
+  }
+});
+
+// ✅ Route to get cards of a board
+app.get("/api/board/cards", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.trello.com/1/boards/${BOARD_ID}/cards?key=${TRELLO_KEY}&token=${TRELLO_TOKEN}`
+    );
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch board cards" });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

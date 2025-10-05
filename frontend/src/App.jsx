@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ChatPage from './pages/ChatPage';
+import Zoom from './pages/Zoom';
+import Trello from './pages/Trello';
 import { socket } from './socket';
 
 function App() {
@@ -24,6 +26,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/zoom" element={<Zoom />} />
+        <Route path="/trello" element={<Trello />} />
         <Route path="/register" element={<Register setUser={setUser} />} />
         <Route path="/chat" element={user ? <ChatPage user={user} /> : <Navigate to="/login" />} />
         <Route path="*" element={<Navigate to={user ? "/chat" : "/login"} />} />
