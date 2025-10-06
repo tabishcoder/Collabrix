@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import API from '../api';
 import { socket } from '../socket';
 
-export default function ChatWindow({ chat, user }) {
+export default function ChatWindow({ chat, user, setChats }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,10 +44,15 @@ export default function ChatWindow({ chat, user }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const sendMsg = () => {
+  const sendMsg = async () => {
     if (!text.trim()) return;
     // emit to server
-    socket.emit('private:message', { chatId: chat._id, senderId: user.id, content: text });
+    socket.emit('private:message', { chatId: chat._id, senderId: user._id, content: text });
+    const res = await API.get(`/chats/${chat._id}/messages`);
+    setMessages(res.data);
+    // update latest message in chat list
+    const res2 = await API.get('/chats'); // optional: you can create route to list chats
+    setChats(res2.data || []);
     setText('');
   };
 
@@ -62,7 +67,7 @@ export default function ChatWindow({ chat, user }) {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
@@ -264,7 +269,7 @@ export default function ChatWindow({ chat, user }) {
           </div>
         </div>
       </div>
-      
+
       <div style={styles.messagesContainer}>
         {isLoading ? (
           <div style={styles.emptyState}>
@@ -307,7 +312,7 @@ export default function ChatWindow({ chat, user }) {
         )}
         <div ref={messagesEndRef} />
       </div>
-      
+
       <div style={styles.inputContainer}>
         <div style={styles.inputWrapper}>
           <textarea
@@ -330,7 +335,7 @@ export default function ChatWindow({ chat, user }) {
           </button>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }

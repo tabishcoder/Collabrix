@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import ChatList from '../components/ChatList';
 import ChatWindow from '../components/ChatWindow';
 import { socket } from '../socket';
+import { redirect } from 'react-router-dom';
 
 export default function ChatPage({ user }) {
   const [selectedChat, setSelectedChat] = useState(null);
   const [chats, setChats] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // fetch user's chats (simple: find chats where user is participant)
@@ -86,7 +89,7 @@ export default function ChatPage({ user }) {
       </div>
       <div style={styles.mainContent}>
         {selectedChat ? (
-          <ChatWindow chat={selectedChat} user={user} />
+          <ChatWindow chat={selectedChat} user={user} setChats={setChats} />
         ) : (
           <div style={styles.emptyState}>
             <div style={styles.emptyStateIcon}>💬</div>

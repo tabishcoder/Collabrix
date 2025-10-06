@@ -31,12 +31,14 @@ export default function ChatList({ user, chats, setChats, setSelectedChat }) {
   // this is fetching the selected chat data
   const openPrivateChat = async (otherUser) => {
     try {
-      const res = await API.get('/chats', { userId: otherUser._id });
-      // small check: if not present in chats, add
+      const res = await API.post('/chats/private', { userId: otherUser._id });
+      
+      // small check for new chat: if not present in chat list, add else list remain same
       setChats(prev => {
         if (!prev.find(c => c._id === res.data._id)) return [res.data, ...prev];
         return prev;
       });
+
       setSelectedChat(res.data);
       setQuery('');
       setSearchResults([]);
@@ -74,7 +76,7 @@ export default function ChatList({ user, chats, setChats, setSelectedChat }) {
     searchContainer: {
       display: 'flex',
       gap: '8px',
-      marginBottom: '16px'
+      // marginBottom: '16px'
     },
     searchInput: {
       flex: 1,
@@ -107,6 +109,7 @@ export default function ChatList({ user, chats, setChats, setSelectedChat }) {
       fontWeight: '600',
       color: '#4a5568',
       marginBottom: '12px',
+      marginTop: '12px',
       textTransform: 'uppercase',
       letterSpacing: '0.5px'
     },
