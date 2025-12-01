@@ -36,12 +36,12 @@ export default function ChatPage({ user }) {
     container: {
       display: 'flex',
       height: '100vh',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      background: 'linear-gradient(135deg, #e6eeff 0%, #c3d7ff 100%)',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     },
     sidebar: {
       width: '350px',
-      background: 'rgba(255, 255, 255, 0.95)',
+      background: 'rgba(248, 250, 255, 0.95)',
       backdropFilter: 'blur(10px)',
       borderRight: '1px solid rgba(0, 0, 0, 0.1)',
       boxShadow: '2px 0 10px rgba(0, 0, 0, 0.1)',
@@ -52,7 +52,7 @@ export default function ChatPage({ user }) {
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      background: 'rgba(255, 255, 255, 0.8)',
+      background: 'rgba(245, 248, 255, 0.85)',
       backdropFilter: 'blur(10px)'
     },
     emptyState: {
@@ -74,13 +74,56 @@ export default function ChatPage({ user }) {
       fontSize: '24px',
       fontWeight: '600',
       marginBottom: '8px',
-      color: '#2d3748'
+      color: '#1e293b'
     },
     emptyStateSubtitle: {
       fontSize: '16px',
       opacity: 0.8
     }
   };
+
+  let mock = [
+    {
+      id: 1,
+      name: "Sarah Smith",
+      message: "See you tomorrow! 👋",
+      time: "2m ago",
+      unread: 2,
+      online: true,
+    },
+    {
+      id: 2,
+      name: "Team Project",
+      message: "Mike: Let's schedule a meeting",
+      time: "15m ago",
+      unread: 5,
+      online: false,
+    },
+    {
+      id: 3,
+      name: "Emily Davis",
+      message: "Thanks for your help!",
+      time: "1h ago",
+      unread: 0,
+      online: true,
+    },
+    {
+      id: 4,
+      name: "Family Group",
+      message: "Mom: Dinner at 7?",
+      time: "2h ago",
+      unread: 0,
+      online: false,
+    },
+    {
+      id: 5,
+      name: "Alex Brown",
+      message: "Check out this article!",
+      time: "1d ago",
+      unread: 0,
+      online: false,
+    },
+  ];
 
   return (
     <div style={styles.container}>

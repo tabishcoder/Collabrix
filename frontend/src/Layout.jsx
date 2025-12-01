@@ -6,6 +6,7 @@ import ChatPage from './pages/ChatPage';
 import Zoom from './pages/Zoom';
 import Gmail from './pages/Gmail';
 import Trello from './pages/Trello';
+import Page from './pages/Page';
 
 function Layout({ user, setUser }) {
     const navigate = useNavigate();
@@ -13,18 +14,19 @@ function Layout({ user, setUser }) {
     return (
         <>
             {/* Global navigation bar */}
-            <div className="buttons" style={{justifyContent: 'right', display:'flex'}}>
+            {/* <div className="buttons" style={{justifyContent: 'right', display:'flex'}}>
                 <button onClick={() => navigate("/zoom")}>Zoom</button>
                 <button onClick={() => navigate("/chat")}>Chat</button>
                 <button onClick={() => navigate("/gmail")}>Gmail</button>
                 <button onClick={() => navigate("/trello")}>Trello</button>
-            </div>
+            </div> */}
 
             {/* Route views */}
             <Routes>
                 <Route path="/login" element={<Login setUser={setUser} />} />
                 <Route path="/zoom" element={<Zoom />} />
                 <Route path="/gmail" element={<Gmail />} />
+                <Route path="/page" element={<Page />} />
                 <Route path="/trello" element={<Trello />} />
                 <Route path="/register" element={<Register setUser={setUser} />} />
                 <Route

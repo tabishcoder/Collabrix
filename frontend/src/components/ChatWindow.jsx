@@ -96,6 +96,23 @@ export default function ChatWindow({ chat, user, setChats }) {
       alignItems: 'center',
       gap: '12px'
     },
+    headerActions: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px'
+    },
+    headerActionBtn: {
+      width: '36px',
+      height: '36px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '50%',
+      background: 'rgba(255, 255, 255, 0.15)',
+      border: '1px solid rgba(255, 255, 255, 0.25)',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    },
     chatAvatar: {
       width: '40px',
       height: '40px',
@@ -118,7 +135,7 @@ export default function ChatWindow({ chat, user, setChats }) {
     },
     chatSubtitle: {
       fontSize: '14px',
-      opacity: 0.8
+      opacity: 0.9
     },
     messagesContainer: {
       flex: 1,
@@ -163,6 +180,10 @@ export default function ChatWindow({ chat, user, setChats }) {
       alignItems: 'center',
       fontSize: '11px',
       opacity: 0.7
+    },
+    ticks: {
+      marginLeft: '8px',
+      opacity: 0.9
     },
     messageSender: {
       fontWeight: '600',
@@ -264,9 +285,14 @@ export default function ChatWindow({ chat, user, setChats }) {
               {chat.isGroup ? chat.name : chat.participants.find(p => p._id !== user._id)?.name || user.name}
             </div>
             <div style={styles.chatSubtitle}>
-              {chat.isGroup ? 'Group conversation' : 'Direct message'}
+              {chat.isGroup ? 'Group conversation' : 'Online'}
             </div>
           </div>
+        </div>
+        <div style={styles.headerActions}>
+          <button title="Voice call" style={styles.headerActionBtn}>📞</button>
+          <button title="Video call" style={styles.headerActionBtn}>🎥</button>
+          <button title="More" style={styles.headerActionBtn}>⋯</button>
         </div>
       </div>
 
@@ -298,7 +324,7 @@ export default function ChatWindow({ chat, user, setChats }) {
                   )}
                   <div style={styles.messageContent}>{m.content}</div>
                   <div style={styles.messageMeta}>
-                    <span>{formatTime(m.createdAt)}</span>
+                    <span>{formatTime(m.createdAt)}{m.sender._id === user._id ? <span style={styles.ticks}>✓✓</span> : null}</span>
                   </div>
                 </div>
               </div>
