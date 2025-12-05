@@ -6,6 +6,14 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, index: true },
   passwordHash: { type: String, required: true },
   avatar: { type: String },
+  isVerified: { type: Boolean, default: false },
+
+  // for password and email verification
+  meta: {
+    resendCount: { type: Number, default: 0 },
+    lastSentAt: Date,
+    hourWindowStart: Date
+  }
 }, { timestamps: true });
 
 // Pre-save hook to hash accessCode if changed/new

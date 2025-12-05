@@ -6,6 +6,6 @@ const User = require('../models/User')
 // @access Private
 // @method GET
 module.exports.getMe = async (req, res) => {
-    const user = await User.findById(req.user._id).select('-passwordHash');
-    res.json(user);
+    // already secured, user set by middleware
+    res.json(req.user);
 }
