@@ -108,4 +108,54 @@ Requires **valid access token** stored in cookies.
     "updatedAt": "2025-12-01T11:40:33.166Z",
     "__v": 0
 }
+
 ```
+
+## 5. POST `/api/auth/verify-otp`
+
+**Description:**  
+Verify the OTP send through registered Email.
+Used for the Email Verification.
+The route is publicly accessible.
+
+### Request Method  
+`POST`
+
+### Request
+```json
+{
+  "userId": "692d7eb14df1f59216e3448e",
+  "otp": "7****6"
+}
+```
+
+### Response
+```json
+{
+    "message": "Email Registered Successfully"
+}
+```
+
+## 6. POST `/api/auth/verify-otp`
+
+**Description:**  
+Request a new OTP through Email.
+Used for the Email Verification.
+Maintains a cool down process of requesting only **1 OTP/min and 5/hour**.
+The route is publicly accessible.
+
+### Request Method  
+`POST`
+
+### Request
+```json
+{
+  "email": "abc@gmail.com"
+}
+```
+
+### Response
+```json
+{
+  "message": "OTP sent"
+}
