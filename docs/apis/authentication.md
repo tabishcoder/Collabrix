@@ -85,7 +85,7 @@ The server verifies the refresh token, issues a new access token, and sets it ag
 
 ---
 
-## 4. `/api/auth/getMe`
+## 4. `/api/users/me`
 
 **Description:**  
 Returns the authenticated user's profile.  
