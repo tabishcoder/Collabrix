@@ -25,7 +25,7 @@ const MAX_ATTEMPTS = process.env.MAX_ATTEMPTS || 5;
 // @access Public
 module.exports.registerUser = async (req, res) => {
     try {
-        console.time('User Registration Time Started');
+        console.time('User Registration Time');
         const { name, email, password } = req.body;
         if (!name || !email || !password) return res.status(400).json({ message: 'Missing essential fields' });
 
@@ -43,7 +43,7 @@ module.exports.registerUser = async (req, res) => {
             // The salt generation and password matching will be handled in User model
             console.time('User Creation Time');
             user = await User.create({ name, email, passwordHash: password });
-            console.timeEnd('User Creation Time Ended With password Hashing');
+            console.timeEnd('User Creation Time');
         }
 
         // Create verification record
@@ -52,7 +52,7 @@ module.exports.registerUser = async (req, res) => {
         const otpHash = hashOTP(otp);
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + OTP_TTL_MS / 1000);
-        console.timeEnd('OTP Generation Time Ended after hashing');
+        console.timeEnd('OTP Generation Time');
 
         // Remove any existing verifications for this user
         await Verification.deleteMany({ userId: user._id });
@@ -60,6 +60,7 @@ module.exports.registerUser = async (req, res) => {
         const verification = await Verification.create({
             userId: user._id,
             otpHash,
+            expiresAt,
             type: 'email_verification'
         });
 
@@ -75,7 +76,7 @@ module.exports.registerUser = async (req, res) => {
         try {
             console.time('Email Send Time');
             await sendEmail(user.email, otp);
-            console.timeEnd('Email Send Time Ended');
+            console.timeEnd('Email Send Time');
         } catch (err) {
             // cleanup
             await Verification.deleteOne({ _id: verification._id });
@@ -92,10 +93,11 @@ module.exports.registerUser = async (req, res) => {
             return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
         }
 
-        console.timeEnd('User Registration Time Ended -- Successful');
+        console.timeEnd('User Registration Time');
         return res.status(201).json({ message: 'User registered. OTP sent to email', userId: user._id });
 
     } catch (err) {
+        console.log(err);
         res.status(500).json({ error: err.message });
     }
 }
