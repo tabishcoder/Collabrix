@@ -1,20 +1,9 @@
 const express = require('express');
-const auth = require('../middleware/auth');
-const User = require('../models/User');
-
+const { auth } = require('../middleware/auth');
 const router = express.Router();
 
-// GET /api/users/me
-router.get('/me', auth, async (req, res) => {
-  const user = await User.findById(req.user.id).select('-passwordHash');
-  res.json(user);
-});
+const { getMe, searchUsers } = require('../controller/user')
 
-// GET /api/users?search=...
-router.get('/', auth, async (req, res) => {
-  const q = req.query.search || '';
-  const users = await User.find({ email: q }).limit(20).select('-passwordHash');
-  res.json(users);
-});
+router.get('/me', auth, getMe);
 
 module.exports = router;
