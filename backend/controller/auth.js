@@ -25,6 +25,7 @@ const MAX_ATTEMPTS = process.env.MAX_ATTEMPTS || 5;
 // @access Public
 module.exports.registerUser = async (req, res) => {
     try {
+        console.time('User Registration Time Started');
         const { name, email, password } = req.body;
         if (!name || !email || !password) return res.status(400).json({ message: 'Missing essential fields' });
 
@@ -40,14 +41,18 @@ module.exports.registerUser = async (req, res) => {
             await user.save();
         } else {
             // The salt generation and password matching will be handled in User model
+            console.time('User Creation Time');
             user = await User.create({ name, email, passwordHash: password });
+            console.timeEnd('User Creation Time Ended With password Hashing');
         }
 
         // Create verification record
+        console.time('OTP Generation Time');
         const otp = generateOTP();
         const otpHash = hashOTP(otp);
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + OTP_TTL_MS / 1000);
+        console.timeEnd('OTP Generation Time Ended after hashing');
 
         // Remove any existing verifications for this user
         await Verification.deleteMany({ userId: user._id });
@@ -68,7 +73,9 @@ module.exports.registerUser = async (req, res) => {
 
         // // Send email — if it fails, clean up verification and possibly user
         try {
+            console.time('Email Send Time');
             await sendEmail(user.email, otp);
+            console.timeEnd('Email Send Time Ended');
         } catch (err) {
             // cleanup
             await Verification.deleteOne({ _id: verification._id });
@@ -85,29 +92,9 @@ module.exports.registerUser = async (req, res) => {
             return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
         }
 
+        console.timeEnd('User Registration Time Ended -- Successful');
         return res.status(201).json({ message: 'User registered. OTP sent to email', userId: user._id });
 
-        const accessToken = JWTService.signAccessToken({ _id: user._id });
-        const refreshToken = JWTService.signRefreshToken({ _id: user._id });
-
-        JWTService.storeRefreshToken(refreshToken, user._id);
-
-        res.cookie('accessToken', accessToken, {
-            ...settings,
-            maxAge: 1000 * 60 * 30  // 30 mins
-        })
-
-        res.cookie('refreshToken', refreshToken, {
-            ...settings,
-            maxAge: 1000 * 60 * 60 * 24 * 7  // 7 days
-        })
-
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            message: "User Registered Successfully"
-        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
