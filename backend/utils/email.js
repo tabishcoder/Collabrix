@@ -49,9 +49,9 @@ const generateVerificationEmail = (otp) => {
                       <!-- Header -->
                       <tr>
                           <td align="center" style="padding-bottom:20px;">
-                              <h2 style="margin:0; color:#2c3e50; font-size:24px; font-weight:700;">SecureExam</h2>
+                              <h2 style="margin:0; color:#2c3e50; font-size:24px; font-weight:700;">Collabrix</h2>
                               <p style="margin:5px 0 0; color:#6c757d; font-size:14px;">
-                                  Zero-Trust Examination Security
+                                  AI-Powered Remote Team Workspace
                               </p>
                           </td>
                       </tr>
@@ -78,7 +78,7 @@ const generateVerificationEmail = (otp) => {
                       <!-- Note -->
                       <tr>
                           <td style="padding-top:10px; font-size:14px; color:#6c757d;">
-                              This code will expire in <strong>10 minutes</strong>.  
+                              This code will expire in <strong>5 minutes</strong>.  
                               If you did not request this verification, please ignore this message.
                           </td>
                       </tr>
@@ -93,7 +93,7 @@ const generateVerificationEmail = (otp) => {
                       <!-- Footer -->
                       <tr>
                           <td align="center" style="font-size:13px; color:#9ba1a6;">
-                              © ${new Date().getFullYear()} SecureExam  
+                              © ${new Date().getFullYear()} Collabrix.  
                               <br>
                               All rights reserved.
                           </td>
