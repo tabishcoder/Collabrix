@@ -25,8 +25,7 @@ module.exports.auth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error(error);
-    res.status(401);
-    throw new Error('Not authorized, token failed');
+    console.error(error?.message);
+    return res.status(401).json({ message: 'Not authorized, token failed' });
   }
 };

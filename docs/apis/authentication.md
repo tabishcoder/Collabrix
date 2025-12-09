@@ -104,9 +104,6 @@ Requires **valid access token** stored in cookies.
     "_id": "692d7eb14df1f59216e3448e",
     "name": "abc",
     "email": "abc@gmail.com",
-    "createdAt": "2025-12-01T11:40:33.166Z",
-    "updatedAt": "2025-12-01T11:40:33.166Z",
-    "__v": 0
 }
 
 ```

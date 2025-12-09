@@ -7,5 +7,11 @@ const User = require('../models/User')
 // @method GET
 module.exports.getMe = async (req, res) => {
     // already secured, user set by middleware
-    res.json(req.user);
+    // send only required fields
+    const userDTO = {
+        _id: req.user._id,
+        name: req.user.name,
+        email: req.user.email
+    }
+    res.json(userDTO);
 }
