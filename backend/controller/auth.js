@@ -3,10 +3,8 @@ const User = require('../models/User');
 const Token = require('../models/Token');
 const Verification = require('../models/Verification.js');
 const { sendEmail, generateOTP, hashOTP } = require('../utils/email.js');
-// const { generateOTP } = require('../utils/generateOTP.js');
 const JWTService = require('../services/JWTService');
 
-const crypto = require('crypto')
 // const bcrypt = require('bcrypt')
 
 const settings = {
@@ -25,7 +23,6 @@ const MAX_ATTEMPTS = process.env.MAX_ATTEMPTS || 5;
 // @access Public
 module.exports.registerUser = async (req, res) => {
     try {
-        console.time('User Registration Time');
         const { name, email, password } = req.body;
         if (!name || !email || !password) return res.status(400).json({ message: 'Missing essential fields' });
 
@@ -41,18 +38,14 @@ module.exports.registerUser = async (req, res) => {
             await user.save();
         } else {
             // The salt generation and password matching will be handled in User model
-            console.time('User Creation Time');
             user = await User.create({ name, email, passwordHash: password });
-            console.timeEnd('User Creation Time');
         }
 
         // Create verification record
-        console.time('OTP Generation Time');
         const otp = generateOTP();
         const otpHash = hashOTP(otp);
         const expiresAt = new Date();
         expiresAt.setSeconds(expiresAt.getSeconds() + OTP_TTL_MS / 1000);
-        console.timeEnd('OTP Generation Time');
 
         // Remove any existing verifications for this user
         await Verification.deleteMany({ userId: user._id });
@@ -74,9 +67,7 @@ module.exports.registerUser = async (req, res) => {
 
         // // Send email — if it fails, clean up verification and possibly user
         try {
-            console.time('Email Send Time');
             await sendEmail(user.email, otp);
-            console.timeEnd('Email Send Time');
         } catch (err) {
             // cleanup
             await Verification.deleteOne({ _id: verification._id });
@@ -89,15 +80,14 @@ module.exports.registerUser = async (req, res) => {
                 await User.findByIdAndUpdate(user._id, {meta : null});            
             }
 
-            console.error('Email send failed', err);
+            console.error('Email send failed', err?.message);
             return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
         }
 
-        console.timeEnd('User Registration Time');
         return res.status(201).json({ message: 'User registered. OTP sent to email', userId: user._id });
 
     } catch (err) {
-        console.log(err);
+        console.error(err?.message);
         res.status(500).json({ error: err.message });
     }
 }
@@ -106,8 +96,8 @@ module.exports.registerUser = async (req, res) => {
 // @route POST /api/auth/login
 // @access Public
 module.exports.loginUser = async (req, res) => {
-    const { email, password } = req.body;
     try {
+        const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ msg: "Missing fields" });
 
         const user = await User.findOne({ email });
@@ -140,6 +130,7 @@ module.exports.loginUser = async (req, res) => {
             message: "Logged in Successfully"
         });
     } catch (err) {
+        console.error(err?.message);
         res.status(500).json({ error: err.message });
     }
 };
@@ -163,8 +154,7 @@ module.exports.refreshToken = async (req, res) => {
     if (!storedToken) {
         // Clear cookie if token is invalid or expired
         res.clearCookie('refreshToken');
-        res.status(403);
-        throw new Error('Invalid or expired refresh token.');
+        return res.status(403).json({ message: 'Refresh token invalid or expired. Please log in again.' });
     }
 
     const newAccessToken = JWTService.signAccessToken({ _id: decoded._id });
@@ -215,7 +205,7 @@ module.exports.verifyOtp = async (req, res) => {
         return res.json({ message: 'Email verified successfully' });
 
     } catch (err) {
-        console.error(err);
+        console.error(err?.message);
         return res.status(500).json({ message: 'Verification failed' });
     }
 };
