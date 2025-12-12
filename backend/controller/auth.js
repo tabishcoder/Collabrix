@@ -10,7 +10,7 @@ const JWTService = require('../services/JWTService');
 const settings = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.SAME_SITE,
 }
 
 const OTP_TTL_MS = process.env.OTP_TTL_MS || 5 * 60 * 1000;
@@ -77,7 +77,7 @@ module.exports.registerUser = async (req, res) => {
                 await User.deleteOne({ _id: user._id });
             } else {
                 // reset user's verification meta if existing user
-                await User.findByIdAndUpdate(user._id, {meta : null});            
+                await User.findByIdAndUpdate(user._id, { meta: null });
             }
 
             console.error('Email send failed', err?.message);
@@ -135,6 +135,30 @@ module.exports.loginUser = async (req, res) => {
     }
 };
 
+// @desc log out user
+// @route POST /api/auth/logout
+// @access Private
+module.exports.logoutUser = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (refreshToken) {
+            // delete only if exists
+            await Token.deleteOne({ token: refreshToken, userId: req.user._id }).catch(() => { });
+        }
+
+        res.clearCookie("accessToken", settings);
+        res.clearCookie("refreshToken", settings);
+
+        return res.status(200).json({ message: "Logged out successfully" });
+
+    } catch (error) {
+        console.error("Logout error:", error);
+        return res.status(500).json({ message: "Logout failed" });
+    }
+};
+
+
 // @desc Update the tokens
 // @route POST /api/auth/refresh
 // @access Private
@@ -142,8 +166,7 @@ module.exports.refreshToken = async (req, res) => {
     const { refreshToken } = req.cookies;
 
     if (!refreshToken) {
-        res.status(402);
-        throw new Error('No refresh token provided.');
+        return res.status(402).json({message: 'No refresh token provided.'});
     }
 
     let decoded = JWTService.verifyRefreshToken(refreshToken);
@@ -160,13 +183,11 @@ module.exports.refreshToken = async (req, res) => {
     const newAccessToken = JWTService.signAccessToken({ _id: decoded._id });
 
     res.cookie('accessToken', newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        ...settings,
         maxAge: 15 * 60 * 1000,
     });
 
-    res.status(200).json({ message: 'Access token refreshed' });
+    return res.status(200).json({ message: 'Access token refreshed' });
 }
 
 // @desc Verify the OTP
@@ -181,7 +202,7 @@ module.exports.verifyOtp = async (req, res) => {
         if (!verification) return res.status(400).json({ message: 'OTP expired or verification failed. Request new OTP.' });
 
         if (verification.attempts >= MAX_ATTEMPTS) {
-            await Verification.deleteOne({ _id: verification._id }); 
+            await Verification.deleteOne({ _id: verification._id });
             return res.status(429).json({ message: 'Too many incorrect attempts. Request a new OTP.' });
         }
 
@@ -202,7 +223,7 @@ module.exports.verifyOtp = async (req, res) => {
         await User.findByIdAndUpdate(userId, { isVerified: true, meta: null }); // also reset the OTP send count
         await Verification.deleteOne({ _id: verification._id });
 
-        return res.json({ message: 'Email verified successfully' });
+        return res.json({ message: 'Email verified successfully'});
 
     } catch (err) {
         console.error(err?.message);
@@ -224,7 +245,7 @@ module.exports.resendOtp = async (req, res) => {
         if (user.isVerified)
             return res.status(400).json({ message: "User already verified" });
 
-        const now = Date.now();        
+        const now = Date.now();
         const OTP_TTL_MS = 5 * 60 * 1000;             // 5 minutes
 
         // Extract unified meta
