@@ -26,6 +26,16 @@ class JWTService {
         return jwt.verify(token, REFRESH_SECRET);
     }
 
+    // sign reset token
+    static signResetToken(payload) {
+        return jwt.sign(payload, process.env.RESET_TOKEN_SECRET, { expiresIn: '5m' });
+    }
+
+    // verify reset token
+    static verifyResetToken(token) {
+        return jwt.verify(token, process.env.RESET_TOKEN_SECRET);
+    }
+
     // store refresh token in database
     static async storeRefreshToken(token, userId) {
         try {

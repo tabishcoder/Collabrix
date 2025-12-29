@@ -232,10 +232,13 @@ module.exports.verifyOtp = async (req, res) => {
         if (verification.type === "password_reset") {
             await Verification.deleteOne({ _id: verification._id });
 
+            const resetToken = JWTService.signResetToken({userId: verification.userId});
+
             return res.json({
                 success: true,
                 type: "password_reset",
                 next: "reset_password",
+                resetToken,
                 message: "OTP verified. You may reset your password."
             });
         }
@@ -365,7 +368,7 @@ module.exports.requestPasswordReset = async (req, res) => {
 
         await sendEmail(user.email, otp);
 
-        return res.json({ userId: user._id , message: "OTP sent for password reset" });
+        return res.json({ userId: user._id, message: "OTP sent for password reset" });
 
     } catch (err) {
         console.error(err);
@@ -378,11 +381,18 @@ module.exports.requestPasswordReset = async (req, res) => {
 // @access Public
 module.exports.resetPassword = async (req, res) => {
     try {
-        const { userId, newPassword } = req.body;
-        if (!userId || !newPassword)
+        const { resetToken, newPassword } = req.body;
+        if (!resetToken || !newPassword)
             return res.status(400).json({ message: "Missing fields" });
 
-        const user = await User.findById(userId);
+        let payload;
+        try {
+            payload = JWTService.verifyResetToken(resetToken);
+        } catch {
+            return res.status(401).json({ message: "Invalid or expired token" });
+        }
+
+        const user = await User.findById(payload.userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
         // automatically hashed in model pre-save hook
