@@ -158,7 +158,6 @@ module.exports.logoutUser = async (req, res) => {
     }
 };
 
-
 // @desc Update the tokens
 // @route POST /api/auth/refresh
 // @access Private
@@ -166,7 +165,7 @@ module.exports.refreshToken = async (req, res) => {
     const { refreshToken } = req.cookies;
 
     if (!refreshToken) {
-        return res.status(402).json({message: 'No refresh token provided.'});
+        return res.status(402).json({ message: 'No refresh token provided.' });
     }
 
     let decoded = JWTService.verifyRefreshToken(refreshToken);
@@ -206,12 +205,6 @@ module.exports.verifyOtp = async (req, res) => {
             return res.status(429).json({ message: 'Too many incorrect attempts. Request a new OTP.' });
         }
 
-        // if expired system will automatically remove from DB
-        // if (verification.expiresAt < new Date()) {
-        //     await Verification.deleteOne({ _id: verification._id });
-        //     return res.status(400).json({ message: 'OTP expired. Request a new one.' });
-        // }
-
         const otpHash = hashOTP(otp);
         if (otpHash !== verification.otpHash) {
             verification.attempts += 1;
@@ -219,11 +212,40 @@ module.exports.verifyOtp = async (req, res) => {
             return res.status(400).json({ message: 'Invalid OTP' });
         }
 
+        // ------------- SUCCESS CASES -------------
+        if (verification.type === "email_verification") {
+            await User.findByIdAndUpdate(userId, {
+                isVerified: true,
+                meta: null
+            });
+
+            await Verification.deleteOne({ _id: verification._id });
+
+            return res.json({
+                success: true,
+                type: "email_verification",
+                next: "dashboard",
+                message: "Email verified successfully"
+            });
+        }
+
+        if (verification.type === "password_reset") {
+            await Verification.deleteOne({ _id: verification._id });
+
+            return res.json({
+                success: true,
+                type: "password_reset",
+                next: "reset_password",
+                message: "OTP verified. You may reset your password."
+            });
+        }
+
+
         // Successful verification
         await User.findByIdAndUpdate(userId, { isVerified: true, meta: null }); // also reset the OTP send count
         await Verification.deleteOne({ _id: verification._id });
 
-        return res.json({ message: 'Email verified successfully'});
+        return res.json({ message: 'Email verified successfully' });
 
     } catch (err) {
         console.error(err?.message);
@@ -312,4 +334,65 @@ module.exports.resendOtp = async (req, res) => {
     }
 };
 
+// --------------------- Password Recovery Routes -------------------
 
+// @desc Receive request for password reset
+// @route POST /api/auth/request-reset-password
+// @access Public
+module.exports.requestPasswordReset = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ message: "Email required" });
+
+        const user = await User.findOne({ email });
+        if (!user)
+            return res.status(200).json({ message: "If the email exists, an OTP has been sent" }); // avoid email enumeration
+
+        await Verification.deleteMany({
+            userId: user._id,
+            type: "password_reset"
+        });
+
+        const otp = generateOTP();
+        const otpHash = hashOTP(otp);
+
+        await Verification.create({
+            userId: user._id,
+            otpHash,
+            type: "password_reset",
+            expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+        });
+
+        await sendEmail(user.email, otp);
+
+        return res.json({ userId: user._id , message: "OTP sent for password reset" });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to send OTP" });
+    }
+};
+
+// @desc Reset password using OTP
+// @route POST /api/auth/reset-password
+// @access Public
+module.exports.resetPassword = async (req, res) => {
+    try {
+        const { userId, newPassword } = req.body;
+        if (!userId || !newPassword)
+            return res.status(400).json({ message: "Missing fields" });
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // automatically hashed in model pre-save hook
+        user.passwordHash = newPassword;
+        await user.save();
+
+        return res.json({ message: "Password reset successful" });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to reset password" });
+    }
+};
