@@ -1,158 +1,248 @@
-# Authentication APIs Documentation
+# Authentication & Verification API Documentation
 
 ## Authentication APIs
 
 ---
 
-## 1. `/api/auth/register`
+## 1. POST `/api/auth/register`
 
-**Description:**  
-Registers a **new user** with name, email, and password.
+### Description
+- Register a new user.
+- Sends OTP for email verification.
+- Publicly accessible.
 
-### Request Method  
-`POST`
-
-### Request Payload
+### Request Body
 ```json
 {
-    "name": "abc",
-    "email": "abc@gmail.com",
-    "password": "12345"
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "StrongPassword@123"
 }
 ```
 
-### Response
+### Success Response
 ```json
 {
-  "_id": "692d7e3850ce8b3069adf88f",
-  "name": "abc",
-  "email": "abc@gmail.com",
-  "message": "User Registered Successfully"
+  "message": "User registered. OTP sent to email",
+  "userId": "692d7eb14df1f59216e3448e"
 }
 ```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Missing essential fields / Email already in use |
+| 500 | Failed to send verification email / Server error |
 
 ---
 
-## 2. `/api/auth/login`
+## 2. POST `/api/auth/login`
 
-**Description:**  
-Logs in an existing user using email and password.  
-Returns access & refresh tokens as **HTTP-only cookies**.
+### Description
+- Login user with email and password.
+- Requires email verification.
+- Publicly accessible.
 
-### Request Method  
-`POST`
-
-### Request Payload
+### Request Body
 ```json
 {
-    "email": "abc@gmail.com",
-    "password": "12345"
+  "email": "john@example.com",
+  "password": "StrongPassword@123"
 }
 ```
 
-### Response
+### Success Response
 ```json
 {
-  "_id": "692d7e3850ce8b3069adf88f",
-  "name": "abc",
-  "email": "abc@gmail.com",
-  "message": "Login Successfully"
+  "_id": "692d7eb14df1f59216e3448e",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "message": "Logged in Successfully"
 }
 ```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Missing fields / Invalid credentials |
+| 403 | Email not verified |
+| 500 | Server error |
 
 ---
 
-## 3. `/api/auth/refresh`
+## 3. POST `/api/auth/logout`
 
-**Description:**  
-Generates a **new access token** when the previous one expires.  
-Uses the **refresh token stored in HTTP-only cookies**.
+### Description
+- Logs out the user and clears cookies.
+- Private route.
 
-### Request Method  
-`POST`
-
-### Cookies Required  
-- `refreshToken` (HTTP-only cookie)
-
-### Response
+### Success Response
 ```json
 {
-    "message": "Access token refreshed"
+  "message": "Logged out successfully"
 }
 ```
 
-The server verifies the refresh token, issues a new access token, and sets it again in cookies.
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 500 | Logout failed |
 
 ---
 
-## 4. `/api/users/me`
+## 4. POST `/api/auth/refresh`
 
-**Description:**  
-Returns the authenticated user's profile.  
-Used to check whether the user is logged in.  
-Requires **valid access token** stored in cookies.
+### Description
+- Refreshes the access token using a valid refresh token in cookies.
+- Private route.
 
-### Request Method  
-`GET`
-
-### Cookies Required  
-- `accessToken` (HTTP-only cookie)
-
-### Response
+### Success Response
 ```json
 {
-    "_id": "692d7eb14df1f59216e3448e",
-    "name": "abc",
-    "email": "abc@gmail.com",
+  "message": "Access token refreshed"
 }
-
 ```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 402 | No refresh token provided |
+| 403 | Refresh token invalid or expired |
+
+---
 
 ## 5. POST `/api/auth/verify-otp`
 
-**Description:**  
-Verify the OTP send through registered Email.
-Used for the Email Verification.
-The route is publicly accessible.
+### Description
+- Verifies OTP for **email verification** or **password reset**.
+- Publicly accessible.
 
-### Request Method  
-`POST`
-
-### Request
+### Request Body
 ```json
 {
   "userId": "692d7eb14df1f59216e3448e",
-  "otp": "7****6"
+  "otp": "745216"
 }
 ```
 
-### Response
+### Success Responses
+
+#### Email Verification
 ```json
 {
-    "message": "Email Registered Successfully"
+  "success": true,
+  "type": "email_verification",
+  "next": "dashboard",
+  "message": "Email verified successfully"
 }
 ```
 
-## 6. POST `/api/auth/verify-otp`
-
-**Description:**  
-Request a new OTP through Email.
-Used for the Email Verification.
-Maintains a cool down process of requesting only **1 OTP/min and 5/hour**.
-The route is publicly accessible.
-
-### Request Method  
-`POST`
-
-### Request
+#### Password Reset OTP Verified
 ```json
 {
-  "email": "abc@gmail.com"
+  "success": true,
+  "type": "password_reset",
+  "next": "reset_password",
+  "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "message": "OTP verified. You may reset your password."
 }
 ```
 
-### Response
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Missing fields / Invalid OTP / OTP expired |
+| 429 | Too many incorrect attempts |
+| 500 | Verification failed |
+
+---
+
+## 6. POST `/api/auth/resend-otp`
+
+### Description
+- Resends OTP for **email verification**.
+- Rate limited: 1 per minute, max 3 per hour.
+- Publicly accessible.
+
+### Request Body
+```json
+{
+  "email": "john@example.com"
+}
+```
+
+### Success Response
 ```json
 {
   "message": "OTP sent"
 }
+```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Email required / User already verified |
+| 404 | User not found |
+| 429 | Rate limit exceeded |
+| 500 | Failed to resend OTP |
+
+---
+
+## 7. POST `/api/auth/request-reset-password`
+
+### Description
+- Requests OTP for password recovery.
+- Always returns generic response to avoid email enumeration.
+- Publicly accessible.
+
+### Request Body
+```json
+{
+  "email": "john@example.com"
+}
+```
+
+### Success Response
+```json
+{
+  "userId": "692d7eb14df1f59216e3448e",
+  "message": "OTP sent for password reset"
+}
+```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Email required |
+| 500 | Failed to send OTP |
+
+---
+
+## 8. POST `/api/auth/reset-password`
+
+### Description
+- Resets password using **resetToken** obtained after OTP verification.
+- Publicly accessible.
+
+### Request Body
+```json
+{
+  "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "newPassword": "StrongPassword@123"
+}
+```
+
+### Success Response
+```json
+{
+  "message": "Password reset successful"
+}
+```
+
+### Error Responses
+| Status | Message |
+|--------|---------|
+| 400 | Missing fields |
+| 401 | Invalid or expired token |
+| 404 | User not found |
+| 500 | Failed to reset password |

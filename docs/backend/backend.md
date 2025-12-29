@@ -24,8 +24,12 @@ Create a `.env` file:
 PORT=5000
 MONGO_URI=your_mongodb_url
 
-ACCESS_SECRET=your_access_token_secret
-REFRESH_SECRET=your_refresh_token_secret
+ACCESS_TOKEN=your_access_token_secret
+REFRESH_TOKEN=your_refresh_token_secret
+
+SMTP_USER=email_here
+SMTP_PASS=your_password
+
 ```
 
 ## 3. Install dependencies
@@ -79,22 +83,20 @@ When access token expires:
 - Login
 - Refresh Token
 - Get Me
+- Password Recovery
+- Logout
 
 ### ❌ Not Implemented Yet (Future Scope)
 - Exams module  
 - Role-based authorization  
-- Logout  
-- Token revocation  
-- Email verification  
-- Password reset  
 - Admin panels  
 
 
 # Document Status
 
-**Version:** 1.0  
-**Last Updated:** 2025-12-01  
-**Status:** Authentication Routes Plugged In  
+**Version:** 1.1 
+**Last Updated:** 2025-12-29
+**Status:** Authentication Routes + Password Recovery Routes plugged in
 **Maintained By:** Backend Team
 
 ---
@@ -103,4 +105,5 @@ When access token expires:
 
 | Date | Version | Changes | Marked By |
 |:-----|:--------|:--------|:-----|
-| 01-12-2025 | 1.0 | Basic APIs working | Saqlain Mansab
+| 01-12-2025 | 1.0 | Basic APIs working | Saqlain Mansab |
+| 29-12-2025 | 1.1 | Authentication Module Completed | Saqlain Mansab |
