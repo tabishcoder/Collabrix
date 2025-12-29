@@ -1,29 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './Layout';
-import { socket } from './socket';
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getMe } from "./features/auth/authSlice";
+import AppRoutes from "./routes/AppRoutes";
+import Navbar from "./components/Navbar/Navbar";
 
-function App() {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user')));
+export default function App() {
+  const dispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+
 
   useEffect(() => {
-    if (user) {
-      // connect socket and notify online
-      socket.auth = { token: localStorage.getItem('token') };
-      socket.connect();
-      socket.emit('user:online', user.id);
-    } else {
-      socket.disconnect();
-    }
-    return () => socket.disconnect();
-  }, [user]);
+    dispatch(getMe()); // Restore login on refresh
+  }, [dispatch]);
 
   return (
     <>
-      <BrowserRouter>
-        <Layout user={user} setUser={setUser} />
-      </BrowserRouter>
+      {isAuthenticated && <Navbar />}
+      <AppRoutes />
     </>
   );
 }
-export default App;

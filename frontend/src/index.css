@@ -1,11 +1,18 @@
 @import "tailwindcss";
 
-/* App-wide tweaks for the bluish theme */
-:root {
-  --brand-start: #3b82f6; /* blue-500 */
-  --brand-end: #6366f1;   /* indigo-500 */
+/* Define your design system */
+@theme {
+    --color-primary: #4F46E5;
+    --color-accent: #22D3EE;
+    --color-highlight: #A855F7;
+    --color-bg: #020617;
+    --color-card: #111827;
+    --color-text-primary: #F9FAFB;
+    --color-text-secondary: #F9FAFB;
 }
 
+/* Global styles */
 body {
-  background-color: #eef2ff; /* indigo-50 */
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
 }
