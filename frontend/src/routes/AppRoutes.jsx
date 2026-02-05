@@ -1,13 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-
+import Login from "../features/auth/Login";
+import Register from "../features/auth/Register";
+import VerifyOtp from "../features/auth/VerifyOtp";
+import Dashboard from "../features/dashboard/Dashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoutes";
-import Login from "../features/auth/Login";
-import Dashboard from "../features/dashboard/Dashboard";
-
+import ForgotPasswordRequest from "../features/auth/ForgotPasswordRequest.jsx";
+import ResetPassword from "../features/auth/ResetPassword.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
@@ -29,6 +31,10 @@ export default function AppRoutes() {
       {/* Public routes (login/register/verify-otp) */}
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPasswordRequest />} />
+        <Route path="/verify-otp/:userId" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       {/* Protected routes (dashboard) */}
