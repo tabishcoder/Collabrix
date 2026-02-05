@@ -1,12 +1,21 @@
-
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getMe } from "./features/auth/authSlice";
+import AppRoutes from "./routes/AppRoutes";
+import Navbar from "./components/Navbar/Navbar";
 
 export default function App() {
-  // Auto getMe on page refresh
- 
+  const dispatch = useDispatch();
+  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(getMe()); // Restore login on refresh
+  }, [dispatch]);
 
   return (
-   <>
-     Hello World
-   </>
+    <>
+      {isAuthenticated && <Navbar />}
+      <AppRoutes />
+    </>
   );
 }

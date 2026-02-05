@@ -5,6 +5,8 @@ import { useSelector } from "react-redux";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoutes";
+import Login from "../features/auth/Login";
+import Dashboard from "../features/dashboard/Dashboard";
 
 
 export default function AppRoutes() {
@@ -26,12 +28,12 @@ export default function AppRoutes() {
 
       {/* Public routes (login/register/verify-otp) */}
       <Route element={<PublicRoute />}>
-       
+        <Route path="/login" element={<Login />} />
       </Route>
 
       {/* Protected routes (dashboard) */}
       <Route element={<ProtectedRoute />}>
-       
+        <Route path="/dashboard" element={<Dashboard />} />
       </Route>
 
       {/* Catch-all: redirect unknown routes */}

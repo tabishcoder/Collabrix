@@ -1,2 +1,27 @@
 @import "tailwindcss";
 
+/* Define your design system */
+@theme {
+  --color-primary: #4F46E5;
+  /* Indigo-600 / Primary Blue/Purple */
+  --color-accent: #22D3EE;
+  /* Cyan-400 / Bright Blue */
+  --color-highlight: #A855F7;
+  /* Purple-500 / Highlight Purple */
+  --color-bg: #020617;
+  /* Very Dark Blue / Background */
+  --color-card: #111827;
+  /* Dark Gray-900 / Card Background */
+  --color-text-primary: #F9FAFB;
+  /* Gray-50 / Primary Text (White-ish) */
+  --color-text-secondary: #F9FAFB;
+  /* Gray-50 / Secondary Text (White-ish) */
+}
+
+/* Global styles */
+body {
+  background-color: var(--color-bg);
+  /* Very Dark Blue */
+  color: var(--color-text-primary);
+  /* White-ish */
+}
