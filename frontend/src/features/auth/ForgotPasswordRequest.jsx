@@ -55,6 +55,14 @@ export default function ForgotPasswordRequest() {
           >
             {loading ? "Sending..." : "Send OTP"}
           </button>
+
+          <button
+            onClick={() => navigate("/login")}
+            className="mt-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:underline"
+          >
+            ← Back to Login
+          </button>
+          
         </form>
       </div>
     </div>

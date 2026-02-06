@@ -59,7 +59,7 @@ export default function VerifyOtp() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-[var(--color-bg)]">
       {/* Left Branding Section */}
       <div className="lg:w-1/2 flex flex-col justify-center bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-highlight)] text-[var(--color-text-primary)] px-10 py-16">
-        <h1 className="text-4xl font-extrabold mb-4">Verify Your Email</h1>
+        <h1 className="text-4xl font-extrabold mb-4">Verify OTP</h1>
         <p className="text-lg text-[var(--color-text-secondary)] max-w-md">
           We’ve sent a 6-digit verification code to your email address. Please
           enter it to continue.
@@ -96,13 +96,24 @@ export default function VerifyOtp() {
           >
             {loading ? "Verifying..." : "Verify OTP"}
           </button>
+          <div className="gap-2">
+            <button
+              onClick={handleResend}
+              className="mt-5 text-sm font-medium text-[var(--color-accent)] hover:underline"
+            >
+              Resend OTP
+            </button>
 
-          <button
-            onClick={handleResend}
-            className="mt-5 text-sm font-medium text-[var(--color-accent)] hover:underline"
-          >
-            Resend OTP
-          </button>
+            <div> </div>
+            <button
+              onClick={() => navigate("/login")}
+              className="mt-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:underline"
+            >
+              ← Back to Login
+            </button>
+
+            
+          </div>
         </div>
       </div>
     </div>
