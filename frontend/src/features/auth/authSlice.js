@@ -1,5 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginApi, registerApi, getMeApi, logoutApi } from "./authApi";
+import {
+  loginApi,
+  registerApi,
+  getMeApi,
+  logoutApi,
+  resetPasswordApi,
+  requestResetPasswordApi,
+  verifyOtpApi,
+} from "./authApi";
 
 /* =========================
    LOGIN
@@ -24,10 +32,10 @@ export const register = createAsyncThunk(
       return res.data.data ?? res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(
-        err.response?.data?.message || err.message
+        err.response?.data?.message || err.message,
       );
     }
-  }
+  },
 );
 
 /* =========================
@@ -40,11 +48,10 @@ export const getMe = createAsyncThunk(
       const res = await getMeApi();
       console.log(res);
       return res.data;
-
     } catch (err) {
       return rejectWithValue(null); // ✅ important
     }
-  }
+  },
 );
 
 /* =========================
@@ -58,7 +65,58 @@ export const logout = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  }
+  },
+);
+
+/* =========================
+   REQUEST RESET PASSWORD
+========================= */
+export const requestResetPassword = createAsyncThunk(
+  "auth/requestResetPassword",
+  async (email, { rejectWithValue }) => {
+    try {
+      const res = await requestResetPasswordApi({ email });
+      return res.data; // contains userId
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to request reset password",
+      );
+    }
+  },
+);
+
+/* =========================
+   VERIFY OTP
+========================= */
+export const verifyOtp = createAsyncThunk(
+  "auth/verifyOtp",
+  async ({ userId, otp }, { rejectWithValue }) => {
+    try {
+      const res = await verifyOtpApi({ userId, otp }); // call POST /verify-otp
+      return res.data; // contains resetToken for password reset
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "OTP verification failed",
+      );
+    }
+  },
+);
+
+/* =========================
+   RESET PASSWORD
+========================= */
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ resetToken, newPassword }, { rejectWithValue }) => {
+    try {
+      const res = await resetPasswordApi({ resetToken, newPassword });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to reset password",
+      );
+    }
+  },
 );
 
 /* =========================
@@ -71,6 +129,13 @@ const authSlice = createSlice({
     isAuthenticated: false,
     loading: true, // 🔥 required for refresh flow
     error: null,
+
+    // forgot password
+    userId: null,
+    resetToken: null,
+    resetRequested: false,
+    otpVerified: false,
+    resetSuccess: false,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -111,6 +176,50 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.isAuthenticated = false;
+      })
+
+      // REQUEST RESET
+      .addCase(requestResetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(requestResetPassword.fulfilled, (state, action) => {
+        state.loading = false;
+        state.resetRequested = true;
+        state.userId = action.payload.userId;
+      })
+      .addCase(requestResetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // VERIFY OTP
+      .addCase(verifyOtp.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.loading = false;
+        state.otpVerified = true;
+        state.resetToken = action.payload.resetToken;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // RESET PASSWORD
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.resetSuccess = true;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

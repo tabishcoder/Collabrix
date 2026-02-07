@@ -8,7 +8,6 @@ export default function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, loading } = useSelector((state) => state.auth);
 
-
   useEffect(() => {
     dispatch(getMe()); // Restore login on refresh
   }, [dispatch]);

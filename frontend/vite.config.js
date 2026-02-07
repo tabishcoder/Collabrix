@@ -2,13 +2,14 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
-  plugins: [tailwindcss(), react()],
+  plugins: [tailwindcss(),react()],
   server: {
     proxy: {
       "/api": {
         target:
-          "http://collabrix-cugaaubxb9hngqg9.southeastasia-01.azurewebsites.net",
+          "https://collabrix-cugaaubxb9hngqg9.southeastasia-01.azurewebsites.net",
         changeOrigin: true,
+      
       },
     },
   },

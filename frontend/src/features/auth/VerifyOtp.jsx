@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { verifyOtpApi, resendOtpApi } from "./authApi";
 import toast from "react-hot-toast";
 
 export default function VerifyOtp() {
   const { userId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const params = new URLSearchParams(location.search);
+  const email = params.get("email"); // needed for resend OTP
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,22 +22,36 @@ export default function VerifyOtp() {
 
     try {
       setLoading(true);
-      await verifyOtpApi({ otp, userId });
-      toast.success("OTP verified successfully");
-      navigate("/login");
+      const res = await verifyOtpApi({ userId, otp });
+
+      toast.success(res.data.message);
+
+      if (res.data.type === "password_reset") {
+        // navigate to reset password page with resetToken
+        navigate(`/reset-password?token=${res.data.resetToken}`);
+      } else {
+        // email verification
+        navigate("/login");
+      }
     } catch (err) {
-      toast.error("Invalid or expired OTP");
+      console.error(err.response?.data);
+      toast.error(err.response?.data?.message || "Invalid or expired OTP");
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (!email) {
+      toast.error("Cannot resend OTP. Email missing.");
+      return;
+    }
+
     try {
-      await resendOtpApi({ userId });
+      await resendOtpApi({ email });
       toast.success("OTP resent to your email");
-    } catch {
-      toast.error("Failed to resend OTP");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to resend OTP");
     }
   };
 
@@ -41,13 +59,11 @@ export default function VerifyOtp() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-[var(--color-bg)]">
       {/* Left Branding Section */}
       <div className="lg:w-1/2 flex flex-col justify-center bg-gradient-to-tr from-[var(--color-primary)] to-[var(--color-highlight)] text-[var(--color-text-primary)] px-10 py-16">
-        <h1 className="text-4xl font-extrabold mb-4">Verify Your Email</h1>
-
+        <h1 className="text-4xl font-extrabold mb-4">Verify OTP</h1>
         <p className="text-lg text-[var(--color-text-secondary)] max-w-md">
           We’ve sent a 6-digit verification code to your email address. Please
-          enter it to activate your Collabrix account.
+          enter it to continue.
         </p>
-
         <p className="mt-6 text-sm text-[var(--color-text-secondary)]">
           Didn’t receive the code? You can resend it anytime.
         </p>
@@ -80,16 +96,26 @@ export default function VerifyOtp() {
           >
             {loading ? "Verifying..." : "Verify OTP"}
           </button>
+          <div className="gap-2">
+            <button
+              onClick={handleResend}
+              className="mt-5 text-sm font-medium text-[var(--color-accent)] hover:underline"
+            >
+              Resend OTP
+            </button>
 
-          <button
-            onClick={handleResend}
-            className="mt-5 text-sm font-medium text-[var(--color-accent)] hover:underline"
-          >
-            Resend OTP
-          </button>
+            <div> </div>
+            <button
+              onClick={() => navigate("/login")}
+              className="mt-3 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:underline"
+            >
+              ← Back to Login
+            </button>
+
+            
+          </div>
         </div>
       </div>
     </div>
   );
-
 }

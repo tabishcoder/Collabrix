@@ -8,6 +8,8 @@ import Dashboard from "../features/dashboard/Dashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoutes";
+import ForgotPasswordRequest from "../features/auth/ForgotPasswordRequest.jsx";
+import ResetPassword from "../features/auth/ResetPassword.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
@@ -30,7 +32,9 @@ export default function AppRoutes() {
       <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPasswordRequest />} />
         <Route path="/verify-otp/:userId" element={<VerifyOtp />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       {/* Protected routes (dashboard) */}

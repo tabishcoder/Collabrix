@@ -11,3 +11,9 @@ export const resendOtpApi = (data) => api.post("/auth/resend-otp", data);
 export const logoutApi = () => api.post("/auth/logout");
 
 export const getMeApi = () => api.get("/users/me");
+
+export const requestResetPasswordApi = (data) =>
+  api.post("/auth/request-reset-password", data);
+
+export const resetPasswordApi = (data) =>
+  api.post("/auth/reset-password", data);

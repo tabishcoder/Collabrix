@@ -116,15 +116,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-
-            <div className="flex justify-between items-center text-sm text-[var(--color-text-secondary)]">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="rounded accent-[var(--color-primary)]"
-                />
-                Remember me
-              </label>
+            <div className="flex justify-between items-cente text-sm text-[var(--color-text-secondary)]">
 
               <Link
                 to="/forgot-password"
