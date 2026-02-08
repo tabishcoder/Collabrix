@@ -7,6 +7,7 @@ import {
   FaRobot,
 } from "react-icons/fa";
 import LogoutButton from "./LogoutButton";
+import { assests } from "../assets/images/assests"; // make sure the path is correct
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
@@ -19,11 +20,17 @@ const navItems = [
 export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-36 bg-[var(--color-card)] border-r border-white/10 flex-col">
-      {/* Profile / Workspace */}
-      <div className="p-4 border-b border-white/10">
-        <p className="text-xs text-[var(--color-text-secondary)] opacity-70">
-          Workspace
-        </p>
+      {/* Logo */}
+      <div className="flex items-center justify-center p-4 border-b border-white/10">
+        <img
+          src={assests.logo}
+          alt="Collabrix Logo"
+          className="w-16 h-16 object-contain"
+        />
+      </div>
+
+      {/* Workspace Name */}
+      <div className="p-2 px-4 border-b border-white/10 text-center">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
           Collabrix
         </h2>

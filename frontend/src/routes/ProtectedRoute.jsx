@@ -1,16 +1,31 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { fetchSpaces } from "../features/spaces/spaceSlice";
+import WorkspaceGate from "../features/spaces/WorkspaceGate";
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector((s) => s.auth);
+  const { activeSpace, initialized } = useSelector((s) => s.spaces);
 
-  if (loading) {
+  useEffect(() => {
+    if (isAuthenticated && !initialized) {
+      dispatch(fetchSpaces());
+    }
+  }, [dispatch, isAuthenticated, initialized]);
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (!initialized) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">Loading...</p>
+      <div className="h-screen flex items-center justify-center text-[var(--color-text-primary)]">
+        Checking workspace...
       </div>
     );
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  if (!activeSpace) return <WorkspaceGate />;
+
+  return <Outlet />;
 }

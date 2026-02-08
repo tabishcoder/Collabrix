@@ -44,6 +44,7 @@ export default function AppRoutes() {
       {/* Protected routes (dashboard) */}
       <Route element={<AppLayout/>}>
         <Route element={<ProtectedRoute />}>
+        
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>
       </Route>
