@@ -7,12 +7,12 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server } = require('socket.io');
 
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const spaceRoutes = require('./routes/spaces');
-const projectRoutes = require('./routes/projects');
-const taskRoutes = require('./routes/tasks');
-const historyRoutes = require('./routes/history');
+const authRoutes = require('./routes/auth.routes');
+const userRoutes = require('./routes/users.routes');
+const spaceRoutes = require('./routes/spaces.routes');
+const projectRoutes = require('./routes/projects.routes');
+const taskRoutes = require('./routes/tasks.routes');
+const historyRoutes = require('./routes/history.routes');
 
 const app = express();
 const server = http.createServer(app);

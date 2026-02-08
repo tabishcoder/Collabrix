@@ -9,7 +9,7 @@ const {
   deleteProject,
   addProjectMember,
   removeProjectMember
-} = require('../controller/projects');
+} = require('../controller/projects.controller');
 
 // @desc Get all projects in a space
 // @route GET /api/projects/space/:spaceId

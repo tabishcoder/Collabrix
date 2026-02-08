@@ -9,7 +9,7 @@ const {
   deleteSpace,
   addSpaceMember,
   removeSpaceMember
-} = require('../controller/spaces');
+} = require('../controller/spaces.controller');
 
 // @desc Get all spaces for authenticated user
 // @route GET /api/spaces

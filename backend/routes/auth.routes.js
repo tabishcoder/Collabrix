@@ -10,7 +10,7 @@ const {
     logoutUser,
     requestPasswordReset,
     resetPassword
-} = require('../controller/auth');
+} = require('../controller/auth.controller');
 
 const { auth } = require('../middleware/auth');
 

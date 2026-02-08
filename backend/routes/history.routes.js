@@ -6,7 +6,7 @@ const {
   getProjectHistory,
   getTaskHistory,
   getUserHistory
- } = require('../controller/history');
+ } = require('../controller/history.controller');
 
 // @desc Get history for a space
 // @route GET /api/history/space/:spaceId

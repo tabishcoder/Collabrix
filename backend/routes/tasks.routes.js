@@ -7,7 +7,7 @@ const {
   createTask,
   updateTask,
   deleteTask
-} = require('../controller/tasks');
+} = require('../controller/tasks.controller');
 
 // @desc Get all tasks in a project
 // @route GET /api/tasks/project/:projectId

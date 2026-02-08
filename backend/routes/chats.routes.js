@@ -5,7 +5,7 @@ const {
   getAllChats,
   getChatMessages,
   createGroupChat
-} = require('../controller/chats');
+} = require('../controller/chats.controller');
 
 const router = express.Router();
 
