@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import TopNavbar from "../components/TopNavbar";
 import Sidebar from "../components/Sidebar";
+import SubSidebarSwitch from "../components/subsidebars/SubSidebarSwitch";
 
 export default function AppLayout() {
   return (
@@ -12,6 +13,7 @@ export default function AppLayout() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
+        <SubSidebarSwitch />
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>

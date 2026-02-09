@@ -31,7 +31,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Public routes (login/register/verify-otp) */}
-      <Route element={<PublicLayout/>}>
+      <Route element={<PublicLayout />}>
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -42,15 +42,19 @@ export default function AppRoutes() {
       </Route>
 
       {/* Protected routes (dashboard) */}
-      <Route element={<AppLayout/>}>
+      <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
-        
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects" element={<Dashboard />} />
+          <Route path="/chats" element={<Dashboard />} />
+          <Route path="/meetings" element={<Dashboard />} />
+          <Route path="/meetings" element={<Dashboard />} />
+          <Route path="/aiBot" element={<Dashboard />} />
         </Route>
       </Route>
 
       {/* Catch-all: redirect unknown routes */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
     </Routes>
   );
 }
