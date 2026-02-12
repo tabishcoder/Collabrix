@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectsBySpace, setActiveProject } from "../../features/projects/projectSlice";
 import { useNavigate, useParams } from "react-router-dom";
-
+import CreateProjectModal from "../../features/projects/CreateProjectModal";
 export default function ProjectsSubSidebar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -10,6 +10,7 @@ export default function ProjectsSubSidebar() {
 
   const { activeSpace } = useSelector((s) => s.spaces);
   const { projects, activeProject } = useSelector((s) => s.projects);
+  const [showModal, setShowModal] = useState(false);
 
   // Fetch projects when activeSpace changes
   useEffect(() => {
@@ -54,6 +55,13 @@ export default function ProjectsSubSidebar() {
           <p className="text-xs opacity-50">No projects yet</p>
         )}
       </div>
+      <button
+        onClick={() => setShowModal(true)}
+        className="w-full mt-2 px-3 py-2 rounded-md bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
+      >
+        + New Project
+      </button>
+      {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
     </aside>
   );
 }
