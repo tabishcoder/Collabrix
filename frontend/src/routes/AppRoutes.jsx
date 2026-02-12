@@ -13,6 +13,7 @@ import ResetPassword from "../features/auth/ResetPassword.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
 import AppLayout from "../layouts/AppLayout.jsx";
 import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
+import ProjectsPage from "../features/projects/ProjectsPage.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
@@ -46,7 +47,7 @@ export default function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<KanbanBoard />} />
+          <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/chats" element={<Dashboard />} />
           <Route path="/meetings" element={<Dashboard />} />
           <Route path="/meetings" element={<Dashboard />} />
