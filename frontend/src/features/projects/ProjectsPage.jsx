@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectById } from "./projectSlice";
-import { useParams } from "react-router-dom";
-import KanbanBoard from "../../components/kanban/KanbanBoard";
+import { Outlet, useParams } from "react-router-dom";
 
 export default function ProjectsPage() {
   const dispatch = useDispatch();
@@ -42,7 +41,7 @@ export default function ProjectsPage() {
 
       {/* Kanban */}
       <div className="flex-1 overflow-auto">
-        <KanbanBoard />
+        <Outlet />
       </div>
     </div>
   );

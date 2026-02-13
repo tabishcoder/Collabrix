@@ -47,7 +47,23 @@ export default function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projects" element={<ProjectsPage />} />
+          {/* Projects */}
+          <Route path="/projects" element={<ProjectsPage />}>
+            {/* When no project selected */}
+            <Route
+              index
+              element={
+                <div className="p-6 text-gray-500">Select a project</div>
+              }
+            />
+
+            {/* When project is selected */}
+            <Route path=":projectId" element={<KanbanBoard />} />
+
+            {/* Optional deeper nested routes (future ready) */}
+            <Route path=":projectId/board" element={<KanbanBoard />} />
+          </Route>
+
           <Route path="/chats" element={<Dashboard />} />
           <Route path="/meetings" element={<Dashboard />} />
           <Route path="/meetings" element={<Dashboard />} />
