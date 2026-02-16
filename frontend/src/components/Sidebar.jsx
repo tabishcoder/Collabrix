@@ -20,18 +20,9 @@ const navItems = [
 export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-36 bg-[var(--color-card)] border-r border-white/10 flex-col">
-      {/* Logo */}
-      <div className="flex items-center justify-center p-4 border-b border-white/10">
-        <img
-          src={assests.logo}
-          alt="Collabrix Logo"
-          className="w-16 h-16 object-contain"
-        />
-      </div>
-
       {/* Workspace Name */}
-      <div className="p-2 px-4 border-b border-white/10 text-center">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+      <div className="p-4 px-6 border-b border-white/10 text-center bg-black/20 backdrop-blur-md">
+        <h2 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 via-cyan-400 to-emerald-400">
           Collabrix
         </h2>
       </div>
