@@ -14,6 +14,7 @@ import PublicLayout from "../layouts/PublicLayout.jsx";
 import AppLayout from "../layouts/AppLayout.jsx";
 import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
 import ProjectsPage from "../features/projects/ProjectsPage.jsx";
+import TasksBoard from "../features/tasks/TasksBoard.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
@@ -58,10 +59,10 @@ export default function AppRoutes() {
             />
 
             {/* When project is selected */}
-            <Route path=":projectId" element={<KanbanBoard />} />
+            <Route path=":projectId" element={<TasksBoard />} />
 
             {/* Optional deeper nested routes (future ready) */}
-            <Route path=":projectId/board" element={<KanbanBoard />} />
+            <Route path=":projectId/board" element={<TasksBoard />} />
           </Route>
 
           <Route path="/chats" element={<Dashboard />} />

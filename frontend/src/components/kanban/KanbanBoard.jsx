@@ -1,84 +1,71 @@
 import { useState } from "react";
-import { DndContext, closestCorners } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
 import KanbanColumn from "./KanbanColumn";
-
-const initialColumns = [
-  {
-    id: "todo",
-    title: "Todo",
-    tasks: [
-      { id: "t1", title: "Design UI" },
-      { id: "t2", title: "Setup project" },
-    ],
-  },
-  {
-    id: "inprogress",
-    title: "In Progress",
-    tasks: [{ id: "t3", title: "Build sidebar" }],
-  },
-  {
-    id: "done",
-    title: "Done",
-    tasks: [],
-  },
-];
+import { DndContext } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 
 export default function KanbanBoard() {
-  const [columns, setColumns] = useState(initialColumns);
-
-  const findColumnByTaskId = (taskId) =>
-    columns.find((col) => col.tasks.some((task) => task.id === taskId));
-
-  const handleDragEnd = ({ active, over }) => {
-    if (!over) return;
-
-    const sourceCol = findColumnByTaskId(active.id);
-    const targetCol =
-      findColumnByTaskId(over.id) || columns.find((col) => col.id === over.id);
-
-    if (!sourceCol || !targetCol) return;
-
-    if (sourceCol.id === targetCol.id) {
-      const oldIndex = sourceCol.tasks.findIndex((t) => t.id === active.id);
-      const newIndex = targetCol.tasks.findIndex((t) => t.id === over.id);
-
-      const updatedTasks = arrayMove(sourceCol.tasks, oldIndex, newIndex);
-
-      setColumns((cols) =>
-        cols.map((col) =>
-          col.id === sourceCol.id ? { ...col, tasks: updatedTasks } : col,
-        ),
-      );
-    } else {
-      const task = sourceCol.tasks.find((t) => t.id === active.id);
-
-      setColumns((cols) =>
-        cols.map((col) => {
-          if (col.id === sourceCol.id) {
-            return {
-              ...col,
-              tasks: col.tasks.filter((t) => t.id !== active.id),
-            };
-          }
-          if (col.id === targetCol.id) {
-            return {
-              ...col,
-              tasks: [...col.tasks, task],
-            };
-          }
-          return col;
-        }),
-      );
-    }
+  const initialData = {
+    columns: {
+      todo: { id: "todo", title: "Todo", taskId: ["t1", "t2", "t3"] },
+      doing: { id: "doing", title: "Doing", taskId: ["t4"] },
+      done: { id: "done", title: "Done", taskId: ["t5"] },
+    },
+    tasks: {
+      t1: { id: "t1", title: "Setup Project Boards" },
+      t2: { id: "t2", title: "Setup Board's Columns" },
+      t3: { id: "t3", title: "Write Code for Boards, Columns and Tasks" },
+      t4: { id: "t4", title: "Let's work on FYP, you are doing right" },
+      t5: { id: "t5", title: "Go on Tabish" },
+    },
+    columnOrder: ["todo", "doing", "done"],
   };
 
+  const [board, setBoard] = useState(initialData);
+
+  function handleDragEnd(event) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    setBoard((prev) => moveTask(prev, active.id, over.id));
+  }
+
+  function moveTask(board, activeId, overId) {
+    const newBoard = structuredClone(board);
+
+    let sourceColumnId = null;
+
+    // Find which column contains the dragged task
+    for (const columnId of newBoard.columnOrder) {
+      if (newBoard.columns[columnId].taskId.includes(activeId)) {
+        sourceColumnId = columnId;
+        break;
+      }
+    }
+
+    if (!sourceColumnId) return board;
+
+    const column = newBoard.columns[sourceColumnId];
+
+    const oldIndex = column.taskId.indexOf(activeId);
+    const newIndex = column.taskId.indexOf(overId);
+
+    if (oldIndex === -1 || newIndex === -1) return board;
+
+    column.taskId = arrayMove(column.taskId, oldIndex, newIndex);
+
+    return newBoard;
+  }
+
   return (
-    <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto p-4">
-        {columns.map((col) => (
-          <KanbanColumn key={col.id} column={col} />
-        ))}
+    <DndContext onDragEnd={handleDragEnd}>
+      <div style={{ display: "flex", gap: "20px" }}>
+        {board.columnOrder.map((columnId) => {
+          const column = board.columns[columnId];
+          const tasks = column.taskId.map((id) => board.tasks[id]);
+
+          return <KanbanColumn key={column.id} column={column} tasks={tasks} />;
+        })}
       </div>
     </DndContext>
   );
