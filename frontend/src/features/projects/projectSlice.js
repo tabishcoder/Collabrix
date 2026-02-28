@@ -57,6 +57,7 @@ const projectSlice = createSlice({
   initialState: {
     projects: [],
     activeProject: null,
+    activeProjectMembers: [],
     loading: false,
     error: null,
   },
@@ -73,6 +74,8 @@ const projectSlice = createSlice({
       })
       .addCase(fetchProjectById.fulfilled, (state, action) => {
         state.activeProject = action.payload;
+        console.log(action.payload);
+        // state.activeProjectMembers = action.payload.
       })
       .addCase(createProject.fulfilled, (state, action) => {
         state.projects.unshift(action.payload);

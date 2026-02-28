@@ -6,12 +6,10 @@ import {
   FaUsers,
   FaRobot,
 } from "react-icons/fa";
-import LogoutButton from "./LogoutButton";
-import { assests } from "../assets/images/assests"; // make sure the path is correct
 
 const navItems = [
   { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
-  { label: "Projects", to: "/projects", icon: FaProjectDiagram },
+  { label: "Project Boards", to: "/projects", icon: FaProjectDiagram },
   { label: "Chats", to: "/chats", icon: FaComments },
   { label: "Meetings", to: "/meetings", icon: FaUsers },
   { label: "AI Bot", to: "/aibot", icon: FaRobot },
@@ -19,38 +17,34 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:flex w-36 bg-[var(--color-card)] border-r border-white/10 flex-col">
-      {/* Workspace Name */}
-      <div className="p-4 px-6 border-b border-white/10 text-center bg-black/20 backdrop-blur-md">
-        <h2 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-indigo-400 via-cyan-400 to-emerald-400">
-          Collabrix
-        </h2>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+    <aside className="hidden md:flex w-64 bg-[var(--color-card)] border-r border-white/5 flex-col h-screen sticky top-0">
+      <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
         {navItems.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition
+              `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group
               ${
                 isActive
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "text-[var(--color-text-secondary)] hover:bg-white/5"
+                  ? "bg-[var(--color-primary)] text-white shadow-lg shadow-indigo-500/20"
+                  : "text-white/50 hover:text-white hover:bg-white/5"
               }`
             }
           >
-            <Icon />
+            <Icon className="text-lg" />
             {label}
           </NavLink>
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-white/10">
-        <LogoutButton />
+      <div className="p-4 bg-white/2 m-4 rounded-2xl border border-white/5">
+        <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest mb-2 px-2">
+          Support
+        </p>
+        <button className="w-full text-left px-3 py-2 text-xs text-white/60 hover:text-white transition">
+          Help Center
+        </button>
       </div>
     </aside>
   );
