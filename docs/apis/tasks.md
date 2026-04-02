@@ -19,7 +19,29 @@
 
 ### Success Response
 ```json
+
 [
+  {
+    "_id": "692d7eb14df1f59216e34492",
+    "title": "Design homepage",
+    "description": "Create a modern and responsive homepage design",
+    "status": "todo",
+    "projectId": "692d7eb14df1f59216e34491",
+    "assignee": {
+      "_id": "692d7eb14df1f59216e34490",
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "avatar": "https://example.com/avatar2.jpg"
+    },
+    "createdBy": {
+      "_id": "692d7eb14df1f59216e3448f",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "avatar": "https://example.com/avatar.jpg"
+    },
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  },
   {
     "_id": "692d7eb14df1f59216e34492",
     "title": "Design homepage",
