@@ -12,6 +12,9 @@ import ForgotPasswordRequest from "../features/auth/ForgotPasswordRequest.jsx";
 import ResetPassword from "../features/auth/ResetPassword.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
 import AppLayout from "../layouts/AppLayout.jsx";
+import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
+import ProjectsPage from "../features/projects/ProjectsPage.jsx";
+import TasksBoard from "../features/tasks/TasksBoard.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
@@ -31,7 +34,7 @@ export default function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
       {/* Public routes (login/register/verify-otp) */}
-      <Route element={<PublicLayout/>}>
+      <Route element={<PublicLayout />}>
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -42,9 +45,30 @@ export default function AppRoutes() {
       </Route>
 
       {/* Protected routes (dashboard) */}
-      <Route element={<AppLayout/>}>
+      <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          {/* Projects */}
+          <Route path="/projects" element={<ProjectsPage />}>
+            {/* When no project selected */}
+            <Route
+              index
+              element={
+                <div className="p-6 text-gray-500">Select a project</div>
+              }
+            />
+
+            {/* When project is selected */}
+            <Route path=":projectId" element={<TasksBoard />} />
+
+            {/* Optional deeper nested routes (future ready) */}
+            <Route path=":projectId/board" element={<TasksBoard />} />
+          </Route>
+
+          <Route path="/chats" element={<Dashboard />} />
+          <Route path="/meetings" element={<Dashboard />} />
+          <Route path="/meetings" element={<Dashboard />} />
+          <Route path="/aiBot" element={<Dashboard />} />
         </Route>
       </Route>
 
