@@ -1,15 +1,15 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-import Login from "../features/auth/Login";
-import Register from "../features/auth/Register";
-import VerifyOtp from "../features/auth/VerifyOtp";
+import Login from "../features/auth/pages/Login";
+import Register from "../features/auth/pages/Register";
+import VerifyOtp from "../features/auth/pages/VerifyOtp";
 import Dashboard from "../features/dashboard/Dashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
 import PublicRoute from "./PublicRoutes";
-import ForgotPasswordRequest from "../features/auth/ForgotPasswordRequest.jsx";
-import ResetPassword from "../features/auth/ResetPassword.jsx";
+import ForgotPasswordRequest from "../features/auth/pages/ForgotPassword.jsx";
+import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
 import PublicLayout from "../layouts/PublicLayout.jsx";
 import AppLayout from "../layouts/AppLayout.jsx";
 import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
