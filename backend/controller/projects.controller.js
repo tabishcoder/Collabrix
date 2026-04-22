@@ -329,16 +329,21 @@ module.exports.inviteUserToProject = async (req, res) => {
 
 module.exports.verifyProjectInvitation = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, email } = req.body;
     
-    if (!token) {
-      return res.status(400).json({ message: 'Token is required' });
+    if (!token || !email) {
+      return res.status(400).json({ message: 'Token and email are required' });
+    }
+
+    if (req.user.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(403).json({ message: 'You can only accept invitations sent to your own email address' });
     }
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const invitation = await Invitation.findOne({
       projectId: req.params.id,
+      invitedEmail: email.toLowerCase(),
       hashedToken,
       status: 'invited'
     });
