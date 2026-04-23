@@ -1,10 +1,21 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
 from app.api.api_router import api_router
+from app.core.database import init_db
 
-app = FastAPI(title="Collabrix AI Backend")
 
-# app.include_router(api_router)
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
 
-@app.get("/")
+
+app = FastAPI(title="Collabrix AI Backend", lifespan=lifespan)
+app.include_router(api_router)
+
+
+@app.get("/", tags=["Root"])
 def root():
-    return {"status": "AI backend running"}
+    return {"status": "AI backend running", "service": "ai_backend"}

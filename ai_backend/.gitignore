@@ -1,1 +1,12 @@
-venv
+venv/
+.venv/
+.env
+.env.example
+
+# Local tooling / exports
+Collabrix-AI-Backend.postman_collection.json
+requirements-whisper.txt
+
+# Python caches
+__pycache__/
+*.pyc
