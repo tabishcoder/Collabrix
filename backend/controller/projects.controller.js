@@ -1,6 +1,9 @@
 const Space = require('../models/Space');
 const Project = require('../models/Project');
 const History = require('../models/History');
+const Invitation = require('../models/Invitation');
+const crypto = require('crypto');
+const { sendProjectInvitationEmail } = require('../utils/email');
 
 // Helper to get Socket.io instance
 const getIO = (req) => {
@@ -274,6 +277,132 @@ module.exports.removeProjectMember = async (req, res) => {
     }
 
     res.json(populatedProject);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.inviteUserToProject = async (req, res) => {
+  try {
+    const { allowed, project } = await isProjectMember(req.params.id, req.user._id);
+
+    if (!allowed) {
+      return res.status(403).json({ message: 'Access denied. Project member required.' });
+    }
+
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required to invite a user' });
+    }
+
+    const existingInvitation = await Invitation.findOne({ 
+      projectId: req.params.id, 
+      invitedEmail: email.toLowerCase(),
+      status: 'invited' 
+    });
+
+    if (existingInvitation) {
+      await Invitation.findByIdAndDelete(existingInvitation._id);
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const invitation = await Invitation.create({
+      invitedEmail: email.toLowerCase(),
+      inviterId: req.user._id,
+      projectId: req.params.id,
+      hashedToken
+    });
+
+    const inviteLink = `${process.env.CLIENT_URL || 'http://localhost:3000'}/projects/${req.params.id}/join?token=${token}`;
+    
+    await sendProjectInvitationEmail(email, req.user.name, project.name, inviteLink);
+
+    await logHistory('project', project._id, 'invitation_sent', req.user._id, { invitedEmail: email });
+
+    res.status(200).json({ message: 'Invitation sent successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.verifyProjectInvitation = async (req, res) => {
+  try {
+    const { token, email } = req.body;
+    
+    if (!token || !email) {
+      return res.status(400).json({ message: 'Token and email are required' });
+    }
+
+    if (req.user.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(403).json({ message: 'You can only accept invitations sent to your own email address' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const invitation = await Invitation.findOne({
+      projectId: req.params.id,
+      invitedEmail: email.toLowerCase(),
+      hashedToken,
+      status: 'invited'
+    });
+
+    if (!invitation) {
+      return res.status(400).json({ message: 'Invalid or expired invitation token' });
+    }
+
+    if (req.user.email.toLowerCase() !== invitation.invitedEmail.toLowerCase()) {
+      return res.status(403).json({ message: 'You can only accept invitations sent to your own email address' });
+    }
+
+    const project = await Project.findById(req.params.id).populate('spaceId');
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (!project.members.includes(req.user._id)) {
+      project.members.push(req.user._id);
+      await project.save();
+    }
+
+    const space = project.spaceId;
+    let addedToSpace = false;
+    if (space) {
+       const isSpaceOwner = space.owner.toString() === req.user._id.toString();
+       const isSpaceMember = space.members.some(member => member.toString() === req.user._id.toString());
+       
+       if (!isSpaceOwner && !isSpaceMember) {
+           space.members.push(req.user._id);
+           await space.save();
+           addedToSpace = true;
+       }
+    }
+
+    invitation.status = 'accepted';
+    await invitation.save();
+
+    await logHistory('member', req.user._id, 'joined_via_invite', req.user._id, {
+      projectId: project._id,
+      projectName: project.name
+    });
+
+    const populatedProject = await Project.findById(project._id)
+      .populate('spaceId')
+      .populate('members', 'name email avatar')
+      .populate('tasks');
+
+    const io = getIO(req);
+    if (io) {
+      const spaceId = space._id || space;
+      io.to(`space-${spaceId}`).emit('project-member-added', { project: populatedProject, userId: req.user._id });
+      io.to(`project-${project._id}`).emit('project-member-added', { project: populatedProject, userId: req.user._id });
+      if (addedToSpace) {
+          io.to(`space-${spaceId}`).emit('space-member-added', { spaceId, userId: req.user._id });
+      }
+    }
+
+    res.status(200).json({ message: 'Successfully joined the project', project: populatedProject });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

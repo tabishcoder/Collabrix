@@ -8,7 +8,9 @@ const {
   updateProject,
   deleteProject,
   addProjectMember,
-  removeProjectMember
+  removeProjectMember,
+  inviteUserToProject,
+  verifyProjectInvitation
 } = require('../controller/projects.controller');
 
 // @desc Get all projects in a space
@@ -45,5 +47,15 @@ router.post('/:id/members', auth, addProjectMember);
 // @route DELETE /api/projects/:id/members/:userId
 // @access Private
 router.delete('/:id/members/:userId', auth, removeProjectMember);
+
+// @desc Invite user to project
+// @route POST /api/projects/:id/invite
+// @access Private
+router.post('/:id/invite', auth, inviteUserToProject);
+
+// @desc Verify project invitation
+// @route POST /api/projects/:id/invite/verify
+// @access Private
+router.post('/:id/invite/verify', auth, verifyProjectInvitation);
 
 module.exports = router;
