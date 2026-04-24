@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectById } from "./projectSlice";
 import { Outlet, useParams, Link } from "react-router-dom";
-import { canManageProject, spaceRoleLabel, projectRoleLabel } from "../../utils/roles";
+import {
+  canManageProject,
+  spaceRoleLabel,
+  projectRoleLabel,
+  projectRoleBadgeClass,
+} from "../../utils/roles";
 import ProjectMembersPanel from "./ProjectMembersPanel";
 
 export default function ProjectsPage() {
@@ -63,15 +68,45 @@ export default function ProjectsPage() {
       {/* Project header */}
       {activeProject && (
         <div className="px-6 py-3 border-b border-white/8 flex items-center gap-4">
-          <div>
-            <h2 className="text-base font-semibold text-white">{activeProject.name}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-semibold text-white truncate">{activeProject.name}</h2>
             {activeProject.myRole && (
-              <span className="text-xs text-white/30">
-                Your role: {projectRoleLabel(activeProject.myRole)}
-              </span>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-xs text-white/30">Your role</span>
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded-full border text-[11px] font-medium ${projectRoleBadgeClass(activeProject.myRole)}`}
+                >
+                  {projectRoleLabel(activeProject.myRole)}
+                </span>
+              </div>
             )}
           </div>
-          <span className="ml-auto text-xs text-white/25">{memberCountLabel}</span>
+
+          {/* Member avatars — hover shows project role (D1) */}
+          {activeProject.members?.length > 0 && (
+            <div className="hidden sm:flex items-center shrink-0" aria-label="Project members">
+              <div className="flex items-center -space-x-2">
+                {activeProject.members.slice(0, 8).map((m) => {
+                  const u = m.user;
+                  const tip = `${u?.name ?? "Member"} — ${projectRoleLabel(m.role)}`;
+                  return (
+                    <div
+                      key={u?._id ?? m.user}
+                      title={tip}
+                      className="w-8 h-8 rounded-full ring-2 ring-[#0a0a0b] bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-[11px] font-bold text-white cursor-default"
+                    >
+                      {(u?.name?.[0] || u?.email?.[0] || "?").toUpperCase()}
+                    </div>
+                  );
+                })}
+              </div>
+              {activeProject.members.length > 8 && (
+                <span className="ml-2 text-[11px] text-white/35">+{activeProject.members.length - 8}</span>
+              )}
+            </div>
+          )}
+
+          <span className="ml-auto sm:ml-2 text-xs text-white/25 shrink-0">{memberCountLabel}</span>
 
           {projectId && (
             <div className="flex rounded-lg border border-white/10 overflow-hidden">

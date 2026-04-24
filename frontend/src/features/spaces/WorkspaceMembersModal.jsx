@@ -9,18 +9,7 @@ import {
   removeSpaceMember,
 } from "./spaceApi";
 import { getWorkspaceInvites, revokeInvite, sendInvite } from "../invites/inviteApi";
-import { canManageSpace, spaceRoleLabel } from "../../utils/roles";
-
-const roleBadgeClass = (role) => {
-  switch (role) {
-    case "owner":
-      return "bg-purple-500/15 border-purple-500/30 text-purple-200";
-    case "admin":
-      return "bg-blue-500/15 border-blue-500/30 text-blue-200";
-    default:
-      return "bg-white/5 border-white/10 text-white/60";
-  }
-};
+import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../../utils/roles";
 
 const avatarText = (nameOrEmail) => (nameOrEmail?.[0] || "?").toUpperCase();
 
@@ -271,7 +260,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                                 <option value="admin">Admin</option>
                               </select>
                             ) : (
-                              <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${roleBadgeClass(m.role)}`}>
+                              <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${spaceRoleBadgeClass(m.role)}`}>
                                 {spaceRoleLabel(m.role)}
                               </span>
                             )}
@@ -338,7 +327,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                         <tr key={inv._id} className="border-t border-white/8 hover:bg-white/3">
                           <td className="px-4 py-3 text-white/70">{inv.email}</td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${roleBadgeClass(inv.role)}`}>
+                            <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${spaceRoleBadgeClass(inv.role)}`}>
                               {spaceRoleLabel(inv.role)}
                             </span>
                           </td>

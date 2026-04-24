@@ -33,3 +33,35 @@ export const projectRoleLabel = (role) => {
   const labels = { manager: 'Manager', contributor: 'Contributor', viewer: 'Viewer' };
   return labels[role] ?? role ?? '—';
 };
+
+/** Tailwind classes for a compact workspace-role pill (D1). */
+export const spaceRoleBadgeClass = (role) => {
+  switch (role) {
+    case 'owner':
+      return 'bg-purple-500/15 border-purple-500/30 text-purple-200';
+    case 'admin':
+      return 'bg-blue-500/15 border-blue-500/30 text-blue-200';
+    case 'member':
+      return 'bg-white/5 border-white/10 text-white/55';
+    default:
+      return 'bg-white/5 border-white/10 text-white/60';
+  }
+};
+
+/** Tailwind classes for a compact project-role pill (D1). */
+export const projectRoleBadgeClass = (role) => {
+  switch (role) {
+    case 'owner':
+      return 'bg-purple-500/15 border-purple-500/30 text-purple-200';
+    case 'admin':
+      return 'bg-blue-500/15 border-blue-500/30 text-blue-200';
+    case 'manager':
+      return 'bg-emerald-500/15 border-emerald-500/30 text-emerald-200';
+    case 'contributor':
+      return 'bg-amber-500/12 border-amber-500/25 text-amber-100/90';
+    case 'viewer':
+      return 'bg-white/5 border-white/10 text-white/50';
+    default:
+      return 'bg-white/5 border-white/10 text-white/60';
+  }
+};

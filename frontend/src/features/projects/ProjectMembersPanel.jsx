@@ -9,24 +9,7 @@ import {
 } from "./projectApi";
 import { fetchProjectById } from "./projectSlice";
 import { getSpaceMembers } from "../spaces/spaceApi";
-import { canManageProject, projectRoleLabel } from "../../utils/roles";
-
-const roleBadgeClass = (role) => {
-  switch (role) {
-    case "owner":
-      return "bg-purple-500/15 border-purple-500/30 text-purple-200";
-    case "admin":
-      return "bg-blue-500/15 border-blue-500/30 text-blue-200";
-    case "manager":
-      return "bg-emerald-500/15 border-emerald-500/30 text-emerald-200";
-    case "contributor":
-      return "bg-white/5 border-white/10 text-white/60";
-    case "viewer":
-      return "bg-white/5 border-white/10 text-white/50";
-    default:
-      return "bg-white/5 border-white/10 text-white/60";
-  }
-};
+import { canManageProject, projectRoleLabel, projectRoleBadgeClass } from "../../utils/roles";
 
 export default function ProjectMembersPanel() {
   const dispatch = useDispatch();
@@ -252,7 +235,7 @@ export default function ProjectMembersPanel() {
                         <option value="viewer">Viewer</option>
                       </select>
                     ) : (
-                      <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${roleBadgeClass(m.role)}`}>
+                      <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${projectRoleBadgeClass(m.role)}`}>
                         {projectRoleLabel(m.role)}
                       </span>
                     )}

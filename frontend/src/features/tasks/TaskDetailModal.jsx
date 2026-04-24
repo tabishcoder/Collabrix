@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 import { editTask, removeTask } from "./tasksSlice";
+import { projectRoleBadgeClass, projectRoleLabel } from "../../utils/roles";
 
 const PRIORITIES = [
   { key: "none", label: "None" },
@@ -66,6 +67,19 @@ export default function TaskDetailModal({
   const memberOptions = projectMembers
     .map((m) => m?.user)
     .filter(Boolean);
+
+  const projectMemberRoleByUserId = useMemo(() => {
+    const map = new Map();
+    (projectMembers || []).forEach((entry) => {
+      const id = entry?.user?._id?.toString();
+      if (id) map.set(id, entry.role);
+    });
+    return map;
+  }, [projectMembers]);
+
+  const selectedAssigneeRole = assigneeId
+    ? projectMemberRoleByUserId.get(String(assigneeId))
+    : null;
 
   const handleSave = async (e) => {
     e?.preventDefault?.();
@@ -222,6 +236,21 @@ export default function TaskDetailModal({
                   </option>
                 ))}
               </select>
+              {assigneeId && selectedAssigneeRole && (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <span className="text-[11px] text-white/40">Role in project</span>
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded-full border text-[11px] font-medium ${projectRoleBadgeClass(selectedAssigneeRole)}`}
+                  >
+                    {projectRoleLabel(selectedAssigneeRole)}
+                  </span>
+                </div>
+              )}
+              {assigneeId && !selectedAssigneeRole && (
+                <p className="text-[11px] text-white/30 mt-2">
+                  Role badge unavailable (assignee may be a space admin not listed on this project).
+                </p>
+              )}
             </div>
 
             <div>
