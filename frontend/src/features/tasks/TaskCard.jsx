@@ -79,20 +79,19 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
           )}
         </div>
 
-        {/* Drag handle */}
-        <button
-          type="button"
-          disabled={!canDrag}
-          onClick={(e) => e.stopPropagation()}
-          className={`shrink-0 px-2 py-1 rounded-md border border-white/10 bg-white/5 text-white/40 hover:text-white/70 ${
-            canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-not-allowed opacity-50"
-          }`}
-          title={canDrag ? "Drag task" : "Read-only"}
-          {...attributes}
-          {...listeners}
-        >
-          ⋮⋮
-        </button>
+        {/* Drag handle (writers only) */}
+        {canDrag && (
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="shrink-0 px-2 py-1 rounded-md border border-white/10 bg-white/5 text-white/40 hover:text-white/70 cursor-grab active:cursor-grabbing"
+            title="Drag task"
+            {...attributes}
+            {...listeners}
+          >
+            ⋮⋮
+          </button>
+        )}
       </div>
 
       <div className="flex items-center justify-between mt-3">

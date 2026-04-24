@@ -42,6 +42,7 @@ export default function TasksBoard() {
   const myProjectRole = activeProject?.myRole ?? null;
   const canManage     = canManageProject(myProjectRole);
   const canWrite      = canWriteTasks(myProjectRole);
+  const isViewer      = myProjectRole === "viewer";
 
   const activeTask = activeTaskId ? tasks.find((t) => t._id === activeTaskId) : null;
   const projectMembers = activeProject?.members ?? [];
@@ -132,9 +133,16 @@ export default function TasksBoard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-white">
-            {activeProject?.name || "Project Board"}
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-white">
+              {activeProject?.name || "Project Board"}
+            </h2>
+            {isViewer && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/50">
+                Read Only
+              </span>
+            )}
+          </div>
           <p className="text-white/40 text-xs mt-0.5">{tasks.length} tasks total</p>
         </div>
 
