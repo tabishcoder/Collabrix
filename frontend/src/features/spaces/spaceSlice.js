@@ -1,38 +1,37 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as spaceApi from "./spaceApi";
 
-// Fetch all spaces for the user
 export const fetchSpaces = createAsyncThunk(
   "spaces/fetchSpaces",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await spaceApi.getSpaces();
-      return response.data; // array of spaces
+      const res = await spaceApi.getSpaces();
+      return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
-// Create a new space
 export const createSpace = createAsyncThunk(
   "spaces/createSpace",
   async (data, { rejectWithValue }) => {
     try {
-      const response = await spaceApi.createSpace(data);
-      return response.data;
+      const res = await spaceApi.createSpace(data);
+      return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
-  },
+  }
 );
 
 const initialState = {
-  spaces: [],
-  activeSpace: null,
-  loading: false,
-  initialized: false,
-  error: null,
+  spaces:          [],
+  activeSpace:     null,
+  activeSpaceRole: null, // 'owner' | 'admin' | 'member'
+  loading:         false,
+  initialized:     false,
+  error:           null,
 };
 
 const spaceSlice = createSlice({
@@ -40,42 +39,52 @@ const spaceSlice = createSlice({
   initialState,
   reducers: {
     setActiveSpace: (state, action) => {
-      state.activeSpace = action.payload;
+      state.activeSpace     = action.payload;
+      // myRole is included in the space object returned by the API
+      state.activeSpaceRole = action.payload?.myRole ?? null;
     },
     clearSpaces: (state) => {
-      state.spaces = [];
-      state.activeSpace = null;
-      state.initialized = false;
+      state.spaces          = [];
+      state.activeSpace     = null;
+      state.activeSpaceRole = null;
+      state.initialized     = false;
     },
   },
   extraReducers: (builder) => {
     builder
-      // fetchSpaces
       .addCase(fetchSpaces.pending, (state) => {
         state.loading = true;
-        state.error = null;
+        state.error   = null;
       })
       .addCase(fetchSpaces.fulfilled, (state, action) => {
-        state.spaces = action.payload;
-        state.loading = false;
-        state.initialized = true; // mark initialized after fetch completes
+        state.spaces      = action.payload;
+        state.loading     = false;
+        state.initialized = true;
+        // Restore activeSpace role if it was already selected
+        if (state.activeSpace) {
+          const updated = action.payload.find((s) => s._id === state.activeSpace._id);
+          if (updated) {
+            state.activeSpace     = updated;
+            state.activeSpaceRole = updated.myRole ?? state.activeSpaceRole;
+          }
+        }
       })
       .addCase(fetchSpaces.rejected, (state, action) => {
-        state.error = action.payload;
-        state.loading = false;
-        state.initialized = true; // still mark as initialized
+        state.error       = action.payload;
+        state.loading     = false;
+        state.initialized = true;
       })
-      // createSpace
       .addCase(createSpace.pending, (state) => {
         state.loading = true;
       })
       .addCase(createSpace.fulfilled, (state, action) => {
         state.spaces.push(action.payload);
-        state.activeSpace = action.payload;
-        state.loading = false;
+        state.activeSpace     = action.payload;
+        state.activeSpaceRole = action.payload.myRole ?? 'owner';
+        state.loading         = false;
       })
       .addCase(createSpace.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error   = action.payload;
         state.loading = false;
       });
   },

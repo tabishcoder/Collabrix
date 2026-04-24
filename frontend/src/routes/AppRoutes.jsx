@@ -1,25 +1,25 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-import Login from "../features/auth/pages/Login";
-import Register from "../features/auth/pages/Register";
-import VerifyOtp from "../features/auth/pages/VerifyOtp";
-import Dashboard from "../features/dashboard/Dashboard";
+import Login           from "../features/auth/pages/Login";
+import Register        from "../features/auth/pages/Register";
+import VerifyOtp       from "../features/auth/pages/VerifyOtp";
+import ForgotPassword  from "../features/auth/pages/ForgotPassword.jsx";
+import ResetPassword   from "../features/auth/pages/ResetPassword.jsx";
 
-import ProtectedRoute from "./ProtectedRoute";
-import PublicRoute from "./PublicRoutes";
-import ForgotPasswordRequest from "../features/auth/pages/ForgotPassword.jsx";
-import ResetPassword from "../features/auth/pages/ResetPassword.jsx";
-import PublicLayout from "../layouts/PublicLayout.jsx";
-import AppLayout from "../layouts/AppLayout.jsx";
-import KanbanBoard from "../components/kanban/KanbanBoard.jsx";
-import ProjectsPage from "../features/projects/ProjectsPage.jsx";
-import TasksBoard from "../features/tasks/TasksBoard.jsx";
+import Dashboard       from "../features/dashboard/Dashboard";
+import ProjectsPage    from "../features/projects/ProjectsPage.jsx";
+import TasksBoard      from "../features/tasks/TasksBoard.jsx";
+import JoinWorkspace   from "../features/invites/JoinWorkspace.jsx";
+
+import ProtectedRoute  from "./ProtectedRoute";
+import PublicRoute     from "./PublicRoutes";
+import PublicLayout    from "../layouts/PublicLayout.jsx";
+import AppLayout       from "../layouts/AppLayout.jsx";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
 
-  // Show loading screen while auth status is being checked
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -33,46 +33,40 @@ export default function AppRoutes() {
       {/* Root redirect */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      {/* Public routes (login/register/verify-otp) */}
+      {/* Workspace invite (public – works logged-in or out) */}
+      <Route path="/join-workspace" element={<JoinWorkspace />} />
+
+      {/* Public auth routes */}
       <Route element={<PublicLayout />}>
         <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPasswordRequest />} />
+          <Route path="/login"            element={<Login />} />
+          <Route path="/register"         element={<Register />} />
+          <Route path="/forgot-password"  element={<ForgotPassword />} />
           <Route path="/verify-otp/:userId" element={<VerifyOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password"   element={<ResetPassword />} />
         </Route>
       </Route>
 
-      {/* Protected routes (dashboard) */}
+      {/* Protected app routes */}
       <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+
           {/* Projects */}
           <Route path="/projects" element={<ProjectsPage />}>
-            {/* When no project selected */}
-            <Route
-              index
-              element={
-                <div className="p-6 text-gray-500">Select a project</div>
-              }
-            />
-
-            {/* When project is selected */}
-            <Route path=":projectId" element={<TasksBoard />} />
-
-            {/* Optional deeper nested routes (future ready) */}
-            <Route path=":projectId/board" element={<TasksBoard />} />
+            <Route index element={<div className="p-6 text-white/40">Select a project</div>} />
+            <Route path=":projectId"        element={<TasksBoard />} />
+            <Route path=":projectId/board"  element={<TasksBoard />} />
           </Route>
 
-          <Route path="/chats" element={<Dashboard />} />
+          {/* Modules – real implementations to come */}
+          <Route path="/chats"    element={<Dashboard />} />
           <Route path="/meetings" element={<Dashboard />} />
-          <Route path="/meetings" element={<Dashboard />} />
-          <Route path="/aiBot" element={<Dashboard />} />
+          <Route path="/aibot"    element={<Dashboard />} />
         </Route>
       </Route>
 
-      {/* Catch-all: redirect unknown routes */}
+      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -3,19 +3,27 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    // host: "smtp.gmail.com",
+    // port: 465,
+    // secure: true,
+    service: 'gmail',
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS, // APP PASSWORD
     },
 });
 
-transporter.verify((err, success) => {
-    if (err) console.error("SMTP verify error:", err);
-    else console.log("SMTP server is ready");
-});
+// console.log({
+//     SMTP_USER: process.env.SMTP_USER,
+//     SMTP_PASS_LENGTH: process.env.SMTP_PASS?.length
+// });
+// // Avoid noisy startup failures. Validate SMTP only in production.
+// if (process.env.NODE_ENV === 'production') {
+//     transporter.verify((err) => {
+//         if (err) console.error("SMTP verify error:", err);
+//         else console.log("SMTP server is ready");
+//     });
+// }
 
 module.exports.generateOTP = () => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -118,6 +126,35 @@ module.exports.sendEmail = async (to, otp) => {
 module.exports.sendProjectInvitationEmail = async (to, inviterName, projectName, inviteLink) => {
     const html = generateInvitationEmail(inviterName, projectName, inviteLink);
     const subject = `You've been invited to join ${projectName} on Collabrix`;
+    await transporter.sendMail({
+        from: `Collabrix <${process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html
+    });
+};
+
+// Workspace invitation email
+module.exports.sendWorkspaceInvitationEmail = async (to, inviterName, workspaceName, role, inviteLink) => {
+    const html = generateEmailTemplate('Workspace Invitation', `
+        Hello,<br><br>
+        <strong>${inviterName}</strong> has invited you to join the workspace
+        <strong>${workspaceName}</strong> on Collabrix as a <strong>${role}</strong>.
+        <br><br>
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="${inviteLink}"
+               style="background-color:#1a73e8;color:#ffffff;padding:12px 24px;
+                      text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+                Join Workspace
+            </a>
+        </div>
+        Or copy and paste this link into your browser:<br>
+        <a href="${inviteLink}" style="color:#1a73e8;">${inviteLink}</a>
+        <br><br>
+        This invitation will expire in <strong>3 days</strong>.
+        If you did not expect this invitation, you can safely ignore this email.
+    `);
+    const subject = `You've been invited to join ${workspaceName} on Collabrix`;
     await transporter.sendMail({
         from: `Collabrix <${process.env.SMTP_USER}>`,
         to,

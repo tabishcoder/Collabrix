@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { setActiveProject } from "../features/projects/projectSlice";
 import {
   FaBars,
   FaChevronDown,
@@ -9,31 +11,42 @@ import {
   FaPlus,
   FaClock,
   FaCheckCircle,
+  FaUserPlus,
 } from "react-icons/fa";
 
 import LogoutButton from "./LogoutButton";
+import InviteModal  from "../features/invites/InviteModal";
+import { canManageSpace } from "../utils/roles";
 
 export default function TopNavbar({ onToggleSidebar }) {
-  const { user } = useSelector((state) => state.auth);
-  const { activeSpace } = useSelector((s) => s.spaces);
-  const { activeProject, allProjects } = useSelector((s) => s.projects);
+  const dispatch  = useDispatch();
+  const navigate  = useNavigate();
+  const { user }                      = useSelector((state) => state.auth);
+  const { activeSpace }               = useSelector((s) => s.spaces);
+  const { activeProject, projects }   = useSelector((s) => s.projects);
 
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const { activeSpaceRole }             = useSelector((s) => s.spaces);
+
+  const [openDropdown,  setOpenDropdown]  = useState(null);
   const [projectSearch, setProjectSearch] = useState("");
+  const [showInvite,    setShowInvite]    = useState(false);
+
+  const isSpaceAdmin = canManageSpace(activeSpaceRole);
 
   const filteredProjects = useMemo(() => {
     return (
-      allProjects?.filter((p) =>
+      projects?.filter((p) =>
         p.name.toLowerCase().includes(projectSearch.toLowerCase())
       ) || []
     );
-  }, [allProjects, projectSearch]);
+  }, [projects, projectSearch]);
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
   return (
+    <>
     <header className="h-16 bg-[#0a0a0b]/95 backdrop-blur-lg border-b border-white/8 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
 
       {/* LEFT SECTION */}
@@ -77,7 +90,7 @@ export default function TopNavbar({ onToggleSidebar }) {
             </button>
 
             {openDropdown === "workspace" && (
-              <div className="absolute left-0 mt-3 w-56 bg-[#0f0f11] border border-white/12 rounded-lg shadow-lg p-2 backdrop-blur-sm">
+              <div className="absolute left-0 mt-3 w-60 bg-[#0f0f11] border border-white/12 rounded-lg shadow-lg p-2 backdrop-blur-sm">
                 <p className="px-3 py-2 text-xs text-indigo-400 uppercase font-bold tracking-wider">
                   Workspaces
                 </p>
@@ -85,6 +98,20 @@ export default function TopNavbar({ onToggleSidebar }) {
                 <button className="w-full px-3 py-2.5 text-left rounded-md hover:bg-indigo-600/20 text-white font-medium transition-colors duration-150">
                   {activeSpace?.name}
                 </button>
+
+                {/* Invite Members — admin/owner only */}
+                {isSpaceAdmin && (
+                  <>
+                    <div className="h-[1px] bg-white/8 my-1.5" />
+                    <button
+                      onClick={() => { setOpenDropdown(null); setShowInvite(true); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-indigo-300 hover:text-indigo-200 hover:bg-indigo-600/15 transition-colors duration-150"
+                    >
+                      <FaUserPlus className="text-xs" />
+                      Invite Members
+                    </button>
+                  </>
+                )}
 
                 <div className="h-[1px] bg-white/8 my-1.5" />
 
@@ -143,11 +170,16 @@ export default function TopNavbar({ onToggleSidebar }) {
                 <div className="max-h-60 overflow-y-auto p-1.5">
                   {filteredProjects.map((p) => (
                     <button
-                      key={p.id}
+                      key={p._id}
+                      onClick={() => {
+                        dispatch(setActiveProject(p));
+                        navigate(`/projects/${p._id}`);
+                        setOpenDropdown(null);
+                      }}
                       className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-emerald-600/25 transition-colors duration-150"
                     >
                       <span className="font-medium">{p.name}</span>
-                      {p.id === activeProject?.id && (
+                      {p._id === activeProject?._id && (
                         <FaCheckCircle className="text-emerald-400 text-xs" />
                       )}
                     </button>
@@ -206,5 +238,9 @@ export default function TopNavbar({ onToggleSidebar }) {
         <LogoutButton variant="dropdown" />
       </div>
     </header>
+
+    {/* Invite modal — rendered outside header to avoid z-index stacking issues */}
+    {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+  </>
   );
 }

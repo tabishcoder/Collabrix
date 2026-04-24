@@ -1,70 +1,97 @@
-// src/features/tasks/AddTaskModal.jsx
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { addTask } from "./tasksSlice";
+import toast from "react-hot-toast";
 
-export default function AddTaskModal({ projectId, onClose }) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+const DEFAULT_COLUMNS = [
+  { key: "todo",        name: "To Do" },
+  { key: "in_progress", name: "In Progress" },
+  { key: "done",        name: "Done" },
+];
+
+export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onClose }) {
   const dispatch = useDispatch();
 
-  const handleSubmit = (e) => {
+  const [title,       setTitle]       = useState("");
+  const [description, setDescription] = useState("");
+  const [status,      setStatus]      = useState(columns[0]?.key ?? "todo");
+  const [submitting,  setSubmitting]  = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!title.trim()) return;
 
-    if (!title.trim()) return; // simple validation
-
-    // backend doc expects projectId key
-    dispatch(
-      addTask({
-        title,
-        description,
-        projectId, // use projectId (not 'project') to match backend doc
-        status: "todo",
-      }),
-    );
-
-    // reset inputs (optional)
-    setTitle("");
-    setDescription("");
-
-    onClose();
+    setSubmitting(true);
+    try {
+      await dispatch(addTask({ title: title.trim(), description, projectId, status })).unwrap();
+      toast.success("Task created");
+      onClose();
+    } catch (err) {
+      toast.error(err || "Failed to create task");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
-      <div className="bg-[var(--color-card)] p-6 rounded-xl w-96 border border-white/10">
-        <h3 className="mb-4 font-semibold text-lg">Create New Task</h3>
+    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4">
+      <div className="bg-[var(--color-card)] border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-lg text-white">New Task</h3>
+          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">×</button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            className="w-full p-2 rounded bg-[var(--color-bg)] border border-white/10 focus:outline-none focus:border-[var(--color-primary)]"
-            placeholder="Task title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+          <div>
+            <label className="text-xs text-white/50 mb-1 block">Title *</label>
+            <input
+              autoFocus
+              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition"
+              placeholder="Task title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+          </div>
 
-          <textarea
-            className="w-full p-2 rounded bg-[var(--color-bg)] border border-white/10 focus:outline-none focus:border-[var(--color-primary)]"
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <div>
+            <label className="text-xs text-white/50 mb-1 block">Description</label>
+            <textarea
+              rows={3}
+              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition resize-none"
+              placeholder="Optional description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div>
+            <label className="text-xs text-white/50 mb-1 block">Initial column</label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer"
+            >
+              {columns.map((col) => (
+                <option key={col.key} value={col.key}>{col.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="text-[var(--color-text-secondary)] hover:text-white"
+              className="px-4 py-2 rounded-lg bg-white/5 text-white/60 hover:text-white text-sm transition"
             >
               Cancel
             </button>
-
             <button
               type="submit"
-              className="px-4 py-2 rounded bg-[var(--color-primary)] text-white hover:opacity-90"
+              disabled={submitting || !title.trim()}
+              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-medium transition"
             >
-              Create
+              {submitting ? "Creating…" : "Create Task"}
             </button>
           </div>
         </form>

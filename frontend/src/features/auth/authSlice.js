@@ -46,10 +46,9 @@ export const getMe = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await getMeApi();
-      console.log(res);
       return res.data;
     } catch (err) {
-      err.response?.data?.message || "Session expired"
+      return rejectWithValue(err.response?.data?.message || "Session expired");
     }
   },
 );

@@ -50,26 +50,31 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
       {/* NAVIGATION */}
       <nav className="flex-1 px-3 py-4 space-y-2">
-        {navItems.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `
+                flex items-center gap-3 px-3.5 py-2.5 rounded-lg
+                transition-all duration-200
+                ${
+                  isActive
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
+                    : "text-white/60 hover:text-white hover:bg-white/10"
+                }
               `
-              flex items-center gap-3 px-3.5 py-2.5 rounded-lg
-              transition-all duration-200
-              ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
               }
-            `
-            }
-          >
-            <Icon className="text-base min-w-[20px]" />
-            {!collapsed && <span className="text-sm font-medium">{label}</span>}
-          </NavLink>
-        ))}
+            >
+              <Icon className="text-base min-w-[20px]" />
+              {!collapsed && (
+                <span className="text-sm font-medium">{item.label}</span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* FOOTER */}

@@ -1,61 +1,36 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const { auth } = require('../middleware/auth');
+const { requireProjectRole } = require('../middleware/authorize');
 const {
   getProjectsBySpace,
   getProjectById,
   createProject,
   updateProject,
   deleteProject,
+  updateBoardColumns,
   addProjectMember,
-  removeProjectMember,
-  inviteUserToProject,
-  verifyProjectInvitation
+  updateProjectMemberRole,
+  removeProjectMember
 } = require('../controller/projects.controller');
 
-// @desc Get all projects in a space
-// @route GET /api/projects/space/:spaceId
-// @access Private
+const MANAGE = ['owner', 'admin', 'manager'];
+const WRITE  = ['owner', 'admin', 'manager', 'contributor'];
+const READ   = ['owner', 'admin', 'manager', 'contributor', 'viewer'];
+
+// Projects CRUD
 router.get('/space/:spaceId', auth, getProjectsBySpace);
+router.get('/:id',            auth, getProjectById);
+router.post('/',              auth, createProject);
+router.put('/:id',            auth, requireProjectRole(MANAGE), updateProject);
+router.delete('/:id',         auth, requireProjectRole(MANAGE), deleteProject);
 
-// @desc Get a specific project by ID
-// @route GET /api/projects/:id
-// @access Private
-router.get('/:id', auth, getProjectById);
+// Board columns (managers+)
+router.put('/:id/board-columns', auth, requireProjectRole(MANAGE), updateBoardColumns);
 
-// @desc Create a new project
-// @route POST /api/projects
-// @access Private
-router.post('/', auth, createProject);
-
-// @desc Update project details
-// @route PUT /api/projects/:id
-// @access Private
-router.put('/:id', auth, updateProject);
-
-// @desc Delete a project
-// @route DELETE /api/projects/:id
-// @access Private
-router.delete('/:id', auth, deleteProject);
-
-// @desc Add member to project
-// @route POST /api/projects/:id/members
-// @access Private
-router.post('/:id/members', auth, addProjectMember);
-
-// @desc Remove member from project
-// @route DELETE /api/projects/:id/members/:userId
-// @access Private
-router.delete('/:id/members/:userId', auth, removeProjectMember);
-
-// @desc Invite user to project
-// @route POST /api/projects/:id/invite
-// @access Private
-router.post('/:id/invite', auth, inviteUserToProject);
-
-// @desc Verify project invitation
-// @route POST /api/projects/:id/invite/verify
-// @access Private
-router.post('/:id/invite/verify', auth, verifyProjectInvitation);
+// Project members
+router.post('/:id/members',                 auth, requireProjectRole(MANAGE), addProjectMember);
+router.put('/:id/members/:userId/role',     auth, requireProjectRole(MANAGE), updateProjectMemberRole);
+router.delete('/:id/members/:userId',       auth, requireProjectRole(MANAGE), removeProjectMember);
 
 module.exports = router;

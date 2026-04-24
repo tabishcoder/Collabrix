@@ -1,4 +1,4 @@
-export default function AuthInput({ label, error, ...props }) {
+export default function AuthInput({ error, ...props }) {
   return (
     <div className="w-full">
       <input

@@ -4,12 +4,12 @@ import { fetchSpaces, createSpace, setActiveSpace } from "./spaceSlice";
 
 export default function WorkspaceGate() {
   const dispatch = useDispatch();
-  const { spaces, loading } = useSelector((s) => s.spaces);
+  const { spaces, loading, error } = useSelector((s) => s.spaces);
   const [spaceName, setSpaceName] = useState("");
 
   useEffect(() => {
     if (!spaces.length) dispatch(fetchSpaces());
-  }, [dispatch]);
+  }, [dispatch, spaces.length]);
 
   const handleSelect = (space) => {
     dispatch(setActiveSpace(space));
@@ -28,7 +28,15 @@ export default function WorkspaceGate() {
           Choose a Workspace
         </h1>
 
-        {loading && <p>Loading workspaces...</p>}
+        {loading && (
+          <p className="text-white/50 flex items-center gap-2">
+            <span className="w-3 h-3 border-2 border-white/20 border-t-indigo-400 rounded-full animate-spin inline-block" />
+            Loading workspaces...
+          </p>
+        )}
+        {error && !loading && (
+          <p className="text-red-400 text-sm">Failed to load workspaces: {error}</p>
+        )}
 
         {spaces.length > 0 && (
           <div className="space-y-3">

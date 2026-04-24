@@ -59,6 +59,14 @@ module.exports.getAllChats = async (req, res) => {
 
 module.exports.getChatMessages = async (req, res) => {
   try {
+    const chat = await Chat.findById(req.params.chatId).select('participants');
+    if (!chat) return res.status(404).json({ error: 'Chat not found' });
+
+    const isParticipant = chat.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isParticipant) return res.status(403).json({ error: 'Forbidden' });
+
     const msgs = await Message.find({ chat: req.params.chatId })
       .sort({ createdAt: 1 })
       .populate('sender', 'name');

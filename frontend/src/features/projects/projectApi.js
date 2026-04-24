@@ -20,9 +20,17 @@ export const deleteProjectApi = (projectId) =>
   api.delete(`/projects/${projectId}`);
 
 // 6. Add project member
-export const addProjectMemberApi = (projectId, userId) =>
-  api.post(`/projects/${projectId}/members`, { userId });
+export const addProjectMemberApi = (projectId, userId, role = 'contributor') =>
+  api.post(`/projects/${projectId}/members`, { userId, role });
 
-// 7. Remove project member
+// 7. Update project member role
+export const updateProjectMemberRoleApi = (projectId, userId, role) =>
+  api.put(`/projects/${projectId}/members/${userId}/role`, { role });
+
+// 8. Remove project member
 export const removeProjectMemberApi = (projectId, userId) =>
   api.delete(`/projects/${projectId}/members/${userId}`);
+
+// 9. Update board columns
+export const updateBoardColumnsApi = (projectId, columns) =>
+  api.put(`/projects/${projectId}/board-columns`, { columns });

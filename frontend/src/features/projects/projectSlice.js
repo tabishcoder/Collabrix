@@ -10,7 +10,7 @@ import {
 // Fetch projects by space
 export const fetchProjectsBySpace = createAsyncThunk(
   "projects/fetchBySpace",
-  async (spaceId, thunkAPI) => {
+  async (spaceId) => {
     const res = await getProjectsBySpaceApi(spaceId);
     return res.data;
   },
@@ -19,7 +19,7 @@ export const fetchProjectsBySpace = createAsyncThunk(
 // Fetch single project
 export const fetchProjectById = createAsyncThunk(
   "projects/fetchById",
-  async (projectId, thunkAPI) => {
+  async (projectId) => {
     const res = await getProjectByIdApi(projectId);
     return res.data;
   },
@@ -28,7 +28,7 @@ export const fetchProjectById = createAsyncThunk(
 // Create project
 export const createProject = createAsyncThunk(
   "projects/create",
-  async (data, thunkAPI) => {
+  async (data) => {
     const res = await createProjectApi(data);
     return res.data;
   },
@@ -37,7 +37,7 @@ export const createProject = createAsyncThunk(
 // Update project
 export const updateProject = createAsyncThunk(
   "projects/update",
-  async ({ id, data }, thunkAPI) => {
+  async ({ id, data }) => {
     const res = await updateProjectApi(id, data);
     return res.data;
   },
@@ -46,7 +46,7 @@ export const updateProject = createAsyncThunk(
 // Delete project
 export const deleteProject = createAsyncThunk(
   "projects/delete",
-  async (projectId, thunkAPI) => {
+  async (projectId) => {
     await deleteProjectApi(projectId);
     return projectId;
   },
@@ -62,35 +62,52 @@ const projectSlice = createSlice({
     error: null,
   },
   reducers: {
-  setActiveProject(state, action) {
-    state.activeProject = action.payload;
+    setActiveProject(state, action) {
+      state.activeProject = action.payload;
+    },
   },
-},
 
   extraReducers: (builder) => {
+    const setPending  = (state)          => { state.loading = true;  state.error = null; };
+    const setRejected = (state, action)  => { state.loading = false; state.error = action.payload || action.error?.message || "Error"; };
+
     builder
+      // fetchProjectsBySpace
+      .addCase(fetchProjectsBySpace.pending,   setPending)
       .addCase(fetchProjectsBySpace.fulfilled, (state, action) => {
+        state.loading  = false;
         state.projects = action.payload;
       })
+      .addCase(fetchProjectsBySpace.rejected,  setRejected)
+
+      // fetchProjectById
+      .addCase(fetchProjectById.pending,   setPending)
       .addCase(fetchProjectById.fulfilled, (state, action) => {
+        state.loading       = false;
         state.activeProject = action.payload;
-        console.log(action.payload);
-        // state.activeProjectMembers = action.payload.
       })
+      .addCase(fetchProjectById.rejected,  setRejected)
+
+      // createProject
+      .addCase(createProject.pending,   setPending)
       .addCase(createProject.fulfilled, (state, action) => {
+        state.loading = false;
         state.projects.unshift(action.payload);
       })
+      .addCase(createProject.rejected,  setRejected)
+
+      // updateProject
       .addCase(updateProject.fulfilled, (state, action) => {
         state.activeProject = action.payload;
         state.projects = state.projects.map((p) =>
           p._id === action.payload._id ? action.payload : p,
         );
       })
+
+      // deleteProject
       .addCase(deleteProject.fulfilled, (state, action) => {
         state.projects = state.projects.filter((p) => p._id !== action.payload);
-        if (state.activeProject?._id === action.payload) {
-          state.activeProject = null;
-        }
+        if (state.activeProject?._id === action.payload) state.activeProject = null;
       });
   },
 });

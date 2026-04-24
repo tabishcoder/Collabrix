@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from "../auth.validation";
 import { useDispatch } from "react-redux";
 import { register } from "../authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 
 import toast from "react-hot-toast";
 
@@ -14,6 +14,8 @@ import AuthLayout from "../components/AuthLayout";
 export default function RegisterPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect") || "";
 
   const {
     register: formRegister,
@@ -24,16 +26,15 @@ export default function RegisterPage() {
   });
 
   const onSubmit = async (data) => {
-  try {
-    const res = await dispatch(register(data)).unwrap();
-
-    toast.success("OTP sent to email");
-
-    navigate(`/verify-otp/${res.userId}?type=email_verification`);
-  } catch (err) {
-    toast.error(err || "Registration failed");
-  }
-};
+    try {
+      const res = await dispatch(register(data)).unwrap();
+      toast.success("OTP sent to email");
+      const redirectParam = redirect ? `&redirect=${encodeURIComponent(redirect)}` : "";
+      navigate(`/verify-otp/${res.userId}?type=email_verification${redirectParam}`);
+    } catch (err) {
+      toast.error(err || "Registration failed");
+    }
+  };
 
   return (
     <AuthLayout
