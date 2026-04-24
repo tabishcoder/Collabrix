@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import { FaInbox } from "react-icons/fa";
 import TaskCard from "./TaskCard";
 
 export default function Column({ column, tasks = [], canWrite, canManage, onOpenTask }) {
@@ -9,26 +10,32 @@ export default function Column({ column, tasks = [], canWrite, canManage, onOpen
   return (
     <div
       ref={setNodeRef}
-      className={`w-[min(18rem,calc(100vw-2rem))] sm:w-72 shrink-0 p-3.5 sm:p-4 rounded-[var(--radius-lg)] border transition duration-200
+      className={`w-[min(17rem,calc(100vw-2rem))] shrink-0 rounded-lg border p-3 shadow-sm transition-colors duration-150 sm:w-[17.5rem] sm:p-3
         ${isOver
-          ? "bg-indigo-600/12 border-indigo-500/45 shadow-[0_0_0_1px_rgba(99,102,241,0.35)]"
-          : "bg-[var(--color-card)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]"
+          ? "border-[color-mix(in_oklab,var(--color-primary)_40%,var(--color-border-strong))] bg-[color-mix(in_oklab,var(--color-primary)_6%,var(--color-card))]"
+          : "border-[var(--color-border)] bg-[var(--color-card)] hover:border-[var(--color-border-strong)]"
         }`}
     >
       {/* Column header */}
-      <div className="flex items-center justify-between mb-3.5">
-        <span className="text-sm font-semibold text-[var(--color-text-primary)]">{column.name}</span>
-        <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-[11px] tabular-nums text-[var(--color-text-muted)]">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span className="truncate text-[13px] font-semibold tracking-tight text-[var(--color-text-primary)]">{column.name}</span>
+        <span className="shrink-0 rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-[var(--color-text-muted)]">
           {tasks.length}
         </span>
       </div>
 
       {/* Task list */}
-      <div className="space-y-2.5 min-h-[72px]">
+      <div className="min-h-[56px] space-y-2">
         {tasks.length === 0 ? (
-          <p className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] py-6 text-center text-xs text-[var(--color-text-muted)]">
-            {canWrite ? "Drop tasks here" : "Empty"}
-          </p>
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-muted)]/50 px-2 py-6 text-center">
+            <FaInbox className="mb-1.5 h-5 w-5 text-[var(--color-text-muted)] opacity-60" aria-hidden />
+            <p className="text-xs font-medium text-[var(--color-text-secondary)]">
+              {canWrite ? "No tasks yet" : "Empty column"}
+            </p>
+            <p className="mt-1 max-w-[12rem] text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+              {canWrite ? "Drop a card here or create a task." : "Tasks will appear here."}
+            </p>
+          </div>
         ) : (
           tasks.map((task) => (
             <TaskCard

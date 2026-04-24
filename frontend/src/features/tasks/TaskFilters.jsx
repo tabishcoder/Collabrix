@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { FaFilter } from "react-icons/fa";
 
 export const PRIORITY_KEYS = ["none", "low", "medium", "high", "urgent"];
 
@@ -102,7 +103,24 @@ export function applyTaskFilters(tasks, filters, columns = []) {
   return out;
 }
 
-export default function TaskFilters({ filters, onChange, projectMembers = [] }) {
+function activeFilterCount(filters) {
+  let n = 0;
+  if ((filters.search || "").trim()) n += 1;
+  if (filters.assignee !== "all") n += 1;
+  if ((filters.priorities || []).length > 0) n += 1;
+  if (filters.duePreset !== "all") n += 1;
+  return n;
+}
+
+/**
+ * @param {{ filters: object; onChange: (f: object) => void; projectMembers?: object[]; projectId?: string }} props
+ */
+export default function TaskFilters({ filters, onChange, projectMembers = [], projectId }) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 16, width: 352 });
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+
   const members = useMemo(
     () => (projectMembers || []).map((m) => m?.user).filter(Boolean),
     [projectMembers],
@@ -117,96 +135,196 @@ export default function TaskFilters({ filters, onChange, projectMembers = [] }) 
     patch({ priorities: [...set] });
   };
 
-  const hasActiveFilters =
-    (filters.search || "").trim() !== "" ||
-    filters.assignee !== "all" ||
-    (filters.priorities || []).length > 0 ||
-    filters.duePreset !== "all";
+  const activeCount = useMemo(() => activeFilterCount(filters), [filters]);
+
+  const hasActiveFilters = activeCount > 0;
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (e) => {
+      const el = rootRef.current;
+      if (el && !el.contains(e.target)) close();
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("touchstart", onPointer, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("touchstart", onPointer);
+    };
+  }, [open, close]);
+
+  useEffect(() => {
+    close();
+  }, [projectId, close]);
+
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return undefined;
+    const update = () => {
+      const r = triggerRef.current.getBoundingClientRect();
+      const panelW = Math.min(window.innerWidth - 32, 22 * 16); // ~22rem
+      const right = Math.max(16, window.innerWidth - r.right);
+      const top = r.bottom + 8;
+      setMenuPos({ top, right, width: panelW });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_78%,transparent)] p-4 sm:p-5 space-y-4 shadow-sm">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[180px] flex-1">
-          <label className="text-[11px] text-[var(--color-text-muted)] mb-1 block">Search</label>
-          <input
-            type="search"
-            value={filters.search}
-            onChange={(e) => patch({ search: e.target.value })}
-            placeholder="Title, description, labels…"
-            className="w-full rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-indigo-500/55"
-          />
-        </div>
-
-        <div className="min-w-[160px]">
-          <label className="text-[11px] text-[var(--color-text-muted)] mb-1 block">Assignee</label>
-          <select
-            value={filters.assignee}
-            onChange={(e) => patch({ assignee: e.target.value })}
-            className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500/55"
-          >
-            <option value="all">All assignees</option>
-            <option value="unassigned">Unassigned</option>
-            {members.map((u) => (
-              <option key={u._id} value={u._id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="min-w-[140px]">
-          <label className="mb-1 block text-[11px] text-[var(--color-text-muted)]">Due date</label>
-          <select
-            value={filters.duePreset}
-            onChange={(e) => patch({ duePreset: e.target.value })}
-            className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-indigo-500/55"
-          >
-            <option value="all">All</option>
-            <option value="overdue">Overdue</option>
-            <option value="this_week">This week</option>
-            <option value="no_due">No due date</option>
-          </select>
-        </div>
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={() => onChange(defaultTaskFilters())}
-            className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-          >
-            Clear filters
-          </button>
+    <div ref={rootRef} className="relative flex shrink-0 justify-end">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls="task-filters-panel"
+        id="task-filters-trigger"
+        className={`relative inline-flex h-9 w-9 items-center justify-center overflow-visible rounded-md border text-[var(--color-text-secondary)] shadow-sm transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] ${
+          open
+            ? "border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]"
+            : "border-[var(--color-border-strong)] bg-[var(--color-card)]"
+        } ${hasActiveFilters ? "ring-1 ring-[color-mix(in_oklab,var(--color-primary)_22%,transparent)]" : ""}`}
+        title="Filter tasks"
+      >
+        <FaFilter className="text-xs" aria-hidden />
+        {activeCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[var(--color-primary)] px-1 text-[9px] font-bold text-white shadow-sm">
+            {activeCount > 9 ? "9+" : activeCount}
+          </span>
         )}
-      </div>
+      </button>
 
-      <div>
-        <label className="mb-2 block text-[11px] text-[var(--color-text-muted)]">
-          Priority <span className="text-[var(--color-text-muted)]/80">(tap to include; none selected = all)</span>
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PRIORITY_KEYS.map((key) => {
-            const active = (filters.priorities || []).includes(key);
-            const label =
-              key === "none"
-                ? "None"
-                : key.charAt(0).toUpperCase() + key.slice(1);
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => togglePriority(key)}
-                className={`px-2.5 py-1 rounded-full border text-xs font-medium transition ${
-                  active
-                    ? "border-indigo-500/50 bg-indigo-600/25 text-indigo-900 dark:text-indigo-100"
-                    : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-secondary)]"
-                }`}
+      {open && (
+        <div
+          id="task-filters-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="task-filters-title"
+          style={{
+            position: "fixed",
+            top: menuPos.top,
+            right: menuPos.right,
+            width: menuPos.width,
+            maxWidth: "min(22rem, calc(100vw - 2rem))",
+          }}
+          className="z-40 rounded-[var(--radius-lg)] border border-[var(--color-border-strong)] bg-[var(--color-card)] p-4 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.04] backdrop-blur-xl dark:ring-white/[0.06]"
+        >
+          <div className="mb-3 flex items-center justify-between gap-2 border-b border-[var(--color-border)] pb-3">
+            <h3 id="task-filters-title" className="text-sm font-semibold tracking-tight text-[var(--color-text-primary)]">
+              Filters
+            </h3>
+            <button
+              type="button"
+              onClick={close}
+              className="rounded-[var(--radius-sm)] px-2 py-1 text-xs font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+            >
+              Done
+            </button>
+          </div>
+
+          <div className="max-h-[min(70vh,28rem)] space-y-4 overflow-y-auto pr-0.5">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-[var(--color-text-muted)]">Search</label>
+              <input
+                type="search"
+                value={filters.search}
+                onChange={(e) => patch({ search: e.target.value })}
+                placeholder="Title, description, labels…"
+                className="app-control px-3 py-2 placeholder:text-[var(--color-text-muted)]"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-[var(--color-text-muted)]">Assignee</label>
+              <select
+                value={filters.assignee}
+                onChange={(e) => patch({ assignee: e.target.value })}
+                className="app-control cursor-pointer px-3 py-2"
               >
-                {label}
+                <option value="all">All assignees</option>
+                <option value="unassigned">Unassigned</option>
+                {members.map((u) => (
+                  <option key={u._id} value={u._id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-[var(--color-text-muted)]">Due date</label>
+              <select
+                value={filters.duePreset}
+                onChange={(e) => patch({ duePreset: e.target.value })}
+                className="app-control cursor-pointer px-3 py-2"
+              >
+                <option value="all">All</option>
+                <option value="overdue">Overdue</option>
+                <option value="this_week">This week</option>
+                <option value="no_due">No due date</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[11px] font-medium text-[var(--color-text-muted)]">
+                Priority{" "}
+                <span className="font-normal text-[var(--color-text-muted)]/85">(none selected = all)</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {PRIORITY_KEYS.map((key) => {
+                  const active = (filters.priorities || []).includes(key);
+                  const label =
+                    key === "none" ? "None" : key.charAt(0).toUpperCase() + key.slice(1);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => togglePriority(key)}
+                      className={`rounded-full border px-2.5 py-1 text-xs font-medium transition duration-200 ease-out ${
+                        active
+                          ? "border-indigo-500/50 bg-indigo-600/25 text-indigo-900 dark:text-indigo-100"
+                          : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-secondary)] active:scale-[0.98]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="mt-4 border-t border-[var(--color-border)] pt-3">
+              <button
+                type="button"
+                onClick={() => onChange(defaultTaskFilters())}
+                className="app-btn-modal-secondary w-full !py-2 text-xs"
+              >
+                Clear all filters
               </button>
-            );
-          })}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

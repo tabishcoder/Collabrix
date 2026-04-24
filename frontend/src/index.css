@@ -16,6 +16,8 @@
 
   --color-bg: #f1f5f9;
   --color-bg-elevated: #e2e8f0;
+  /* Left rail: slightly darker than canvas (ClickUp-style separation) */
+  --color-sidebar-bg: #e8edf4;
   --color-card: #ffffff;
   --color-card-hover: #f8fafc;
 
@@ -32,11 +34,16 @@
   --color-input-bg: #f8fafc;
   --color-modal-backdrop: rgba(15, 23, 42, 0.45);
 
-  --gradient-page-spot1: rgba(79, 70, 229, 0.09);
-  --gradient-page-spot2: rgba(34, 211, 238, 0.07);
+  --gradient-page-spot1: rgba(79, 70, 229, 0.045);
+  --gradient-page-spot2: rgba(34, 211, 238, 0.035);
 
-  --shadow-soft: 0 24px 60px rgba(15, 23, 42, 0.1);
-  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06);
+  /* Layered elevation: hairline + soft ambient (light) */
+  --shadow-soft: 0 1px 0 rgba(15, 23, 42, 0.06), 0 14px 44px -12px rgba(15, 23, 42, 0.12);
+  --shadow-nav: 0 1px 0 rgba(15, 23, 42, 0.06), 0 8px 24px -16px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.06);
+  /* Dialogs: hairline rim + deeper drop (all modals use .app-modal-panel) */
+  --shadow-modal:
+    0 0 0 1px rgba(15, 23, 42, 0.05), 0 1px 0 rgba(15, 23, 42, 0.04), 0 20px 50px -14px rgba(15, 23, 42, 0.18);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -56,6 +63,7 @@ html.dark {
 
   --color-bg: #020617;
   --color-bg-elevated: #050816;
+  --color-sidebar-bg: #0a1020;
   --color-card: #0f172a;
   --color-card-hover: #111c33;
 
@@ -72,11 +80,14 @@ html.dark {
   --color-input-bg: #020617;
   --color-modal-backdrop: rgba(0, 0, 0, 0.62);
 
-  --gradient-page-spot1: rgba(79, 70, 229, 0.12);
-  --gradient-page-spot2: rgba(34, 211, 238, 0.06);
+  --gradient-page-spot1: rgba(79, 70, 229, 0.07);
+  --gradient-page-spot2: rgba(34, 211, 238, 0.04);
 
-  --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.45);
-  --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.06), 0 28px 64px -16px rgba(0, 0, 0, 0.55);
+  --shadow-nav: 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 32px -18px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04), 0 4px 16px -4px rgba(0, 0, 0, 0.35);
+  --shadow-modal:
+    0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 0 rgba(255, 255, 255, 0.04), 0 24px 56px -12px rgba(0, 0, 0, 0.65);
 }
 
 /* Expose radius + brand to Tailwind theme utilities where useful */
@@ -104,6 +115,7 @@ html.dark {
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
       Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
     text-rendering: optimizeLegibility;
+    letter-spacing: -0.011em;
   }
 
   ::selection {
@@ -147,12 +159,234 @@ html.dark {
 /* Shared modal shell */
 .app-modal-backdrop {
   background: var(--color-modal-backdrop);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
 }
 
 .app-modal-panel {
   background: var(--color-card);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-modal);
+}
+
+/* Form controls: consistent focus ring without fighting global outline */
+@layer components {
+  .app-control {
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-strong);
+    background-color: var(--color-input-bg);
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.15s ease;
+  }
+
+  .app-control:focus {
+    outline: none;
+  }
+
+  .app-control:focus-visible {
+    border-color: color-mix(in oklab, var(--color-primary) 48%, var(--color-border-strong));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 22%, transparent);
+  }
+
+  .app-control:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .app-control--auth {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.9375rem;
+  }
+
+  .app-control--invalid {
+    border-color: color-mix(in oklab, var(--color-danger) 72%, var(--color-border-strong));
+  }
+
+  .app-control--invalid:focus-visible {
+    border-color: color-mix(in oklab, var(--color-danger) 65%, var(--color-border-strong));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 22%, transparent);
+  }
+
+  .app-btn-auth-primary {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-primary);
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #fff;
+    box-shadow: var(--shadow-card);
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.15s ease,
+      opacity 0.2s ease;
+  }
+
+  .app-btn-auth-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+  }
+
+  .app-btn-auth-primary:focus-visible {
+    outline: none;
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 3px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  }
+
+  .app-btn-auth-primary:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  .app-btn-auth-primary:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .app-btn-modal-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background-color: var(--color-primary);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #fff;
+    box-shadow: var(--shadow-card);
+    transition:
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .app-btn-modal-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+  }
+
+  .app-btn-modal-primary:focus-visible {
+    outline: none;
+    box-shadow:
+      var(--shadow-card),
+      0 0 0 3px color-mix(in oklab, var(--color-primary) 35%, transparent);
+  }
+
+  .app-btn-modal-primary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .app-btn-modal-primary:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .app-btn-modal-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface-muted);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .app-btn-modal-secondary:hover:not(:disabled) {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+
+  .app-btn-modal-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-text-muted) 18%, transparent);
+  }
+
+  .app-btn-modal-secondary:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .app-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.375rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--color-text-muted);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.15s ease;
+  }
+
+  .app-modal-close:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+
+  .app-modal-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 40%, transparent);
+  }
+
+  .app-modal-close:active {
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-btn-modal-primary,
+  .app-btn-modal-secondary,
+  .app-btn-auth-primary,
+  .app-modal-close {
+    transition: none !important;
+  }
+
+  .app-btn-modal-primary:active,
+  .app-btn-modal-secondary:active,
+  .app-btn-auth-primary:active,
+  .app-modal-close:active {
+    transform: none !important;
+  }
+}
+
+/* Skeleton pulse — uses semantic surfaces only */
+@keyframes app-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+.app-skeleton {
+  background: var(--color-surface-muted);
+  animation: app-skeleton-pulse 1.15s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-skeleton {
+    animation: none;
+    opacity: 0.65;
+  }
 }

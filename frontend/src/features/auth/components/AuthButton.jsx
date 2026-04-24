@@ -1,9 +1,9 @@
-export default function AuthButton({ loading, children, ...props }) {
+export default function AuthButton({ loading, children, className, ...props }) {
   return (
     <button
       {...props}
       disabled={loading}
-      className="w-full bg-[var(--color-primary)] text-white py-3 rounded-xl font-semibold disabled:opacity-50"
+      className={["app-btn-auth-primary", className].filter(Boolean).join(" ")}
     >
       {loading ? "Please wait..." : children}
     </button>

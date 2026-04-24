@@ -47,9 +47,11 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10 sm:py-12 app-modal-backdrop">
       <div className="app-modal-panel w-full max-w-md overflow-hidden">
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_88%,transparent)] px-6 py-4 backdrop-blur-sm">
           <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">Edit Board Columns</h3>
-          <button type="button" onClick={onClose} className="rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xl leading-none text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]">×</button>
+          <button type="button" onClick={onClose} className="app-modal-close" aria-label="Close">
+            ×
+          </button>
         </div>
 
         <div className="px-6 py-4 space-y-2 max-h-72 overflow-y-auto">
@@ -67,7 +69,7 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
               <input
                 value={col.name}
                 onChange={(e) => handleNameChange(idx, e.target.value)}
-                className="flex-1 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/55 focus:outline-none"
+                className="app-control min-w-0 flex-1 px-3 py-2"
               />
 
               <button
@@ -82,7 +84,7 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
 
           <button
             onClick={handleAdd}
-            className="w-full py-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:border-[var(--color-border)] text-sm transition mt-2"
+            className="mt-2 w-full rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-strong)] py-2 text-sm text-[var(--color-text-muted)] transition duration-200 ease-out hover:border-[var(--color-border)] hover:text-[var(--color-text-secondary)] active:scale-[0.99]"
           >
             + Add Column
           </button>
@@ -90,20 +92,11 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
           {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-          >
+        <div className="flex justify-end gap-3 border-t border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_92%,transparent)] px-6 py-4 backdrop-blur-sm">
+          <button type="button" onClick={onClose} className="app-btn-modal-secondary">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 rounded-[var(--radius-md)] bg-indigo-600 hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-medium shadow-lg shadow-indigo-600/20 transition"
-          >
+          <button type="button" onClick={handleSave} disabled={saving} className="app-btn-modal-primary">
             {saving ? "Saving…" : "Save"}
           </button>
         </div>

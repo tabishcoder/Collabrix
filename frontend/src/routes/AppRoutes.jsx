@@ -16,18 +16,13 @@ import ProtectedRoute  from "./ProtectedRoute";
 import PublicRoute     from "./PublicRoutes";
 import PublicLayout    from "../layouts/PublicLayout.jsx";
 import AppLayout       from "../layouts/AppLayout.jsx";
+import { AuthLoadingSkeleton } from "../components/ui/Skeleton";
 
 export default function AppRoutes() {
   const { loading } = useSelector((state) => state.auth);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[var(--color-bg)]">
-        <p className="text-lg text-[var(--color-text-secondary)]">
-          Checking authentication...
-        </p>
-      </div>
-    );
+    return <AuthLoadingSkeleton />;
   }
 
   return (
@@ -59,7 +54,11 @@ export default function AppRoutes() {
             <Route
               index
               element={
-                <div className="p-6 text-[var(--color-text-muted)]">Select a project</div>
+                <div className="p-6 text-[var(--color-text-secondary)]">
+                  Select a project from the{" "}
+                  <span className="font-medium text-[var(--color-text-primary)]">Project</span>{" "}
+                  menu in the header.
+                </div>
               }
             />
             <Route path=":projectId"        element={<TasksBoard />} />

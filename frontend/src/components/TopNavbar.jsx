@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setActiveProject } from "../features/projects/projectSlice";
+import { setActiveProject, fetchProjectsBySpace } from "../features/projects/projectSlice";
+import CreateProjectModal from "../features/projects/CreateProjectModal";
 import {
   FaBars,
   FaChevronDown,
@@ -9,40 +10,47 @@ import {
   FaSearch,
   FaFolder,
   FaPlus,
-  FaClock,
   FaCheckCircle,
   FaUserPlus,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import LogoutButton from "./LogoutButton";
-import InviteModal  from "../features/invites/InviteModal";
+import InviteModal from "../features/invites/InviteModal";
 import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
 import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../utils/roles";
 import ThemeToggle from "../theme/ThemeToggle";
 
+/** Shared trigger style — neutral “breadcrumb control” */
+const chromeTrigger =
+  "inline-flex max-w-[200px] items-center gap-2 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2.5 py-1.5 text-left shadow-sm transition-colors duration-150 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] sm:max-w-[240px] sm:px-3 sm:py-2";
+
 export default function TopNavbar({ onToggleSidebar }) {
-  const dispatch  = useDispatch();
-  const navigate  = useNavigate();
-  const { user }                      = useSelector((state) => state.auth);
-  const { activeSpace }               = useSelector((s) => s.spaces);
-  const { activeProject, projects }   = useSelector((s) => s.projects);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
+  const { activeSpace } = useSelector((s) => s.spaces);
+  const { activeProject, projects } = useSelector((s) => s.projects);
 
-  const { activeSpaceRole }             = useSelector((s) => s.spaces);
+  const { activeSpaceRole } = useSelector((s) => s.spaces);
 
-  const [openDropdown,  setOpenDropdown]  = useState(null);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const [projectSearch, setProjectSearch] = useState("");
-  const [showInvite,    setShowInvite]    = useState(false);
-  const [showMembers,   setShowMembers]   = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showCreateProject, setShowCreateProject] = useState(false);
 
   const isSpaceAdmin = canManageSpace(activeSpaceRole);
 
-  const filteredProjects = useMemo(() => {
-    return (
-      projects?.filter((p) =>
-        p.name.toLowerCase().includes(projectSearch.toLowerCase())
-      ) || []
-    );
-  }, [projects, projectSearch]);
+  useEffect(() => {
+    if (activeSpace?._id) dispatch(fetchProjectsBySpace(activeSpace._id));
+  }, [dispatch, activeSpace?._id]);
+
+  const filteredProjects = useMemo(
+    () =>
+      projects?.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase())) || [],
+    [projects, projectSearch],
+  );
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
@@ -50,236 +58,219 @@ export default function TopNavbar({ onToggleSidebar }) {
 
   return (
     <>
-    <header className="h-16 shrink-0 z-50 sticky top-0 flex items-center justify-between px-4 md:px-6 lg:px-8 border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_88%,transparent)] backdrop-blur-lg shadow-[var(--shadow-nav)]">
+      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-card)] px-3 shadow-[var(--shadow-nav)] md:px-5 lg:px-6">
 
-      {/* LEFT SECTION */}
-      <div className="flex items-center gap-6">
+        {/* LEFT — breadcrumb-style context */}
+        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
 
-        {/* Mobile Menu */}
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] md:hidden"
-        >
-          <FaBars size={18} />
-        </button>
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] md:hidden"
+          >
+            <FaBars size={18} />
+          </button>
 
-        {/* WORKSPACE + PROJECT */}
-        <div className="flex items-center gap-3">
-
-          {/* 🔵 WORKSPACE */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => toggleDropdown("workspace")}
-              className="flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-600/15 px-4 py-2.5 font-medium transition-all duration-200 hover:bg-indigo-600/25 dark:border-indigo-500/30"
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-[11px] font-bold text-white">
-                {activeSpace?.name?.[0] || "W"}
-              </div>
-
-              <div className="hidden flex-col leading-tight lg:flex">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
-                  Workspace
+          <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+            {/* Workspace */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("workspace")}
+                className={chromeTrigger}
+                aria-expanded={openDropdown === "workspace"}
+                aria-haspopup="true"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[var(--color-surface-muted)] text-[10px] font-semibold text-[var(--color-text-secondary)] ring-1 ring-[var(--color-border)]">
+                  {activeSpace?.name?.[0] || "W"}
                 </span>
-                <span className="text-sm font-bold text-indigo-950 dark:text-indigo-100">
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
                   {activeSpace?.name || "Workspace"}
                 </span>
-              </div>
-
-              {activeSpaceRole && (
-                <span
-                  className={`hidden sm:inline-flex px-2 py-0.5 rounded-full border text-[10px] font-semibold shrink-0 ${spaceRoleBadgeClass(activeSpaceRole)}`}
-                  title={`Your workspace role: ${spaceRoleLabel(activeSpaceRole)}`}
-                >
-                  {spaceRoleLabel(activeSpaceRole)}
-                </span>
-              )}
-
-              <FaChevronDown
-                className={`text-xs text-[var(--color-text-muted)] transition ${
-                  openDropdown === "workspace" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {openDropdown === "workspace" && (
-              <div className="absolute left-0 mt-3 w-60 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-2 shadow-lg backdrop-blur-sm">
-                <p className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                  Workspaces
-                </p>
-
-                <button
-                  type="button"
-                  className="w-full rounded-md px-3 py-2.5 text-left font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-indigo-600/15 dark:hover:bg-indigo-600/20"
-                >
-                  {activeSpace?.name}
-                </button>
-
-                {/* Invite Members — admin/owner only */}
-                {isSpaceAdmin && (
-                  <>
-                    <div className="my-1.5 h-px bg-[var(--color-border)]" />
-                    <button
-                      type="button"
-                      onClick={() => { setOpenDropdown(null); setShowMembers(true); }}
-                      className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-                    >
-                      Manage Members
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setOpenDropdown(null); setShowInvite(true); }}
-                      className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-indigo-700 transition-colors duration-150 hover:bg-indigo-600/15 hover:text-indigo-900 dark:text-indigo-300 dark:hover:text-indigo-200"
-                    >
-                      <FaUserPlus className="text-xs" />
-                      Invite Members
-                    </button>
-                  </>
+                {activeSpaceRole && (
+                  <span
+                    className={`hidden shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium sm:inline-flex ${spaceRoleBadgeClass(activeSpaceRole)}`}
+                    title={spaceRoleLabel(activeSpaceRole)}
+                  >
+                    {spaceRoleLabel(activeSpaceRole)}
+                  </span>
                 )}
+                <FaChevronDown
+                  className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                    openDropdown === "workspace" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-                <div className="my-1.5 h-px bg-[var(--color-border)]" />
+              {openDropdown === "workspace" && (
+                <div className="absolute left-0 z-50 mt-1.5 w-56 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
+                  <p className="px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Workspace</p>
 
-                <button
-                  type="button"
-                  className="w-full rounded-md px-3 py-2.5 text-left text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-                >
-                  + New Workspace
-                </button>
-              </div>
-            )}
-          </div>
+                  <button
+                    type="button"
+                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)]"
+                  >
+                    {activeSpace?.name}
+                  </button>
 
-          {/* DOT SEPARATOR */}
-          <div className="h-1 w-1 rounded-full bg-[var(--color-text-muted)]" />
+                  {isSpaceAdmin && (
+                    <>
+                      <div className="my-1 h-px bg-[var(--color-border)]" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setShowMembers(true);
+                        }}
+                        className="w-full rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                      >
+                        Manage members
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setShowInvite(true);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-primary)] transition-colors duration-150 hover:bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)]"
+                      >
+                        <FaUserPlus className="text-xs opacity-80" />
+                        Invite members
+                      </button>
+                    </>
+                  )}
 
-          {/* 🟢 PROJECT */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => toggleDropdown("project")}
-              className="flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/12 px-4 py-2.5 font-medium transition-all duration-200 hover:bg-emerald-500/20"
-            >
-              <FaFolder className="text-sm text-emerald-600 dark:text-emerald-400" />
+                  <div className="my-1 h-px bg-[var(--color-border)]" />
 
-              <div className="flex flex-col leading-tight">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                  Project
-                </span>
-                <span className="max-w-[120px] truncate text-sm font-bold text-[var(--color-text-primary)]">
-                  {activeProject?.name || "Select Project"}
-                </span>
-              </div>
-
-              <FaChevronDown
-                className={`text-xs text-[var(--color-text-muted)] transition ${
-                  openDropdown === "project" ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-
-            {openDropdown === "project" && (
-              <div className="absolute left-0 mt-3 w-72 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-lg backdrop-blur-sm">
-
-                {/* Search */}
-                <div className="border-b border-[var(--color-border)] p-3">
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)]" />
-                    <input
-                      autoFocus
-                      value={projectSearch}
-                      onChange={(e) => setProjectSearch(e.target.value)}
-                      placeholder="Search project..."
-                      className="w-full rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] py-2 pl-8 pr-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all duration-150"
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    + New workspace
+                  </button>
                 </div>
+              )}
+            </div>
 
-                {/* List */}
-                <div className="max-h-60 overflow-y-auto p-1.5">
-                  {filteredProjects.map((p) => (
+            <FaChevronRight className="hidden shrink-0 text-[9px] text-[var(--color-text-muted)] opacity-70 sm:block" aria-hidden />
+
+            {/* Project */}
+            <div className="relative min-w-0 shrink">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("project")}
+                className={`${chromeTrigger} max-w-[min(12rem,calc(100vw-8rem))]`}
+                aria-expanded={openDropdown === "project"}
+                aria-haspopup="true"
+              >
+                <FaFolder className="shrink-0 text-[13px] text-[var(--color-text-muted)]" aria-hidden />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
+                  {activeProject?.name || "Select project"}
+                </span>
+                <FaChevronDown
+                  className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                    openDropdown === "project" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {openDropdown === "project" && (
+                <div className="absolute left-0 z-50 mt-1.5 w-[min(calc(100vw-1.5rem),18rem)] overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05] sm:left-auto sm:right-0">
+
+                  <div className="border-b border-[var(--color-border)] p-2.5">
+                    <div className="relative">
+                      <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
+                      <input
+                        autoFocus
+                        value={projectSearch}
+                        onChange={(e) => setProjectSearch(e.target.value)}
+                        placeholder="Search projects…"
+                        className="app-control w-full py-1.5 pl-8 pr-2.5 text-[13px] placeholder:text-[var(--color-text-muted)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="max-h-56 overflow-y-auto p-1">
+                    {filteredProjects.map((p) => (
+                      <button
+                        type="button"
+                        key={p._id}
+                        onClick={() => {
+                          dispatch(setActiveProject(p));
+                          navigate(`/projects/${p._id}`);
+                          setOpenDropdown(null);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                      >
+                        <span className="min-w-0 truncate font-medium">{p.name}</span>
+                        {p._id === activeProject?._id && (
+                          <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {isSpaceAdmin && (
                     <button
                       type="button"
-                      key={p._id}
                       onClick={() => {
-                        dispatch(setActiveProject(p));
-                        navigate(`/projects/${p._id}`);
                         setOpenDropdown(null);
+                        setShowCreateProject(true);
                       }}
-                      className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-emerald-600/20 hover:text-[var(--color-text-primary)] dark:hover:bg-emerald-600/25"
+                      className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-border)] px-2.5 py-2.5 text-[12px] font-semibold text-[var(--color-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]"
                     >
-                      <span className="font-medium">{p.name}</span>
-                      {p._id === activeProject?._id && (
-                        <FaCheckCircle className="text-xs text-emerald-600 dark:text-emerald-400" />
-                      )}
+                      <FaPlus className="text-[10px]" />
+                      New project
                     </button>
-                  ))}
+                  )}
                 </div>
-
-                <button
-                  type="button"
-                  className="w-full border-t border-[var(--color-border)] px-4 py-3 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-[var(--color-surface-muted)] dark:text-emerald-400 dark:hover:bg-white/[0.06]"
-                >
-                  <FaPlus className="inline mr-2" />
-                  New Project
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 🔍 CENTER SEARCH */}
-      <div className="hidden md:flex flex-1 justify-center px-8">
-        <div className="w-full max-w-md relative">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)]" />
-          <input
-            type="text"
-            placeholder="Search anything..."
-            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] py-2.5 pl-9 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all duration-150"
-          />
-        </div>
-      </div>
-
-      {/* RIGHT SECTION */}
-      <div className="flex items-center gap-4">
-
-        {/* Timer */}
-        <div className="hidden items-center gap-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-2 sm:flex">
-          <FaClock className="text-xs text-emerald-600 dark:text-emerald-400" />
-          <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
-            01:24:05
-          </span>
-        </div>
-
-        <ThemeToggle />
-
-        {/* Notifications */}
-        <button
-          type="button"
-          className="relative rounded-lg p-2.5 text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-        >
-          <FaBell size={16} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-        </button>
-
-        {/* Profile */}
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] md:block">
-            {user?.name}
-          </span>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-lg transition-shadow duration-200 hover:shadow-indigo-500/50">
-            {user?.name?.[0] || "U"}
+              )}
+            </div>
           </div>
         </div>
 
-        <LogoutButton variant="dropdown" />
-      </div>
-    </header>
+        {/* CENTER — search */}
+        <div className="mx-4 hidden max-w-md flex-1 md:block">
+          <div className="relative">
+            <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
+            <input
+              type="text"
+              placeholder="Search…"
+              className="app-control w-full border-[var(--color-border)] bg-[var(--color-input-bg)] py-2 pl-8 pr-3 text-[13px] placeholder:text-[var(--color-text-muted)]"
+            />
+          </div>
+        </div>
 
-    {/* Invite modal — rendered outside header to avoid z-index stacking issues */}
-    {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
-    {showMembers && <WorkspaceMembersModal onClose={() => setShowMembers(false)} />}
-  </>
+        {/* RIGHT */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+
+          <ThemeToggle />
+
+          <button
+            type="button"
+            className="relative rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+            title="Notifications"
+          >
+            <FaBell size={15} />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--color-danger)] ring-2 ring-[var(--color-card)]" />
+          </button>
+
+          <div className="ml-0.5 flex items-center gap-2 pl-1">
+            <span className="hidden max-w-[8rem] truncate text-[13px] font-medium text-[var(--color-text-secondary)] lg:block">
+              {user?.name}
+            </span>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--color-primary)] text-[11px] font-semibold text-white">
+              {user?.name?.[0] || "U"}
+            </div>
+          </div>
+
+          <LogoutButton variant="dropdown" />
+        </div>
+      </header>
+
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+      {showMembers && <WorkspaceMembersModal onClose={() => setShowMembers(false)} />}
+      {showCreateProject && <CreateProjectModal onClose={() => setShowCreateProject(false)} />}
+    </>
   );
 }

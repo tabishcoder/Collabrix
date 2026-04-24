@@ -15,6 +15,7 @@ import AddTaskModal from "./AddTaskModal";
 import BoardColumnsEditor from "./BoardColumnsEditor";
 import TaskDetailModal from "./TaskDetailModal";
 import TaskFilters, { defaultTaskFilters, applyTaskFilters } from "./TaskFilters";
+import { TasksBoardSkeleton } from "../../components/ui/Skeleton";
 
 const DEFAULT_COLUMNS = [
   { key: "todo",        name: "To Do",      order: 0 },
@@ -120,17 +121,21 @@ export default function TasksBoard() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center gap-3 p-6 text-[var(--color-text-muted)]">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-border-strong)] border-t-indigo-500" />
-        Loading tasks...
+      <div className="pb-2">
+        <TasksBoardSkeleton />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="p-6">
-        <p className="text-red-400 text-sm">{message || "Failed to load tasks."}</p>
+      <div
+        className="rounded-[var(--radius-lg)] border border-red-500/25 bg-red-500/[0.06] px-5 py-4 dark:bg-red-500/10"
+        role="alert"
+      >
+        <p className="text-sm font-medium text-red-700 dark:text-red-300">
+          {message || "Failed to load tasks."}
+        </p>
       </div>
     );
   }
@@ -142,37 +147,44 @@ export default function TasksBoard() {
     <div className="min-h-0 space-y-5">
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold leading-tight tracking-tight text-[var(--color-text-primary)] sm:text-xl">
               {activeProject?.name || "Project Board"}
             </h2>
             {isViewer && (
-              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-[11px] text-[var(--color-text-muted)]">
-                Read Only
+              <span className="rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+                Read only
               </span>
             )}
           </div>
-          <p className="text-[var(--color-text-muted)] text-xs mt-0.5">
+          <p className="mt-0.5 text-[11px] tabular-nums text-[var(--color-text-muted)]">
             {filteredTasks.length === tasks.length
               ? `${tasks.length} tasks`
               : `${filteredTasks.length} of ${tasks.length} tasks`}
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+          <TaskFilters
+            filters={taskFilters}
+            onChange={setTaskFilters}
+            projectMembers={projectMembers}
+            projectId={projectId}
+          />
+
           {/* View toggle */}
-          <div className="flex overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)]">
+          <div className="flex overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] p-0.5">
             {["kanban", "list"].map((mode) => (
               <button
                 type="button"
                 key={mode}
                 onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 text-xs font-medium capitalize transition
+                className={`rounded-[calc(var(--radius-sm)+1px)] px-2.5 py-1 text-[11px] font-medium capitalize transition-colors duration-150
                   ${viewMode === mode
-                    ? "bg-indigo-600 text-white"
-                    : "bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                    ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-[var(--color-border)]"
+                    : "bg-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   }`}
               >
                 {mode}
@@ -185,7 +197,7 @@ export default function TasksBoard() {
             <button
               type="button"
               onClick={() => setShowColEditor(true)}
-              className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+              className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
             >
               Edit Columns
             </button>
@@ -196,7 +208,7 @@ export default function TasksBoard() {
             <button
               type="button"
               onClick={() => setShowModal(true)}
-              className="rounded-[var(--radius-md)] bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition hover:bg-[var(--color-primary-hover)]"
+              className="rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-[var(--color-primary-hover)]"
             >
               + Add Task
             </button>
@@ -204,12 +216,10 @@ export default function TasksBoard() {
         </div>
       </div>
 
-      <TaskFilters filters={taskFilters} onChange={setTaskFilters} projectMembers={projectMembers} />
-
       {/* ── Kanban ──────────────────────────────────────────────────────── */}
       {viewMode === "kanban" && (
         <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 sm:gap-5 items-start overflow-x-auto pb-2 -mx-1 px-1 scroll-smooth">
+          <div className="-mx-1 flex items-start gap-3 overflow-x-auto scroll-smooth px-1 pb-2 sm:gap-4">
             {columns.map((col) => (
               <SortableContext
                 key={col.key}
@@ -244,7 +254,12 @@ export default function TasksBoard() {
                 </div>
 
                 {colTasks.length === 0 ? (
-                  <p className="pl-2 text-xs text-[var(--color-text-muted)]">No tasks</p>
+                  <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-muted)]/60 py-8 pl-3 pr-4 text-left">
+                    <p className="text-xs font-medium text-[var(--color-text-secondary)]">No tasks in {col.name}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+                      {canWrite ? "Add a task or switch to Kanban to drag items here." : "Nothing to show in this section."}
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {colTasks.map((task) => (

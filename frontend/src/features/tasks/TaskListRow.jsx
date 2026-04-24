@@ -20,7 +20,7 @@ export default function TaskListRow({ task, columns, canWrite, onOpen }) {
 
   return (
     <div
-      className="group flex cursor-pointer items-center gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 transition hover:border-[var(--color-border-strong)]"
+      className="group flex cursor-pointer items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 shadow-sm transition-colors duration-150 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]"
       role="button"
       tabIndex={0}
       onClick={() => onOpen?.()}
@@ -46,11 +46,11 @@ export default function TaskListRow({ task, columns, canWrite, onOpen }) {
         <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-xs text-[var(--color-text-muted)]">{colName}</span>
       )}
 
-      <span className="flex-1 truncate text-sm font-medium text-[var(--color-text-primary)]">{task.title}</span>
+      <span className="flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">{task.title}</span>
 
       {task.assignee && (
         <div
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white"
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[var(--color-surface-muted)] text-[10px] font-semibold text-[var(--color-text-secondary)] ring-1 ring-[var(--color-border)]"
           title={task.assignee.name}
         >
           {task.assignee.name?.[0] ?? "?"}

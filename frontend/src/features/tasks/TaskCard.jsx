@@ -51,7 +51,7 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
     <div
       ref={setNodeRef}
       style={style}
-      className="group bg-[color-mix(in_oklab,var(--color-bg-elevated)_88%,transparent)] p-3.5 sm:p-4 rounded-[var(--radius-md)] border border-[var(--color-border)] shadow-sm hover:border-indigo-500/35 hover:shadow-md hover:bg-[color-mix(in_oklab,var(--color-card-hover)_70%,transparent)] transition cursor-pointer focus-within:border-indigo-500/45"
+      className="group cursor-pointer rounded-md border border-[var(--color-border)] bg-[var(--color-card)] p-2.5 shadow-sm transition-colors duration-150 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,var(--color-primary)_35%,transparent)] sm:p-3"
       data-task-id={task._id}
       role="button"
       tabIndex={0}
@@ -67,13 +67,13 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
               className={`w-2 h-2 rounded-full ${priorityDotClass(task.priority)}`}
               title={`Priority: ${task.priority ?? "none"}`}
             />
-            <h4 className="font-medium text-[var(--color-text-primary)] truncate">
+            <h4 className="truncate text-[13px] font-medium leading-snug tracking-tight text-[var(--color-text-primary)] sm:text-sm">
               {task.title}
             </h4>
           </div>
 
           {task.description && (
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1 line-clamp-2">
+            <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[var(--color-text-secondary)]">
               {task.description}
             </p>
           )}
@@ -84,7 +84,7 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="shrink-0 cursor-grab rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] active:cursor-grabbing"
+            className="shrink-0 cursor-grab rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2 py-1 text-[var(--color-text-muted)] transition duration-200 hover:border-indigo-500/30 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] focus-visible:ring-2 focus-visible:ring-indigo-500/25 active:cursor-grabbing"
             title="Drag task"
             {...attributes}
             {...listeners}
@@ -94,8 +94,8 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-3">
-        <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] min-w-0">
+      <div className="mt-2 flex items-center justify-between">
+        <div className="flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--color-text-secondary)]">
           {/* Due date chip */}
           {task.dueDate && (
             <span

@@ -181,10 +181,10 @@ export default function WorkspaceMembersModal({ onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:py-10 app-modal-backdrop">
       <div className="app-modal-panel flex w-full max-w-4xl max-h-[min(92dvh,880px)] flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_90%,transparent)] px-6 py-4 backdrop-blur-md">
           <div>
-            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Workspace members</h3>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+            <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">Workspace members</h3>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               {activeSpace?.name} • Your role: {spaceRoleLabel(activeSpaceRole)}
             </p>
           </div>
@@ -194,19 +194,14 @@ export default function WorkspaceMembersModal({ onClose }) {
                 type="button"
                 disabled={actingId === "leave-space"}
                 onClick={handleLeaveWorkspace}
-                className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-500/15 disabled:opacity-60 dark:text-red-200"
+                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-700 transition duration-200 ease-out hover:bg-red-500/16 active:scale-[0.98] disabled:opacity-60 dark:text-red-200"
                 title="Leave workspace"
               >
                 {actingId === "leave-space" ? "Leaving…" : "Leave"}
               </button>
             )}
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-[var(--radius-sm)] p-1.5 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-              aria-label="Close"
-            >
-              <FaTimes />
+            <button type="button" onClick={onClose} className="app-modal-close !p-1.5 text-base" aria-label="Close">
+              <FaTimes className="text-sm" />
             </button>
           </div>
         </div>
@@ -223,11 +218,11 @@ export default function WorkspaceMembersModal({ onClose }) {
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 disabled={!isAdmin && t.key !== "members"}
-                className={`px-3 py-2 text-sm font-medium border-b-2 transition ${
+                className={`border-b-2 px-3 py-2 text-sm font-medium transition duration-200 ease-out ${
                   tab === t.key
                     ? "border-indigo-500 text-[var(--color-text-primary)]"
                     : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                } ${!isAdmin && t.key !== "members" ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${!isAdmin && t.key !== "members" ? "cursor-not-allowed opacity-50" : ""}`}
               >
                 {t.label}
               </button>
@@ -255,14 +250,14 @@ export default function WorkspaceMembersModal({ onClose }) {
                 </button>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-card)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] text-xs">
+                  <thead className="sticky top-0 z-10 bg-[var(--color-surface-muted)] text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                     <tr>
-                      <th className="text-left px-4 py-3">User</th>
-                      <th className="text-left px-4 py-3">Email</th>
-                      <th className="text-left px-4 py-3">Role</th>
-                      <th className="text-right px-4 py-3">Actions</th>
+                      <th className="px-3 py-2 text-left">User</th>
+                      <th className="px-3 py-2 text-left">Email</th>
+                      <th className="px-3 py-2 text-left">Role</th>
+                      <th className="px-3 py-2 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -273,10 +268,10 @@ export default function WorkspaceMembersModal({ onClose }) {
                       const busy = actingId === userId;
                       return (
                         <tr key={userId} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2">
                             <div className="flex items-center gap-3 min-w-[220px]">
                               <div
-                                className="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white"
+                                className="flex h-8 w-8 items-center justify-center rounded-md bg-[var(--color-surface-muted)] text-[11px] font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-border)]"
                                 title={u?.name}
                               >
                                 {avatarText(u?.name || u?.email)}
@@ -287,14 +282,14 @@ export default function WorkspaceMembersModal({ onClose }) {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
+                          <td className="px-3 py-2">
                             {isAdmin && !isOwner ? (
                               <select
                                 value={m.role}
                                 disabled={busy}
                                 onChange={(e) => handleChangeRole(userId, e.target.value)}
-                                className="cursor-pointer rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none disabled:opacity-60"
+                                className="app-control !w-auto min-w-[5.25rem] cursor-pointer px-2 py-1 text-xs disabled:opacity-60"
                               >
                                 <option value="member">Member</option>
                                 <option value="admin">Admin</option>
@@ -305,12 +300,12 @@ export default function WorkspaceMembersModal({ onClose }) {
                               </span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-3 py-2 text-right">
                             {isAdmin && !isOwner ? (
                               <button
                                 disabled={busy}
                                 onClick={() => handleRemoveMember(userId)}
-                                className="rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500/15 dark:text-red-200 disabled:opacity-60"
+                                className="rounded-md border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-xs font-medium text-red-700 transition duration-200 ease-out hover:bg-red-500/16 active:scale-[0.98] disabled:opacity-60 dark:text-red-200"
                               >
                                 Remove
                               </button>
@@ -350,14 +345,14 @@ export default function WorkspaceMembersModal({ onClose }) {
                 </button>
               </div>
 
-              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-card)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] text-xs">
+                  <thead className="sticky top-0 z-10 bg-[var(--color-surface-muted)] text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
                     <tr>
-                      <th className="text-left px-4 py-3">Email</th>
-                      <th className="text-left px-4 py-3">Role</th>
-                      <th className="text-left px-4 py-3">Expires</th>
-                      <th className="text-right px-4 py-3">Actions</th>
+                      <th className="px-3 py-2 text-left">Email</th>
+                      <th className="px-3 py-2 text-left">Role</th>
+                      <th className="px-3 py-2 text-left">Expires</th>
+                      <th className="px-3 py-2 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -365,20 +360,20 @@ export default function WorkspaceMembersModal({ onClose }) {
                       const busy = actingId === inv._id;
                       return (
                         <tr key={inv._id} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
-                          <td className="px-4 py-3 text-[var(--color-text-secondary)]">{inv.email}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 text-[var(--color-text-secondary)]">{inv.email}</td>
+                          <td className="px-3 py-2">
                             <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${spaceRoleBadgeClass(inv.role)}`}>
                               {spaceRoleLabel(inv.role)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
+                          <td className="px-3 py-2 text-[var(--color-text-muted)] text-xs">
                             {inv.expiresAt ? new Date(inv.expiresAt).toLocaleString() : "—"}
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          <td className="px-3 py-2 text-right">
                             <button
                               disabled={busy}
                               onClick={() => handleRevokeInvite(inv._id)}
-                              className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-60"
+                              className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] transition duration-200 ease-out hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] active:scale-[0.98] disabled:opacity-60"
                             >
                               Revoke
                             </button>
@@ -402,8 +397,8 @@ export default function WorkspaceMembersModal({ onClose }) {
 
           {/* Invite (reuse existing InviteModal UI inline by rendering it) */}
           {tab === "invite" && (
-            <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-              <div className="p-4 bg-[var(--color-surface-muted)] border-b border-[var(--color-border)]">
+            <div className="overflow-hidden rounded-xl border border-[var(--color-border)] shadow-[var(--shadow-card)]">
+              <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4">
                 <p className="text-sm text-[var(--color-text-secondary)] font-medium">Send a new invitation</p>
                 <p className="text-xs text-[var(--color-text-muted)] mt-1">
                   Invite someone to join this workspace.
@@ -421,7 +416,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="colleague@example.com"
-                      className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] transition focus:border-indigo-500/60 focus:outline-none"
+                      className="app-control px-3 py-2.5 placeholder:text-[var(--color-text-muted)]"
                       required
                       disabled={!isAdmin || sendingInvite}
                     />
@@ -439,10 +434,10 @@ export default function WorkspaceMembersModal({ onClose }) {
                           type="button"
                           onClick={() => setInviteRole(r.value)}
                           disabled={!isAdmin || sendingInvite}
-                          className={`text-left px-3 py-2.5 rounded-lg border transition disabled:opacity-60 ${
+                          className={`rounded-lg border px-3 py-2.5 text-left transition duration-200 ease-out disabled:opacity-60 ${
                             inviteRole === r.value
-                              ? "border-indigo-500/60 bg-indigo-600/15 text-indigo-950 dark:text-white"
-                              : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+                              ? "border-indigo-500/55 bg-indigo-600/14 text-indigo-950 shadow-[var(--shadow-card)] dark:text-white"
+                              : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] active:scale-[0.99]"
                           }`}
                         >
                           <p className="text-sm font-medium">{r.title}</p>
@@ -455,21 +450,21 @@ export default function WorkspaceMembersModal({ onClose }) {
                   <button
                     type="submit"
                     disabled={!isAdmin || sendingInvite || !inviteEmail.trim()}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-medium transition"
+                    className="app-btn-modal-primary flex w-full items-center justify-center gap-2 rounded-lg py-2.5"
                   >
                     {sendingInvite ? "Sending…" : "Send invite"}
                   </button>
                 </form>
 
                 {inviteLink && (
-                  <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
-                    <p className="text-xs text-[var(--color-text-muted)] mb-2">Share link directly:</p>
+                  <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 shadow-[var(--shadow-card)]">
+                    <p className="mb-2 text-xs text-[var(--color-text-muted)]">Share link directly:</p>
                     <div className="flex items-center gap-2">
-                      <p className="flex-1 text-xs text-[var(--color-text-secondary)] truncate font-mono">{inviteLink}</p>
+                      <p className="flex-1 truncate font-mono text-xs text-[var(--color-text-secondary)]">{inviteLink}</p>
                       <button
                         type="button"
                         onClick={copyLink}
-                        className="shrink-0 rounded-md bg-[var(--color-surface-muted)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                        className="shrink-0 rounded-md bg-[var(--color-card)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] ring-1 ring-[var(--color-border)] transition duration-200 ease-out hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] active:scale-[0.98]"
                       >
                         Copy
                       </button>

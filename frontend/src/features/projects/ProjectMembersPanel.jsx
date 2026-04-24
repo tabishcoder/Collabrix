@@ -148,21 +148,21 @@ export default function ProjectMembersPanel() {
   }
 
   return (
-    <div className="space-y-5 p-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="space-y-4 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Project members</h3>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+          <h3 className="text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)]">Project members</h3>
+          <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
             Manage who is in this project and what they can do.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {canSelfLeaveProject && (
             <button
               type="button"
               disabled={actingId === "leave-project"}
               onClick={handleLeaveProject}
-              className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/15 disabled:opacity-60 dark:text-red-200"
+              className="rounded-md border border-red-500/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-700 transition-colors duration-150 hover:bg-red-500/15 disabled:opacity-60 dark:text-red-200"
               title="Leave project"
             >
               {actingId === "leave-project" ? "Leaving…" : "Leave project"}
@@ -175,27 +175,27 @@ export default function ProjectMembersPanel() {
               await load();
               toast.success("Refreshed");
             }}
-            className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-3 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+            className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
           >
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-semibold text-[var(--color-text-primary)]">Add member</p>
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)]/60 p-4">
+        <div className="mb-2.5 flex items-center justify-between">
+          <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">Add member</p>
           {!canManage && (
             <span className="text-xs text-[var(--color-text-muted)]">Manager role required</span>
           )}
         </div>
 
-        <form onSubmit={handleAdd} className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_180px_140px]">
+        <form onSubmit={handleAdd} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_180px_120px]">
           <select
             value={addUserId}
             onChange={(e) => setAddUserId(e.target.value)}
             disabled={!canManage || loading}
-            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none disabled:opacity-60"
+            className="app-control cursor-pointer px-2.5 py-2 text-[13px] disabled:opacity-60"
           >
             <option value="">
               {loading ? "Loading space members…" : "Select a workspace member"}
@@ -211,7 +211,7 @@ export default function ProjectMembersPanel() {
             value={addRole}
             onChange={(e) => setAddRole(e.target.value)}
             disabled={!canManage}
-            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none disabled:opacity-60"
+            className="app-control cursor-pointer px-2.5 py-2 text-[13px] disabled:opacity-60"
           >
             <option value="manager">Manager</option>
             <option value="contributor">Contributor</option>
@@ -221,7 +221,7 @@ export default function ProjectMembersPanel() {
           <button
             type="submit"
             disabled={!canManage || !addUserId || actingId === addUserId}
-            className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-60"
+            className="app-btn-modal-primary w-full justify-center rounded-md py-2 text-[13px] disabled:opacity-60"
           >
             {actingId === addUserId ? "Adding…" : "Add"}
           </button>
@@ -234,14 +234,14 @@ export default function ProjectMembersPanel() {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)]">
-        <table className="w-full text-sm">
-          <thead className="bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-muted)]">
+      <div className="overflow-x-auto rounded-lg border border-[var(--color-border)] shadow-sm">
+        <table className="w-full text-[13px]">
+          <thead className="sticky top-0 z-10 bg-[var(--color-surface-muted)] text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
             <tr>
-              <th className="px-4 py-3 text-left">User</th>
-              <th className="px-4 py-3 text-left">Email</th>
-              <th className="px-4 py-3 text-left">Role</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-3 py-2 text-left">User</th>
+              <th className="px-3 py-2 text-left">Email</th>
+              <th className="px-3 py-2 text-left">Role</th>
+              <th className="px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -250,10 +250,10 @@ export default function ProjectMembersPanel() {
               const userId = u?._id;
               const busy = actingId === userId;
               return (
-                <tr key={userId} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
-                  <td className="px-4 py-3">
-                    <div className="flex min-w-[220px] items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-500 text-xs font-bold text-white">
+                <tr key={userId} className="border-t border-[var(--color-border)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]/80">
+                  <td className="px-3 py-2">
+                    <div className="flex min-w-[200px] items-center gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--color-surface-muted)] text-[11px] font-semibold text-[var(--color-primary)] ring-1 ring-[var(--color-border)]">
                         {(u?.name?.[0] || u?.email?.[0] || "?").toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -262,14 +262,14 @@ export default function ProjectMembersPanel() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
+                  <td className="px-3 py-2">
                     {canManage ? (
                       <select
                         value={m.role}
                         disabled={busy}
                         onChange={(e) => handleChangeRole(userId, e.target.value)}
-                        className="cursor-pointer rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none disabled:opacity-60"
+                        className="app-control !w-auto min-w-[5.5rem] cursor-pointer px-2 py-1 text-[11px] disabled:opacity-60"
                       >
                         <option value="manager">Manager</option>
                         <option value="contributor">Contributor</option>
@@ -301,7 +301,7 @@ export default function ProjectMembersPanel() {
 
             {(activeProject.members || []).length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
+                <td colSpan={4} className="px-3 py-5 text-center text-[13px] text-[var(--color-text-muted)]">
                   No project members found.
                 </td>
               </tr>

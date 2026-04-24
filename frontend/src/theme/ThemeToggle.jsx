@@ -39,23 +39,25 @@ export default function ThemeToggle() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2.5 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+        className={`flex h-9 items-center gap-1.5 rounded-md border px-2 text-[var(--color-text-secondary)] shadow-sm transition-colors duration-150 sm:gap-2 sm:px-2.5 ${
+          open
+            ? "border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]"
+            : "border-[var(--color-border-strong)] bg-[var(--color-card)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+        }`}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={`Theme: ${active.label}. Resolved: ${resolvedTheme} mode.`}
       >
-        <ActiveIcon className="text-xs" aria-hidden />
-        <span className="hidden sm:inline max-w-[5.5rem] truncate">
-          {active.label}
-        </span>
+        <ActiveIcon className="text-[13px] opacity-90" aria-hidden />
+        <span className="hidden max-w-[5rem] truncate text-[13px] sm:inline">{active.label}</span>
         <FaChevronDown
-          className={`text-[10px] opacity-60 transition ${open ? "rotate-180" : ""}`}
+          className={`text-[9px] text-[var(--color-text-muted)] transition-transform duration-150 ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open && (
         <ul
-          className="absolute right-0 z-[60] mt-2 w-44 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] py-1 shadow-lg ring-1 ring-black/5 dark:ring-white/10"
+          className="absolute right-0 z-[60] mt-1.5 w-40 overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] py-0.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]"
           role="listbox"
         >
           {OPTIONS.map(({ value, label, Icon }) => {
@@ -68,7 +70,7 @@ export default function ThemeToggle() {
                     setPreference(value);
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${
+                  className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[13px] transition-colors duration-150 ${
                     selected
                       ? "bg-[var(--color-surface-hover)] text-[var(--color-text-primary)]"
                       : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-primary)]"
@@ -77,9 +79,7 @@ export default function ThemeToggle() {
                   <Icon className="text-xs opacity-80" />
                   {label}
                   {value === "system" && preference === "system" && (
-                    <span className="ml-auto text-[10px] text-[var(--color-text-muted)]">
-                      {resolvedTheme}
-                    </span>
+                    <span className="ml-auto text-[10px] capitalize text-[var(--color-text-muted)]">{resolvedTheme}</span>
                   )}
                 </button>
               </li>

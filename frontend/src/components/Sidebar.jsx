@@ -22,18 +22,17 @@ export default function Sidebar({ collapsed, setCollapsed }) {
     <aside
       className={`
         h-full min-h-0 flex flex-col shrink-0
-        bg-[color-mix(in_oklab,var(--color-card)_92%,transparent)]
-        backdrop-blur-md
         border-r border-[var(--color-border-strong)]
+        bg-[var(--color-sidebar-bg)]
         shadow-[var(--shadow-nav)]
-        transition-all duration-300 ease-out
-        ${collapsed ? "w-20" : "w-64"}
+        transition-[width] duration-200 ease-out
+        ${collapsed ? "w-20" : "w-60"}
       `}
     >
       {/* HEADER */}
-      <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-3">
         {!collapsed && (
-          <h1 className="text-sm font-bold text-[var(--color-text-primary)]">
+          <h1 className="text-[13px] font-semibold tracking-tight text-[var(--color-text-primary)]">
             Collabrix
           </h1>
         )}
@@ -41,7 +40,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="rounded-lg p-2 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+          className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
         >
           {collapsed ? (
             <FaChevronRight size={14} />
@@ -52,7 +51,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 px-3 py-4 space-y-2">
+      <nav className="flex-1 space-y-0.5 px-2 py-3">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -61,20 +60,18 @@ export default function Sidebar({ collapsed, setCollapsed }) {
               to={item.to}
               className={({ isActive }) =>
                 `
-                flex items-center gap-3 px-3.5 py-2.5 rounded-[var(--radius-md)]
-                transition-all duration-200
+                flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium
+                transition-colors duration-150
                 ${
                   isActive
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/25"
+                    ? "bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] text-[var(--color-primary)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] dark:text-indigo-200"
                     : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                 }
               `
               }
             >
-              <Icon className="text-base min-w-[20px]" />
-              {!collapsed && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
+              <Icon className="min-w-[18px] text-[15px] opacity-90" />
+              {!collapsed && <span>{item.label}</span>}
             </NavLink>
           );
         })}
@@ -82,13 +79,11 @@ export default function Sidebar({ collapsed, setCollapsed }) {
 
       {/* FOOTER */}
       {!collapsed && (
-        <div className="m-3 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] p-4">
-          <p className="text-[10px] text-[var(--color-text-muted)] uppercase mb-2.5 font-bold tracking-wider">
-            Support
-          </p>
+        <div className="m-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)]/50 p-3">
+          <p className="mb-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Support</p>
           <button
             type="button"
-            className="text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:text-[var(--color-text-primary)]"
+            className="text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:text-[var(--color-text-primary)]"
           >
             Help Center
           </button>

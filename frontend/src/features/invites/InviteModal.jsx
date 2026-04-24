@@ -53,17 +53,13 @@ export default function InviteModal({ onClose }) {
       <div className="app-modal-panel w-full max-w-md overflow-hidden">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_88%,transparent)] px-6 py-4 backdrop-blur-sm">
           <div>
             <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">Invite to Workspace</h3>
-            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{activeSpace?.name}</p>
+            <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{activeSpace?.name}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-[var(--radius-sm)] p-1.5 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-          >
-            <FaTimes />
+          <button type="button" onClick={onClose} className="app-modal-close !p-1.5 text-base" aria-label="Close">
+            <FaTimes className="text-sm" />
           </button>
         </div>
 
@@ -78,7 +74,7 @@ export default function InviteModal({ onClose }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="colleague@example.com"
-              className="w-full rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] transition focus:border-indigo-500/60 focus:outline-none"
+              className="app-control px-3 py-2.5 placeholder:text-[var(--color-text-muted)]"
               required
             />
           </div>
@@ -92,10 +88,10 @@ export default function InviteModal({ onClose }) {
                   key={r.value}
                   type="button"
                   onClick={() => setRole(r.value)}
-                  className={`text-left px-3 py-2.5 rounded-[var(--radius-md)] border transition
+                  className={`rounded-[var(--radius-md)] border px-3 py-2.5 text-left transition duration-200 ease-out
                     ${role === r.value
-                      ? "border-indigo-500/60 bg-indigo-600/15 text-indigo-950 dark:text-white"
-                      : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
+                      ? "border-indigo-500/55 bg-indigo-600/14 text-indigo-950 shadow-[var(--shadow-card)] dark:text-white"
+                      : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)] active:scale-[0.99]"
                     }`}
                 >
                   <p className="text-sm font-medium">{r.label}</p>
@@ -109,7 +105,7 @@ export default function InviteModal({ onClose }) {
           <button
             type="submit"
             disabled={sending || !email.trim()}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[var(--radius-md)] bg-indigo-600 hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white text-sm font-medium shadow-lg shadow-indigo-600/20 transition"
+            className="app-btn-modal-primary flex w-full items-center justify-center gap-2 py-2.5"
           >
             <FaEnvelope className="text-xs" />
             {sending ? "Sending…" : "Send Invitation"}
@@ -119,16 +115,16 @@ export default function InviteModal({ onClose }) {
         {/* Invite link (shown after a successful send) */}
         {inviteLink && (
           <div className="px-6 pb-5">
-            <div className="bg-white/[0.03] border border-[var(--color-border)] rounded-[var(--radius-md)] p-3">
+            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3 shadow-[var(--shadow-card)]">
               <p className="text-xs text-[var(--color-text-muted)] mb-2">Or share this link directly:</p>
               <div className="flex items-center gap-2">
                 <p className="flex-1 text-xs text-[var(--color-text-secondary)] truncate font-mono">{inviteLink}</p>
                 <button
                   onClick={copyLink}
-                  className={`shrink-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition
+                  className={`shrink-0 rounded-md px-2.5 py-1.5 text-xs font-medium transition duration-200 ease-out
                     ${linkCopied
                       ? "bg-emerald-600/30 text-emerald-400"
-                      : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                      : "bg-[var(--color-card)] text-[var(--color-text-secondary)] ring-1 ring-[var(--color-border)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] active:scale-[0.98]"
                     }`}
                 >
                   <FaCopy className="inline mr-1 text-[10px]" />

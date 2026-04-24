@@ -9,6 +9,7 @@ import {
   projectRoleBadgeClass,
 } from "../../utils/roles";
 import ProjectMembersPanel from "./ProjectMembersPanel";
+import { ProjectPageSkeleton } from "../../components/ui/Skeleton";
 
 export default function ProjectsPage() {
   const dispatch = useDispatch();
@@ -31,12 +32,7 @@ export default function ProjectsPage() {
   }, [projectId, dispatch]);
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center gap-3 text-[var(--color-text-muted)]">
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-border-strong)] border-t-indigo-500" />
-        Loading project...
-      </div>
-    );
+    return <ProjectPageSkeleton />;
   }
 
   if (error) {
@@ -53,7 +49,9 @@ export default function ProjectsPage() {
   if (!projectId) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 text-[var(--color-text-muted)]">
-        <p className="text-lg text-[var(--color-text-secondary)]">Select a project from the sidebar</p>
+        <p className="text-lg text-[var(--color-text-secondary)]">
+          Select a project from the <span className="font-medium text-[var(--color-text-primary)]">Project</span> menu in the header.
+        </p>
         {activeSpaceRole && (
           <p className="text-xs text-[var(--color-text-muted)]">
             Your workspace role: {spaceRoleLabel(activeSpaceRole)}
@@ -66,9 +64,11 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-full flex-col">
       {activeProject && (
-        <div className="flex items-center gap-4 border-b border-[var(--color-border)] px-6 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-card)] px-4 py-2.5 sm:px-5">
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-base font-semibold text-[var(--color-text-primary)]">{activeProject.name}</h2>
+            <h2 className="truncate text-[15px] font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-base">
+              {activeProject.name}
+            </h2>
             {activeProject.myRole && (
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-[var(--color-text-muted)]">Your role</span>
@@ -91,7 +91,7 @@ export default function ProjectsPage() {
                     <div
                       key={u?._id ?? m.user}
                       title={tip}
-                      className="flex h-8 w-8 cursor-default items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-[11px] font-bold text-white ring-2 ring-[var(--color-bg)]"
+                      className="flex h-7 w-7 cursor-default items-center justify-center rounded-md bg-[var(--color-surface-muted)] text-[10px] font-semibold text-[var(--color-primary)] ring-2 ring-[var(--color-border-strong)]"
                     >
                       {(u?.name?.[0] || u?.email?.[0] || "?").toUpperCase()}
                     </div>
@@ -104,17 +104,17 @@ export default function ProjectsPage() {
             </div>
           )}
 
-          <span className="ml-auto shrink-0 text-xs text-[var(--color-text-muted)] sm:ml-2">{memberCountLabel}</span>
+          <span className="ml-auto shrink-0 text-[11px] tabular-nums text-[var(--color-text-muted)] sm:ml-2">{memberCountLabel}</span>
 
           {projectId && (
-            <div className="flex overflow-hidden rounded-lg border border-[var(--color-border-strong)]">
+            <div className="flex overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] p-0.5">
               <button
                 type="button"
                 onClick={() => setTab("board")}
-                className={`px-3 py-1.5 text-xs font-medium transition ${
+                className={`rounded-[calc(var(--radius-sm)+1px)] px-2.5 py-1 text-[11px] font-medium capitalize transition-colors duration-150 ${
                   tab === "board"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
+                    ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-[var(--color-border)]"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 }`}
               >
                 Board
@@ -123,10 +123,10 @@ export default function ProjectsPage() {
                 type="button"
                 onClick={() => setTab("members")}
                 disabled={!canManage}
-                className={`px-3 py-1.5 text-xs font-medium transition ${
+                className={`rounded-[calc(var(--radius-sm)+1px)] px-2.5 py-1 text-[11px] font-medium capitalize transition-colors duration-150 ${
                   tab === "members"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]"
+                    ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-[var(--color-border)]"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 } ${!canManage ? "cursor-not-allowed opacity-50" : ""}`}
                 title={!canManage ? "Manager role required" : "Manage project members"}
               >

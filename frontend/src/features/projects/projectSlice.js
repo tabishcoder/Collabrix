@@ -72,13 +72,13 @@ const projectSlice = createSlice({
     const setRejected = (state, action)  => { state.loading = false; state.error = action.payload || action.error?.message || "Error"; };
 
     builder
-      // fetchProjectsBySpace
-      .addCase(fetchProjectsBySpace.pending,   setPending)
+      // fetchProjectsBySpace — does not use `loading` (avoids clobbering fetchProjectById / page skeleton)
       .addCase(fetchProjectsBySpace.fulfilled, (state, action) => {
-        state.loading  = false;
         state.projects = action.payload;
       })
-      .addCase(fetchProjectsBySpace.rejected,  setRejected)
+      .addCase(fetchProjectsBySpace.rejected, () => {
+        /* keep existing list; avoids overwriting fetchProjectById error UI */
+      })
 
       // fetchProjectById
       .addCase(fetchProjectById.pending,   setPending)
