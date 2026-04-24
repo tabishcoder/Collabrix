@@ -5,6 +5,9 @@ const { getProjectRole, PROJECT_WRITE_ROLES } = require('../utils/rbac');
 
 const getIO = (req) => req.app.get('io');
 
+const PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
+const MAX_LABELS = 5;
+
 const logHistory = async (entityType, entityId, action, performedBy, details = {}) => {
   await History.create({ entityType, entityId, action, performedBy, details });
 };
@@ -49,7 +52,7 @@ module.exports.getTaskById = async (req, res) => {
 
 module.exports.createTask = async (req, res) => {
   try {
-    const { title, description, projectId, assignee, status } = req.body;
+    const { title, description, projectId, assignee, status, priority, dueDate, labels } = req.body;
     if (!title || !projectId) {
       return res.status(400).json({ message: 'title and projectId are required' });
     }
@@ -73,10 +76,45 @@ module.exports.createTask = async (req, res) => {
       ? status
       : (validKeys[0] || 'todo');
 
+    // Validate priority
+    const taskPriority = priority && PRIORITIES.includes(priority)
+      ? priority
+      : 'none';
+
+    // Validate dueDate (allow null)
+    let taskDueDate = null;
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === '') {
+        taskDueDate = null;
+      } else {
+        const parsed = new Date(dueDate);
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({ message: 'dueDate must be a valid date or null' });
+        }
+        taskDueDate = parsed;
+      }
+    }
+
+    // Validate labels (max 5)
+    let taskLabels = [];
+    if (labels !== undefined) {
+      if (!Array.isArray(labels)) {
+        return res.status(400).json({ message: 'labels must be an array of strings' });
+      }
+      taskLabels = labels
+        .filter((l) => typeof l === 'string')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, MAX_LABELS);
+    }
+
     const task = await Task.create({
       title,
       description: description || '',
       status: taskStatus,
+      priority: taskPriority,
+      dueDate: taskDueDate,
+      labels: taskLabels,
       projectId,
       assignee: assignee || null,
       createdBy: req.user._id
@@ -85,7 +123,14 @@ module.exports.createTask = async (req, res) => {
     project.tasks.push(task._id);
     await project.save();
 
-    await logHistory('task', task._id, 'created', req.user._id, { title, projectId, assignee });
+    await logHistory('task', task._id, 'created', req.user._id, {
+      title,
+      projectId,
+      assignee,
+      priority: taskPriority,
+      dueDate: taskDueDate,
+      labels: taskLabels
+    });
 
     const populatedTask = await populateTask(Task.findById(task._id));
 
@@ -114,9 +159,12 @@ module.exports.updateTask = async (req, res) => {
       return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
     }
 
-    const { title, description, status, assignee } = req.body;
+    const { title, description, status, assignee, priority, dueDate, labels } = req.body;
     const oldStatus   = task.status;
     const oldAssignee = task.assignee?.toString() ?? null;
+    const oldPriority = task.priority ?? 'none';
+    const oldDueDate  = task.dueDate ? new Date(task.dueDate).toISOString() : null;
+    const oldLabels   = Array.isArray(task.labels) ? task.labels.join('|') : '';
 
     if (title)                   task.title = title;
     if (description !== undefined) task.description = description;
@@ -143,6 +191,41 @@ module.exports.updateTask = async (req, res) => {
       }
     }
 
+    if (priority !== undefined) {
+      if (priority === null || priority === '') {
+        task.priority = 'none';
+      } else if (!PRIORITIES.includes(priority)) {
+        return res.status(400).json({
+          message: `Invalid priority. Valid values: ${PRIORITIES.join(', ')}`
+        });
+      } else {
+        task.priority = priority;
+      }
+    }
+
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === '') {
+        task.dueDate = null;
+      } else {
+        const parsed = new Date(dueDate);
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({ message: 'dueDate must be a valid date or null' });
+        }
+        task.dueDate = parsed;
+      }
+    }
+
+    if (labels !== undefined) {
+      if (!Array.isArray(labels)) {
+        return res.status(400).json({ message: 'labels must be an array of strings' });
+      }
+      task.labels = labels
+        .filter((l) => typeof l === 'string')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, MAX_LABELS);
+    }
+
     await task.save();
 
     if (status && status !== oldStatus) {
@@ -151,8 +234,22 @@ module.exports.updateTask = async (req, res) => {
     if (assignee !== undefined && assignee !== oldAssignee) {
       await logHistory('task', task._id, 'assigned', req.user._id, { oldAssignee, newAssignee: assignee });
     }
-    if (title || description !== undefined) {
-      await logHistory('task', task._id, 'updated', req.user._id, { title, description });
+
+    const newDueDate = task.dueDate ? new Date(task.dueDate).toISOString() : null;
+    const newLabels  = Array.isArray(task.labels) ? task.labels.join('|') : '';
+    const metaChanged =
+      (priority !== undefined && task.priority !== oldPriority) ||
+      (dueDate !== undefined && newDueDate !== oldDueDate) ||
+      (labels !== undefined && newLabels !== oldLabels);
+
+    if (title || description !== undefined || metaChanged) {
+      await logHistory('task', task._id, 'updated', req.user._id, {
+        title,
+        description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        labels: task.labels
+      });
     }
 
     const populatedTask = await populateTask(Task.findById(task._id));

@@ -1,7 +1,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import TaskCard from "./TaskCard";
 
-export default function Column({ column, tasks = [], canWrite }) {
+export default function Column({ column, tasks = [], canWrite, canManage, onOpenTask }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.key, // stable key used as task.status value
   });
@@ -30,7 +30,15 @@ export default function Column({ column, tasks = [], canWrite }) {
             {canWrite ? "Drop tasks here" : "Empty"}
           </p>
         ) : (
-          tasks.map((task) => <TaskCard key={task._id} task={task} />)
+          tasks.map((task) => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              canDrag={canWrite}
+              canManage={canManage}
+              onOpen={() => onOpenTask?.(task._id)}
+            />
+          ))
         )}
       </div>
     </div>

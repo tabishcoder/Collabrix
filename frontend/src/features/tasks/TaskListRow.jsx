@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import { editTask, optimisticStatusUpdate } from "./tasksSlice";
 import toast from "react-hot-toast";
 
-export default function TaskListRow({ task, columns, canWrite }) {
+export default function TaskListRow({ task, columns, canWrite, onOpen }) {
   const dispatch = useDispatch();
 
   const handleStatusChange = async (newStatus) => {
@@ -19,12 +19,21 @@ export default function TaskListRow({ task, columns, canWrite }) {
   const colName = columns.find((c) => c.key === task.status)?.name ?? task.status;
 
   return (
-    <div className="flex items-center gap-4 bg-[var(--color-card)] border border-white/5 rounded-lg px-4 py-3 hover:border-white/10 transition group">
+    <div
+      className="flex items-center gap-4 bg-[var(--color-card)] border border-white/5 rounded-lg px-4 py-3 hover:border-white/10 transition group cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpen?.()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onOpen?.();
+      }}
+    >
 
       {/* Status badge / selector */}
       {canWrite ? (
         <select
           value={task.status}
+          onClick={(e) => e.stopPropagation()}
           onChange={(e) => handleStatusChange(e.target.value)}
           className="text-xs rounded-md bg-white/5 border border-white/10 text-white/70 px-2 py-1 focus:outline-none focus:border-indigo-500/50 cursor-pointer"
         >

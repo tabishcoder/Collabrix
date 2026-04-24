@@ -13,6 +13,7 @@ import Column       from "./Column";
 import TaskListRow  from "./TaskListRow";
 import AddTaskModal from "./AddTaskModal";
 import BoardColumnsEditor from "./BoardColumnsEditor";
+import TaskDetailModal from "./TaskDetailModal";
 
 const DEFAULT_COLUMNS = [
   { key: "todo",        name: "To Do",      order: 0 },
@@ -31,6 +32,7 @@ export default function TasksBoard() {
   const [showModal,       setShowModal]       = useState(false);
   const [showColEditor,   setShowColEditor]   = useState(false);
   const [savingCols,      setSavingCols]      = useState(false);
+  const [activeTaskId,    setActiveTaskId]    = useState(null);
 
   // Resolve columns: prefer activeProject boardColumns, fallback to defaults
   const columns = (activeProject?._id === projectId && activeProject?.boardColumns?.length > 0)
@@ -40,6 +42,9 @@ export default function TasksBoard() {
   const myProjectRole = activeProject?.myRole ?? null;
   const canManage     = canManageProject(myProjectRole);
   const canWrite      = canWriteTasks(myProjectRole);
+
+  const activeTask = activeTaskId ? tasks.find((t) => t._id === activeTaskId) : null;
+  const projectMembers = activeProject?.members ?? [];
 
   // Fetch tasks when project changes
   useEffect(() => {
@@ -187,6 +192,8 @@ export default function TasksBoard() {
                   column={col}
                   tasks={getTasksByKey(col.key)}
                   canWrite={canWrite}
+                  canManage={canManage}
+                  onOpenTask={(taskId) => setActiveTaskId(taskId)}
                 />
               </SortableContext>
             ))}
@@ -218,6 +225,7 @@ export default function TasksBoard() {
                         task={task}
                         columns={columns}
                         canWrite={canWrite}
+                        onOpen={() => setActiveTaskId(task._id)}
                       />
                     ))}
                   </div>
@@ -243,6 +251,17 @@ export default function TasksBoard() {
           saving={savingCols}
           onSave={handleSaveColumns}
           onClose={() => setShowColEditor(false)}
+        />
+      )}
+
+      {activeTask && (
+        <TaskDetailModal
+          task={activeTask}
+          columns={columns}
+          projectMembers={projectMembers}
+          canWrite={canWrite}
+          canManage={canManage}
+          onClose={() => setActiveTaskId(null)}
         />
       )}
     </div>

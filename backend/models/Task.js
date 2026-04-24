@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+const PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
+
 const TaskSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -9,6 +11,19 @@ const TaskSchema = new mongoose.Schema({
   description: {
     type: String,
     default: ''
+  },
+  priority: {
+    type: String,
+    enum: PRIORITIES,
+    default: 'none'
+  },
+  dueDate: {
+    type: Date,
+    default: null
+  },
+  labels: {
+    type: [String],
+    default: []
   },
   status: {
     type: String,
