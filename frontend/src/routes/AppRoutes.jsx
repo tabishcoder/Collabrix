@@ -7,9 +7,13 @@ import VerifyOtp       from "../features/auth/pages/VerifyOtp";
 import ForgotPassword  from "../features/auth/pages/ForgotPassword.jsx";
 import ResetPassword   from "../features/auth/pages/ResetPassword.jsx";
 
-import Dashboard       from "../features/dashboard/Dashboard";
+import WorkspaceDashboard from "../features/dashboard/WorkspaceDashboard";
+import PlatformAdminRoute from "./PlatformAdminRoute";
 import ProjectsPage    from "../features/projects/ProjectsPage.jsx";
 import TasksBoard      from "../features/tasks/TasksBoard.jsx";
+import ChatsPage       from "../features/modules/ChatsPage.jsx";
+import MeetingsPage    from "../features/modules/MeetingsPage.jsx";
+import AIAssistantPage from "../features/modules/AIAssistantPage.jsx";
 import JoinWorkspace   from "../features/invites/JoinWorkspace.jsx";
 
 import ProtectedRoute  from "./ProtectedRoute";
@@ -47,7 +51,8 @@ export default function AppRoutes() {
       {/* Protected app routes */}
       <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<WorkspaceDashboard />} />
+          <Route path="/admin" element={<PlatformAdminRoute />} />
 
           {/* Projects */}
           <Route path="/projects" element={<ProjectsPage />}>
@@ -65,10 +70,10 @@ export default function AppRoutes() {
             <Route path=":projectId/board"  element={<TasksBoard />} />
           </Route>
 
-          {/* Modules – real implementations to come */}
-          <Route path="/chats"    element={<Dashboard />} />
-          <Route path="/meetings" element={<Dashboard />} />
-          <Route path="/aibot"    element={<Dashboard />} />
+          {/* Modules – scoped to active project (header picker) */}
+          <Route path="/chats"    element={<ChatsPage />} />
+          <Route path="/meetings" element={<MeetingsPage />} />
+          <Route path="/aibot"    element={<AIAssistantPage />} />
         </Route>
       </Route>
 

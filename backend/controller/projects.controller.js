@@ -267,6 +267,13 @@ module.exports.updateProjectMemberRole = async (req, res) => {
     const membership = project.members.find((m) => m.user.toString() === userId);
     if (!membership) return res.status(404).json({ message: 'Member not found' });
 
+    // Explicit project managers cannot change their own role via this endpoint (avoids self-demotion / privilege games). Owner/admin (implicit) are not in members[].
+    if (req.user._id.toString() === userId && callerRole === 'manager') {
+      return res.status(403).json({
+        message: 'You cannot change your own project role. Ask another manager or a workspace admin.',
+      });
+    }
+
     membership.role = newRole;
     await project.save();
 
@@ -288,6 +295,10 @@ module.exports.removeProjectMember = async (req, res) => {
     }
 
     const { userId } = req.params;
+    if (req.user._id.toString() === userId) {
+      return res.status(400).json({ message: 'Use leave project to remove yourself from the team.' });
+    }
+
     project.members = project.members.filter((m) => m.user.toString() !== userId);
     await project.save();
 

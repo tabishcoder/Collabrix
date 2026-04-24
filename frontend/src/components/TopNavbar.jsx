@@ -1,8 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { setActiveProject, fetchProjectsBySpace } from "../features/projects/projectSlice";
+import { useNavigate, useLocation } from "react-router-dom";
+import { setActiveProject, fetchProjectsBySpace, fetchProjectById } from "../features/projects/projectSlice";
+import { resetTasks } from "../features/tasks/tasksSlice";
+import { setActiveSpace } from "../features/spaces/spaceSlice";
 import CreateProjectModal from "../features/projects/CreateProjectModal";
+import CreateWorkspaceModal from "../features/spaces/CreateWorkspaceModal";
 import {
   FaBars,
   FaChevronDown,
@@ -18,7 +21,7 @@ import {
 import LogoutButton from "./LogoutButton";
 import InviteModal from "../features/invites/InviteModal";
 import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
-import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../utils/roles";
+import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass, isPlatformAdmin } from "../utils/roles";
 import ThemeToggle from "../theme/ThemeToggle";
 
 /** Shared trigger style — neutral “breadcrumb control” */
@@ -29,16 +32,15 @@ export default function TopNavbar({ onToggleSidebar }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
-  const { activeSpace } = useSelector((s) => s.spaces);
+  const { activeSpace, activeSpaceRole, spaces } = useSelector((s) => s.spaces);
   const { activeProject, projects } = useSelector((s) => s.projects);
-
-  const { activeSpaceRole } = useSelector((s) => s.spaces);
 
   const [openDropdown, setOpenDropdown] = useState(null);
   const [projectSearch, setProjectSearch] = useState("");
   const [showInvite, setShowInvite] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
   const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
 
   const isSpaceAdmin = canManageSpace(activeSpaceRole);
 
@@ -103,17 +105,37 @@ export default function TopNavbar({ onToggleSidebar }) {
               </button>
 
               {openDropdown === "workspace" && (
-                <div className="absolute left-0 z-50 mt-1.5 w-56 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
+                <div className="absolute left-0 z-50 mt-1.5 w-64 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
                   <p className="px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Workspace</p>
+                  {isPlatformAdmin(user) && (
+                    <p className="px-2.5 pb-1.5 text-[10px] leading-snug text-amber-800/90 dark:text-amber-200/80">
+                      Platform admin — switch tenant context here.
+                    </p>
+                  )}
 
-                  <button
-                    type="button"
-                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)]"
-                  >
-                    {activeSpace?.name}
-                  </button>
+                  <div className="max-h-52 overflow-y-auto p-0.5">
+                    {(!spaces || spaces.length === 0) && (
+                      <p className="px-2 py-2 text-[12px] text-[var(--color-text-muted)]">No workspaces yet.</p>
+                    )}
+                    {(spaces || []).map((s) => (
+                      <button
+                        key={s._id}
+                        type="button"
+                        onClick={() => {
+                          dispatch(setActiveSpace(s));
+                          setOpenDropdown(null);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)]"
+                      >
+                        <span className="min-w-0 truncate">{s.name}</span>
+                        {activeSpace?._id === s._id && (
+                          <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" aria-label="Active" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
 
-                  {isSpaceAdmin && (
+                  {activeSpace && isSpaceAdmin && (
                     <>
                       <div className="my-1 h-px bg-[var(--color-border)]" />
                       <button
@@ -144,7 +166,11 @@ export default function TopNavbar({ onToggleSidebar }) {
 
                   <button
                     type="button"
-                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                    onClick={() => {
+                      setOpenDropdown(null);
+                      setShowCreateWorkspace(true);
+                    }}
+                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                   >
                     + New workspace
                   </button>
@@ -196,8 +222,17 @@ export default function TopNavbar({ onToggleSidebar }) {
                         type="button"
                         key={p._id}
                         onClick={() => {
+                          const prevId = activeProject?._id;
+                          if (prevId !== p._id) {
+                            dispatch(resetTasks());
+                          }
                           dispatch(setActiveProject(p));
-                          navigate(`/projects/${p._id}`);
+                          const stay = shouldKeepRouteWhenSwitchingProject(location.pathname);
+                          if (stay) {
+                            dispatch(fetchProjectById(p._id));
+                          } else {
+                            navigate(`/projects/${p._id}`);
+                          }
                           setOpenDropdown(null);
                         }}
                         className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
@@ -271,6 +306,7 @@ export default function TopNavbar({ onToggleSidebar }) {
       {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
       {showMembers && <WorkspaceMembersModal onClose={() => setShowMembers(false)} />}
       {showCreateProject && <CreateProjectModal onClose={() => setShowCreateProject(false)} />}
+      {showCreateWorkspace && <CreateWorkspaceModal onClose={() => setShowCreateWorkspace(false)} />}
     </>
   );
 }

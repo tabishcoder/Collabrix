@@ -11,11 +11,9 @@ export default function SubSidebarSwitch({ collapsed }) {
   if (pathname.startsWith("/chats"))
     return <ChatsSubSidebar collapsed={collapsed} />;
 
-  if (pathname.startsWith("/meetings"))
-    return <MeetingsSubSidebar collapsed={collapsed} />;
+  if (pathname.startsWith("/meetings")) return <MeetingsSubSidebar collapsed={collapsed} />;
 
-  if (pathname.startsWith("/aibot"))
-    return <AISubSidebar collapsed={collapsed} />;
+  if (pathname.startsWith("/aibot")) return <AISubSidebar collapsed={collapsed} />;
 
   return null;
 }

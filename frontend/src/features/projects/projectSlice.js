@@ -6,6 +6,7 @@ import {
   updateProjectApi,
   deleteProjectApi,
 } from "./projectApi";
+import { logout, getMe, login } from "../auth/authSlice";
 
 // Fetch projects by space
 export const fetchProjectsBySpace = createAsyncThunk(
@@ -37,41 +38,63 @@ export const createProject = createAsyncThunk(
 // Update project
 export const updateProject = createAsyncThunk(
   "projects/update",
-  async ({ id, data }) => {
-    const res = await updateProjectApi(id, data);
-    return res.data;
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const res = await updateProjectApi(id, data);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message || "Failed to update project");
+    }
   },
 );
 
 // Delete project
 export const deleteProject = createAsyncThunk(
   "projects/delete",
-  async (projectId) => {
-    await deleteProjectApi(projectId);
-    return projectId;
+  async (projectId, { rejectWithValue }) => {
+    try {
+      await deleteProjectApi(projectId);
+      return projectId;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message || "Failed to delete project");
+    }
   },
 );
 
+const initialState = {
+  projects: [],
+  activeProject: null,
+  activeProjectMembers: [],
+  loading: false,
+  error: null,
+};
+
 const projectSlice = createSlice({
   name: "projects",
-  initialState: {
-    projects: [],
-    activeProject: null,
-    activeProjectMembers: [],
-    loading: false,
-    error: null,
-  },
+  initialState,
   reducers: {
     setActiveProject(state, action) {
       state.activeProject = action.payload;
+    },
+    clearProjects(state) {
+      state.projects = [];
+      state.activeProject = null;
+      state.activeProjectMembers = [];
+      state.loading = false;
+      state.error = null;
     },
   },
 
   extraReducers: (builder) => {
     const setPending  = (state)          => { state.loading = true;  state.error = null; };
     const setRejected = (state, action)  => { state.loading = false; state.error = action.payload || action.error?.message || "Error"; };
+    const resetToInitial = () => ({ ...initialState });
 
     builder
+      .addCase(logout.fulfilled, resetToInitial)
+      .addCase(logout.rejected, resetToInitial)
+      .addCase(getMe.rejected, resetToInitial)
+      .addCase(login.fulfilled, resetToInitial)
       // fetchProjectsBySpace — does not use `loading` (avoids clobbering fetchProjectById / page skeleton)
       .addCase(fetchProjectsBySpace.fulfilled, (state, action) => {
         state.projects = action.payload;
@@ -111,5 +134,5 @@ const projectSlice = createSlice({
       });
   },
 });
-export const { setActiveProject } = projectSlice.actions;
+export const { setActiveProject, clearProjects } = projectSlice.actions;
 export default projectSlice.reducer;

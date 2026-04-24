@@ -19,6 +19,7 @@ const avatarText = (nameOrEmail) => (nameOrEmail?.[0] || "?").toUpperCase();
 export default function WorkspaceMembersModal({ onClose }) {
   const dispatch = useDispatch();
   const { activeSpace, activeSpaceRole } = useSelector((s) => s.spaces);
+  const { user: currentUser } = useSelector((s) => s.auth);
   const isAdmin = canManageSpace(activeSpaceRole);
 
   const [tab, setTab] = useState("members"); // members | invites | invite
@@ -265,6 +266,12 @@ export default function WorkspaceMembersModal({ onClose }) {
                       const u = m.user;
                       const userId = u?._id;
                       const isOwner = m.role === "owner";
+                      const isSelfMember = userId && currentUser?._id && userId === currentUser._id;
+                      const cannotEditOwnAdminRole = isSelfMember && activeSpaceRole === "admin";
+                      const cannotDemoteOtherAdmin = m.role === "admin" && activeSpaceRole !== "owner";
+                      const canEditThisRole = isAdmin && !isOwner && !cannotEditOwnAdminRole && !cannotDemoteOtherAdmin;
+                      const canRemoveThisMember =
+                        isAdmin && !isOwner && !isSelfMember && !(m.role === "admin" && activeSpaceRole !== "owner");
                       const busy = actingId === userId;
                       return (
                         <tr key={userId} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
@@ -284,7 +291,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                           </td>
                           <td className="px-3 py-2 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
                           <td className="px-3 py-2">
-                            {isAdmin && !isOwner ? (
+                            {canEditThisRole ? (
                               <select
                                 value={m.role}
                                 disabled={busy}
@@ -301,7 +308,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                             )}
                           </td>
                           <td className="px-3 py-2 text-right">
-                            {isAdmin && !isOwner ? (
+                            {canRemoveThisMember ? (
                               <button
                                 disabled={busy}
                                 onClick={() => handleRemoveMember(userId)}

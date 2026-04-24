@@ -1,4 +1,8 @@
+import { useSelector } from "react-redux";
+
 export default function ChatsSubSidebar({ collapsed }) {
+  const activeProject = useSelector((s) => s.projects.activeProject);
+
   return (
     <aside
       className={`
@@ -10,8 +14,17 @@ export default function ChatsSubSidebar({ collapsed }) {
       `}
     >
       <div className="border-b border-[var(--color-border)] p-4">
-        {collapsed ? "💬" : (
-          <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Chats</h3>
+        {collapsed ? (
+          "💬"
+        ) : (
+          <div>
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Chats</h3>
+            {activeProject?.name && (
+              <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-[var(--color-text-muted)]" title={activeProject.name}>
+                {activeProject.name}
+              </p>
+            )}
+          </div>
         )}
       </div>
 

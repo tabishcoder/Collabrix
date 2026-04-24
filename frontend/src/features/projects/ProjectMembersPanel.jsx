@@ -248,6 +248,8 @@ export default function ProjectMembersPanel() {
             {(activeProject.members || []).map((m) => {
               const u = m.user;
               const userId = u?._id;
+              const isSelfRow = userId && myUserId && userId === myUserId;
+              const cannotEditOwnManagerRole = isSelfRow && myRole === "manager";
               const busy = actingId === userId;
               return (
                 <tr key={userId} className="border-t border-[var(--color-border)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]/80">
@@ -264,7 +266,7 @@ export default function ProjectMembersPanel() {
                   </td>
                   <td className="px-3 py-2 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
                   <td className="px-3 py-2">
-                    {canManage ? (
+                    {canManage && !cannotEditOwnManagerRole ? (
                       <select
                         value={m.role}
                         disabled={busy}
@@ -282,7 +284,7 @@ export default function ProjectMembersPanel() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {canManage ? (
+                    {canManage && !isSelfRow ? (
                       <button
                         type="button"
                         disabled={busy}

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import * as spaceApi from "./spaceApi";
+import { logout, getMe, login } from "../auth/authSlice";
 
 export const fetchSpaces = createAsyncThunk(
   "spaces/fetchSpaces",
@@ -48,10 +49,18 @@ const spaceSlice = createSlice({
       state.activeSpace     = null;
       state.activeSpaceRole = null;
       state.initialized     = false;
+      state.loading         = false;
+      state.error           = null;
     },
   },
   extraReducers: (builder) => {
+    const resetToInitial = () => ({ ...initialState });
+
     builder
+      .addCase(logout.fulfilled, resetToInitial)
+      .addCase(logout.rejected, resetToInitial)
+      .addCase(getMe.rejected, resetToInitial)
+      .addCase(login.fulfilled, resetToInitial)
       .addCase(fetchSpaces.pending, (state) => {
         state.loading = true;
         state.error   = null;
@@ -60,12 +69,15 @@ const spaceSlice = createSlice({
         state.spaces      = action.payload;
         state.loading     = false;
         state.initialized = true;
-        // Restore activeSpace role if it was already selected
+        // Keep or refresh selection; clear if this user no longer has that workspace
         if (state.activeSpace) {
           const updated = action.payload.find((s) => s._id === state.activeSpace._id);
           if (updated) {
             state.activeSpace     = updated;
             state.activeSpaceRole = updated.myRole ?? state.activeSpaceRole;
+          } else {
+            state.activeSpace     = null;
+            state.activeSpaceRole = null;
           }
         }
       })

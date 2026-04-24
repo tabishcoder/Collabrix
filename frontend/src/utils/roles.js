@@ -22,6 +22,9 @@ export const canManageProject = (role) => PROJECT_MANAGE_ROLES.includes(role);
 /** Returns true if the given role can create/edit tasks. */
 export const canWriteTasks = (role) => PROJECT_WRITE_ROLES.includes(role);
 
+/** Collabrix platform operator (separate from workspace roles). */
+export const isPlatformAdmin = (user) => (user?.platformRole || "user") === "admin";
+
 /** Human-readable label for a workspace role. */
 export const spaceRoleLabel = (role) => {
   const labels = { owner: 'Owner', admin: 'Admin', member: 'Member' };

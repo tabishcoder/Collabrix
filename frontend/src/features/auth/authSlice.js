@@ -176,6 +176,11 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
       })
+      .addCase(logout.rejected, (state) => {
+        // Still end the client session if the API fails (cookies may remain; user can retry).
+        state.user = null;
+        state.isAuthenticated = false;
+      })
 
       // REQUEST RESET
       .addCase(requestResetPassword.pending, (state) => {

@@ -9,6 +9,7 @@ import {
   projectRoleBadgeClass,
 } from "../../utils/roles";
 import ProjectMembersPanel from "./ProjectMembersPanel";
+import ProjectSettingsPanel from "./ProjectSettingsPanel";
 import { ProjectPageSkeleton } from "../../components/ui/Skeleton";
 
 export default function ProjectsPage() {
@@ -30,6 +31,16 @@ export default function ProjectsPage() {
   useEffect(() => {
     if (projectId) dispatch(fetchProjectById(projectId));
   }, [projectId, dispatch]);
+
+  useEffect(() => {
+    setTab("board");
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!canManage && (tab === "members" || tab === "settings")) {
+      setTab("board");
+    }
+  }, [canManage, tab]);
 
   if (loading) {
     return <ProjectPageSkeleton />;
@@ -132,13 +143,32 @@ export default function ProjectsPage() {
               >
                 Members
               </button>
+              <button
+                type="button"
+                onClick={() => setTab("settings")}
+                disabled={!canManage}
+                className={`rounded-[calc(var(--radius-sm)+1px)] px-2.5 py-1 text-[11px] font-medium capitalize transition-colors duration-150 ${
+                  tab === "settings"
+                    ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-sm ring-1 ring-[var(--color-border)]"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                } ${!canManage ? "cursor-not-allowed opacity-50" : ""}`}
+                title={!canManage ? "Manager role required" : "Project settings"}
+              >
+                Settings
+              </button>
             </div>
           )}
         </div>
       )}
 
       <div className="flex-1 overflow-auto">
-        {tab === "members" ? <ProjectMembersPanel /> : <Outlet />}
+        {tab === "members" ? (
+          <ProjectMembersPanel />
+        ) : tab === "settings" ? (
+          <ProjectSettingsPanel />
+        ) : (
+          <Outlet />
+        )}
       </div>
     </div>
   );

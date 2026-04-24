@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   FaTachometerAlt,
   FaProjectDiagram,
@@ -7,17 +8,32 @@ import {
   FaRobot,
   FaChevronLeft,
   FaChevronRight,
+  FaShieldAlt,
 } from "react-icons/fa";
-
-const navItems = [
-  { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
-  { label: "Projects", to: "/projects", icon: FaProjectDiagram },
-  { label: "Chats", to: "/chats", icon: FaComments },
-  { label: "Meetings", to: "/meetings", icon: FaUsers },
-  { label: "AI Bot", to: "/aibot", icon: FaRobot },
-];
+import { isPlatformAdmin } from "../utils/roles";
 
 export default function Sidebar({ collapsed, setCollapsed }) {
+  const user = useSelector((s) => s.auth.user);
+  const { pathname } = useLocation();
+  const activeProject = useSelector((s) => s.projects.activeProject);
+  const projectsTo = activeProject?._id ? `/projects/${activeProject._id}` : "/projects";
+
+  const baseNavItems = [
+    { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
+    { label: "Projects", to: projectsTo, icon: FaProjectDiagram },
+    { label: "Chats", to: "/chats", icon: FaComments },
+    { label: "Meetings", to: "/meetings", icon: FaUsers },
+    { label: "AI Bot", to: "/aibot", icon: FaRobot },
+  ];
+
+  const navItems = isPlatformAdmin(user)
+    ? [
+        ...baseNavItems.slice(0, 1),
+        { label: "Platform", to: "/admin", icon: FaShieldAlt },
+        ...baseNavItems.slice(1),
+      ]
+    : baseNavItems;
+
   return (
     <aside
       className={`
@@ -56,19 +72,23 @@ export default function Sidebar({ collapsed, setCollapsed }) {
           const Icon = item.icon;
           return (
             <NavLink
-              key={item.to}
+              key={`${item.label}-${item.to}`}
               to={item.to}
-              className={({ isActive }) =>
-                `
+              className={({ isActive }) => {
+                const active =
+                  item.label === "Projects"
+                    ? pathname.startsWith("/projects")
+                    : isActive;
+                return `
                 flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium
                 transition-colors duration-150
                 ${
-                  isActive
+                  active
                     ? "bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] text-[var(--color-primary)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] dark:text-indigo-200"
                     : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                 }
-              `
-              }
+              `;
+              }}
             >
               <Icon className="min-w-[18px] text-[15px] opacity-90" />
               {!collapsed && <span>{item.label}</span>}

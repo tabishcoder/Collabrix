@@ -186,6 +186,20 @@ module.exports.updateSpaceMemberRole = async (req, res) => {
     const membership = space.members.find((m) => m.user.toString() === userId);
     if (!membership) return res.status(404).json({ message: 'Member not found' });
 
+    // Workspace admins cannot change their own role (e.g. self-demotion to member). Only the owner can adjust admin roles for them.
+    if (req.user._id.toString() === userId && callerRole === 'admin') {
+      return res.status(403).json({
+        message: 'Workspace admins cannot change their own role. Ask the workspace owner.',
+      });
+    }
+
+    // Only the owner may remove admin privileges from someone else (prevents one admin demoting another).
+    if (membership.role === 'admin' && newRole === 'member' && callerRole !== 'owner') {
+      return res.status(403).json({
+        message: 'Only the workspace owner can demote a workspace admin.',
+      });
+    }
+
     membership.role = newRole;
     await space.save();
 
@@ -212,6 +226,14 @@ module.exports.removeSpaceMember = async (req, res) => {
     const { userId } = req.params;
     if (space.owner.toString() === userId) {
       return res.status(400).json({ message: 'Cannot remove the space owner' });
+    }
+    if (req.user._id.toString() === userId) {
+      return res.status(400).json({ message: 'Use leave workspace to remove yourself from the team.' });
+    }
+
+    const targetMembership = space.members.find((m) => m.user.toString() === userId);
+    if (targetMembership?.role === 'admin' && callerRole !== 'owner') {
+      return res.status(403).json({ message: 'Only the workspace owner can remove a workspace admin.' });
     }
 
     space.members = space.members.filter((m) => m.user.toString() !== userId);

@@ -3,11 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 import { fetchSpaces } from "../features/spaces/spaceSlice";
 import WorkspaceGate from "../features/spaces/WorkspaceGate";
+import { isPlatformAdmin } from "../utils/roles";
 
 export default function ProtectedRoute() {
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((s) => s.auth);
+  const { isAuthenticated, user } = useSelector((s) => s.auth);
   const { activeSpace, initialized } = useSelector((s) => s.spaces);
+  const adminBypassGate = isPlatformAdmin(user) && !activeSpace;
 
   useEffect(() => {
     if (isAuthenticated && !initialized) {
@@ -25,7 +27,7 @@ export default function ProtectedRoute() {
     );
   }
 
-  if (!activeSpace) return <WorkspaceGate />;
+  if (!activeSpace && !adminBypassGate) return <WorkspaceGate />;
 
   return <Outlet />;
 }

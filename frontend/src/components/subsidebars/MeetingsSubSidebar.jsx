@@ -1,12 +1,32 @@
+import { useSelector } from "react-redux";
 import { FaCalendarAlt, FaPlus } from "react-icons/fa";
 
-export default function MeetingsSubSidebar() {
+export default function MeetingsSubSidebar({ collapsed }) {
+  const activeProject = useSelector((s) => s.projects.activeProject);
+
   return (
-    <aside className="hidden h-full min-h-0 w-60 shrink-0 flex-col border-r border-[var(--color-border-strong)] bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)] md:flex">
+    <aside
+      className={`
+        hidden h-full min-h-0 shrink-0 flex-col border-r border-[var(--color-border-strong)]
+        bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)] transition-all duration-300 ease-out md:flex
+        ${collapsed ? "w-20" : "w-60"}
+      `}
+    >
       <div className="border-b border-[var(--color-border)] p-4">
-        <h3 className="text-sm font-bold text-[var(--color-text-primary)]">
-          Meetings
-        </h3>
+        {collapsed ? (
+          <span className="text-lg" aria-hidden>
+            📅
+          </span>
+        ) : (
+          <div>
+            <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Meetings</h3>
+            {activeProject?.name && (
+              <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-[var(--color-text-muted)]" title={activeProject.name}>
+                {activeProject.name}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto p-3">

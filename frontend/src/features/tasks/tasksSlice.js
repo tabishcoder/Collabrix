@@ -1,5 +1,6 @@
 // src/features/tasks/tasksSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { logout, getMe, login } from "../auth/authSlice";
 import {
   fetchTasksByProjectApi,
   createTaskApi,
@@ -94,7 +95,13 @@ const tasksSlice = createSlice({
   },
 },
   extraReducers: (builder) => {
+    const resetToInitial = () => ({ ...initialState });
+
     builder
+      .addCase(logout.fulfilled, resetToInitial)
+      .addCase(logout.rejected, resetToInitial)
+      .addCase(getMe.rejected, resetToInitial)
+      .addCase(login.fulfilled, resetToInitial)
       .addCase(getProjectTasks.pending, (state) => {
         state.isLoading = true;
         state.isError = false;

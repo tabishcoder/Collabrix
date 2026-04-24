@@ -19,6 +19,7 @@ const taskRoutes = require('./routes/tasks.routes');
 const historyRoutes = require('./routes/history.routes');
 const chatRoutes   = require('./routes/chats.routes');
 const inviteRoutes = require('./routes/invites.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -101,6 +102,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/chats',   chatRoutes);
 app.use('/api/invites', inviteRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
