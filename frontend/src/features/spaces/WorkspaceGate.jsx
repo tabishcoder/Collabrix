@@ -22,15 +22,18 @@ export default function WorkspaceGate() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-      <div className="w-[80vw] h-[80vh] bg-[var(--color-card)] rounded-xl p-6 overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-6 text-[var(--color-primary)]">
-          Choose a Workspace
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-lg max-h-[min(88dvh,720px)] overflow-y-auto p-6 sm:p-8">
+        <h1 className="mb-2 text-2xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+          Choose a workspace
         </h1>
+        <p className="text-sm text-[var(--color-text-secondary)] mb-6">
+          Select an existing workspace or create a new one to continue.
+        </p>
 
         {loading && (
-          <p className="text-white/50 flex items-center gap-2">
-            <span className="w-3 h-3 border-2 border-white/20 border-t-indigo-400 rounded-full animate-spin inline-block" />
+          <p className="text-[var(--color-text-secondary)] flex items-center gap-2 text-sm">
+            <span className="w-3 h-3 border-2 border-[var(--color-border-strong)] border-t-indigo-400 rounded-full animate-spin inline-block" />
             Loading workspaces...
           </p>
         )}
@@ -43,13 +46,14 @@ export default function WorkspaceGate() {
             {spaces.map((space) => (
               <button
                 key={space._id}
+                type="button"
                 onClick={() => handleSelect(space)}
-                className="w-full text-left px-4 py-3 rounded-md bg-white/5 hover:bg-white/10 transition"
+                className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-left transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-hover)]"
               >
                 <p className="font-medium text-[var(--color-text-primary)]">
                   {space.name}
                 </p>
-                <p className="text-xs opacity-70 text-[var(--color-text-secondary)]">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   Owner: {space.owner?.name}
                 </p>
               </button>
@@ -68,13 +72,14 @@ export default function WorkspaceGate() {
             value={spaceName}
             onChange={(e) => setSpaceName(e.target.value)}
             placeholder="Workspace name"
-            className="w-full px-4 py-2 rounded-md bg-black/40 mb-4 outline-none text-[var(--color-text-primary)] placeholder:text-gray-400"
+            className="w-full px-4 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-bg)] border border-[var(--color-border-strong)] mb-4 outline-none text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:border-indigo-500/55"
           />
 
           <button
+            type="button"
             disabled={!spaceName}
             onClick={handleCreate}
-            className="px-4 py-2 rounded-md bg-[var(--color-primary)] text-white font-medium disabled:opacity-50 hover:bg-[var(--color-highlight)] transition"
+            className="px-4 py-2.5 rounded-[var(--radius-md)] bg-indigo-600 text-white font-medium disabled:opacity-50 hover:bg-[var(--color-primary-hover)] shadow-lg shadow-indigo-600/20 transition"
           >
             Create Workspace
           </button>

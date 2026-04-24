@@ -38,13 +38,13 @@ export const projectRoleLabel = (role) => {
 export const spaceRoleBadgeClass = (role) => {
   switch (role) {
     case 'owner':
-      return 'bg-purple-500/15 border-purple-500/30 text-purple-200';
+      return 'bg-purple-100 border-purple-200 text-purple-900 dark:bg-purple-500/15 dark:border-purple-500/30 dark:text-purple-200';
     case 'admin':
-      return 'bg-blue-500/15 border-blue-500/30 text-blue-200';
+      return 'bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-500/15 dark:border-blue-500/30 dark:text-blue-200';
     case 'member':
-      return 'bg-white/5 border-white/10 text-white/55';
+      return 'bg-slate-100 border-slate-200 text-slate-700 dark:bg-white/5 dark:border-white/10 dark:text-white/55';
     default:
-      return 'bg-white/5 border-white/10 text-white/60';
+      return 'bg-slate-100 border-slate-200 text-slate-700 dark:bg-white/5 dark:border-white/10 dark:text-white/60';
   }
 };
 
@@ -52,16 +52,16 @@ export const spaceRoleBadgeClass = (role) => {
 export const projectRoleBadgeClass = (role) => {
   switch (role) {
     case 'owner':
-      return 'bg-purple-500/15 border-purple-500/30 text-purple-200';
+      return 'bg-purple-100 border-purple-200 text-purple-900 dark:bg-purple-500/15 dark:border-purple-500/30 dark:text-purple-200';
     case 'admin':
-      return 'bg-blue-500/15 border-blue-500/30 text-blue-200';
+      return 'bg-blue-100 border-blue-200 text-blue-900 dark:bg-blue-500/15 dark:border-blue-500/30 dark:text-blue-200';
     case 'manager':
-      return 'bg-emerald-500/15 border-emerald-500/30 text-emerald-200';
+      return 'bg-emerald-100 border-emerald-200 text-emerald-900 dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-200';
     case 'contributor':
-      return 'bg-amber-500/12 border-amber-500/25 text-amber-100/90';
+      return 'bg-amber-100 border-amber-200 text-amber-900 dark:bg-amber-500/12 dark:border-amber-500/25 dark:text-amber-100/90';
     case 'viewer':
-      return 'bg-white/5 border-white/10 text-white/50';
+      return 'bg-slate-100 border-slate-200 text-slate-600 dark:bg-white/5 dark:border-white/10 dark:text-white/50';
     default:
-      return 'bg-white/5 border-white/10 text-white/60';
+      return 'bg-slate-100 border-slate-200 text-slate-700 dark:bg-white/5 dark:border-white/10 dark:text-white/60';
   }
 };

@@ -44,12 +44,12 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
-      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10 sm:py-12 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-md overflow-hidden">
 
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
-          <h3 className="text-base font-semibold text-white">Edit Board Columns</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">×</button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)]">
+          <h3 className="text-base font-semibold tracking-tight text-[var(--color-text-primary)]">Edit Board Columns</h3>
+          <button type="button" onClick={onClose} className="rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xl leading-none text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]">×</button>
         </div>
 
         <div className="px-6 py-4 space-y-2 max-h-72 overflow-y-auto">
@@ -58,7 +58,7 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
               <button
                 onClick={() => handleMoveUp(idx)}
                 disabled={idx === 0}
-                className="text-white/20 hover:text-white/60 disabled:opacity-20 transition"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] disabled:opacity-20 transition"
                 title="Move up"
               >
                 <FaGripVertical className="text-xs" />
@@ -67,12 +67,12 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
               <input
                 value={col.name}
                 onChange={(e) => handleNameChange(idx, e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50"
+                className="flex-1 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/55 focus:outline-none"
               />
 
               <button
                 onClick={() => handleRemove(idx)}
-                className="text-white/25 hover:text-red-400 transition"
+                className="text-[var(--color-text-muted)] transition hover:text-red-500 dark:hover:text-red-400"
                 title="Remove column"
               >
                 <FaTrash className="text-xs" />
@@ -82,7 +82,7 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
 
           <button
             onClick={handleAdd}
-            className="w-full py-2 rounded-md border border-dashed border-white/15 text-white/40 hover:text-white/70 hover:border-white/30 text-sm transition mt-2"
+            className="w-full py-2 rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] hover:border-[var(--color-border)] text-sm transition mt-2"
           >
             + Add Column
           </button>
@@ -90,17 +90,19 @@ export default function BoardColumnsEditor({ columns, saving, onSave, onClose })
           {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         </div>
 
-        <div className="px-6 py-4 border-t border-white/8 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-[var(--color-border)] flex justify-end gap-3">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-white/5 text-white/60 text-sm hover:bg-white/10 transition"
+            className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-medium transition"
+            className="px-4 py-2 rounded-[var(--radius-md)] bg-indigo-600 hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-medium shadow-lg shadow-indigo-600/20 transition"
           >
             {saving ? "Saving…" : "Save"}
           </button>

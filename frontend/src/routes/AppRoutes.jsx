@@ -22,8 +22,10 @@ export default function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-lg">Checking authentication...</p>
+      <div className="flex h-screen items-center justify-center bg-[var(--color-bg)]">
+        <p className="text-lg text-[var(--color-text-secondary)]">
+          Checking authentication...
+        </p>
       </div>
     );
   }
@@ -54,7 +56,12 @@ export default function AppRoutes() {
 
           {/* Projects */}
           <Route path="/projects" element={<ProjectsPage />}>
-            <Route index element={<div className="p-6 text-white/40">Select a project</div>} />
+            <Route
+              index
+              element={
+                <div className="p-6 text-[var(--color-text-muted)]">Select a project</div>
+              }
+            />
             <Route path=":projectId"        element={<TasksBoard />} />
             <Route path=":projectId/board"  element={<TasksBoard />} />
           </Route>

@@ -15,7 +15,7 @@ const priorityDotClass = (priority) => {
     case "urgent":
       return "bg-red-400";
     default:
-      return "bg-white/30";
+      return "bg-slate-300 dark:bg-white/30";
   }
 };
 
@@ -51,7 +51,7 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-[var(--color-bg)] p-4 rounded-lg shadow-md border border-white/5 hover:border-[var(--color-primary)] transition"
+      className="group bg-[color-mix(in_oklab,var(--color-bg-elevated)_88%,transparent)] p-3.5 sm:p-4 rounded-[var(--radius-md)] border border-[var(--color-border)] shadow-sm hover:border-indigo-500/35 hover:shadow-md hover:bg-[color-mix(in_oklab,var(--color-card-hover)_70%,transparent)] transition cursor-pointer focus-within:border-indigo-500/45"
       data-task-id={task._id}
       role="button"
       tabIndex={0}
@@ -84,7 +84,7 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
           <button
             type="button"
             onClick={(e) => e.stopPropagation()}
-            className="shrink-0 px-2 py-1 rounded-md border border-white/10 bg-white/5 text-white/40 hover:text-white/70 cursor-grab active:cursor-grabbing"
+            className="shrink-0 cursor-grab rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2 py-1 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] active:cursor-grabbing"
             title="Drag task"
             {...attributes}
             {...listeners}
@@ -101,8 +101,8 @@ export default function TaskCard({ task, onOpen, canDrag = true, canManage = fal
             <span
               className={`px-2 py-0.5 rounded-full border text-[11px] ${
                 isOverdue(task.dueDate)
-                  ? "bg-red-500/10 border-red-500/30 text-red-200"
-                  : "bg-white/5 border-white/10 text-white/50"
+                  ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-200"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
               }`}
               title="Due date"
             >

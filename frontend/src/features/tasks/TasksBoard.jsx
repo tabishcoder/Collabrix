@@ -1,6 +1,6 @@
 import { DndContext, closestCorners } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector }  from "react-redux";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ import TaskListRow  from "./TaskListRow";
 import AddTaskModal from "./AddTaskModal";
 import BoardColumnsEditor from "./BoardColumnsEditor";
 import TaskDetailModal from "./TaskDetailModal";
+import TaskFilters, { defaultTaskFilters, applyTaskFilters } from "./TaskFilters";
 
 const DEFAULT_COLUMNS = [
   { key: "todo",        name: "To Do",      order: 0 },
@@ -33,6 +34,7 @@ export default function TasksBoard() {
   const [showColEditor,   setShowColEditor]   = useState(false);
   const [savingCols,      setSavingCols]      = useState(false);
   const [activeTaskId,    setActiveTaskId]    = useState(null);
+  const [taskFilters, setTaskFilters] = useState(() => defaultTaskFilters());
 
   // Resolve columns: prefer activeProject boardColumns, fallback to defaults
   const columns = (activeProject?._id === projectId && activeProject?.boardColumns?.length > 0)
@@ -47,10 +49,19 @@ export default function TasksBoard() {
   const activeTask = activeTaskId ? tasks.find((t) => t._id === activeTaskId) : null;
   const projectMembers = activeProject?.members ?? [];
 
+  const filteredTasks = useMemo(
+    () => applyTaskFilters(tasks, taskFilters, columns),
+    [tasks, taskFilters, columns],
+  );
+
   // Fetch tasks when project changes
   useEffect(() => {
     if (projectId) dispatch(getProjectTasks(projectId));
   }, [dispatch, projectId]);
+
+  useEffect(() => {
+    setTaskFilters(defaultTaskFilters());
+  }, [projectId]);
 
   // Fetch project if activeProject doesn't match
   useEffect(() => {
@@ -73,7 +84,7 @@ export default function TasksBoard() {
     if (colKeys.includes(over.id)) {
       newStatus = over.id;
     } else {
-      const overTask = tasks.find((t) => t._id === over.id);
+      const overTask = filteredTasks.find((t) => t._id === over.id) || tasks.find((t) => t._id === over.id);
       if (!overTask) return;
       newStatus = overTask.status;
     }
@@ -109,8 +120,8 @@ export default function TasksBoard() {
   // ── Loading / error states ────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center gap-3 text-white/40">
-        <div className="w-4 h-4 border-2 border-white/20 border-t-indigo-400 rounded-full animate-spin" />
+      <div className="flex items-center gap-3 p-6 text-[var(--color-text-muted)]">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-border-strong)] border-t-indigo-500" />
         Loading tasks...
       </div>
     );
@@ -124,39 +135,44 @@ export default function TasksBoard() {
     );
   }
 
-  const getTasksByKey = (key) => tasks.filter((t) => t.status === key);
+  const getTasksByKey = (key) => filteredTasks.filter((t) => t.status === key);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 min-h-screen bg-[var(--color-bg)]">
+    <div className="min-h-0 space-y-5">
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
               {activeProject?.name || "Project Board"}
             </h2>
             {isViewer && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/50">
+              <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-2 py-0.5 text-[11px] text-[var(--color-text-muted)]">
                 Read Only
               </span>
             )}
           </div>
-          <p className="text-white/40 text-xs mt-0.5">{tasks.length} tasks total</p>
+          <p className="text-[var(--color-text-muted)] text-xs mt-0.5">
+            {filteredTasks.length === tasks.length
+              ? `${tasks.length} tasks`
+              : `${filteredTasks.length} of ${tasks.length} tasks`}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {/* View toggle */}
-          <div className="flex rounded-lg border border-white/10 overflow-hidden">
+          <div className="flex overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)]">
             {["kanban", "list"].map((mode) => (
               <button
+                type="button"
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`px-3 py-1.5 text-xs font-medium capitalize transition
                   ${viewMode === mode
                     ? "bg-indigo-600 text-white"
-                    : "bg-white/5 text-white/50 hover:bg-white/10"
+                    : "bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                   }`}
               >
                 {mode}
@@ -167,8 +183,9 @@ export default function TasksBoard() {
           {/* Column editor (managers) */}
           {canManage && (
             <button
+              type="button"
               onClick={() => setShowColEditor(true)}
-              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white text-xs font-medium transition"
+              className="rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
             >
               Edit Columns
             </button>
@@ -177,8 +194,9 @@ export default function TasksBoard() {
           {/* Add task (contributors+) */}
           {canWrite && (
             <button
+              type="button"
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition"
+              className="rounded-[var(--radius-md)] bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition hover:bg-[var(--color-primary-hover)]"
             >
               + Add Task
             </button>
@@ -186,10 +204,12 @@ export default function TasksBoard() {
         </div>
       </div>
 
+      <TaskFilters filters={taskFilters} onChange={setTaskFilters} projectMembers={projectMembers} />
+
       {/* ── Kanban ──────────────────────────────────────────────────────── */}
       {viewMode === "kanban" && (
         <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-          <div className="flex gap-5 items-start overflow-x-auto pb-4">
+          <div className="flex gap-4 sm:gap-5 items-start overflow-x-auto pb-2 -mx-1 px-1 scroll-smooth">
             {columns.map((col) => (
               <SortableContext
                 key={col.key}
@@ -217,14 +237,14 @@ export default function TasksBoard() {
             return (
               <div key={col.key}>
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-sm font-semibold text-white/80">{col.name}</span>
-                  <span className="text-xs text-white/30 bg-white/5 px-2 py-0.5 rounded-full">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">{col.name}</span>
+                  <span className="rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]">
                     {colTasks.length}
                   </span>
                 </div>
 
                 {colTasks.length === 0 ? (
-                  <p className="text-white/25 text-xs pl-2">No tasks</p>
+                  <p className="pl-2 text-xs text-[var(--color-text-muted)]">No tasks</p>
                 ) : (
                   <div className="space-y-2">
                     {colTasks.map((task) => (

@@ -178,13 +178,13 @@ export default function WorkspaceMembersModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
-      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 sm:py-10 app-modal-backdrop">
+      <div className="app-modal-panel flex w-full max-w-4xl max-h-[min(92dvh,880px)] flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
           <div>
-            <h3 className="text-base font-semibold text-white">Workspace members</h3>
-            <p className="text-xs text-white/40 mt-0.5">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Workspace members</h3>
+            <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
               {activeSpace?.name} • Your role: {spaceRoleLabel(activeSpaceRole)}
             </p>
           </div>
@@ -194,15 +194,16 @@ export default function WorkspaceMembersModal({ onClose }) {
                 type="button"
                 disabled={actingId === "leave-space"}
                 onClick={handleLeaveWorkspace}
-                className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/25 text-red-200 hover:bg-red-500/15 disabled:opacity-60 text-xs font-medium transition"
+                className="rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-500/15 disabled:opacity-60 dark:text-red-200"
                 title="Leave workspace"
               >
                 {actingId === "leave-space" ? "Leaving…" : "Leave"}
               </button>
             )}
             <button
+              type="button"
               onClick={onClose}
-              className="text-white/30 hover:text-white transition rounded-lg p-1"
+              className="rounded-[var(--radius-sm)] p-1.5 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
               aria-label="Close"
             >
               <FaTimes />
@@ -211,8 +212,8 @@ export default function WorkspaceMembersModal({ onClose }) {
         </div>
 
         {/* Tabs */}
-        <div className="px-6 pt-4">
-          <div className="flex items-center gap-2 border-b border-white/8">
+        <div className="shrink-0 px-6 pt-4">
+          <div className="flex items-center gap-2 border-b border-[var(--color-border)]">
             {[
               { key: "members", label: "Members" },
               { key: "invites", label: "Pending invites" },
@@ -224,39 +225,39 @@ export default function WorkspaceMembersModal({ onClose }) {
                 disabled={!isAdmin && t.key !== "members"}
                 className={`px-3 py-2 text-sm font-medium border-b-2 transition ${
                   tab === t.key
-                    ? "text-white border-indigo-500"
-                    : "text-white/50 border-transparent hover:text-white/70"
+                    ? "border-indigo-500 text-[var(--color-text-primary)]"
+                    : "border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                 } ${!isAdmin && t.key !== "members" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {t.label}
               </button>
             ))}
-            <div className="ml-auto text-xs text-white/30 pb-2">
+            <div className="ml-auto pb-2 text-xs text-[var(--color-text-muted)]">
               {isAdmin ? "Admin controls enabled" : "Read-only"}
             </div>
           </div>
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 min-h-0 overflow-y-auto flex-1">
           {/* Members */}
           {tab === "members" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-white/70 font-medium">
+                <p className="text-sm text-[var(--color-text-secondary)] font-medium">
                   {loadingMembers ? "Loading members..." : `${members.length} member(s)`}
                 </p>
                 <button
                   onClick={loadMembers}
-                  className="text-xs text-indigo-300 hover:text-indigo-200"
+                  className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200"
                 >
                   Refresh
                 </button>
               </div>
 
-              <div className="overflow-x-auto border border-white/8 rounded-xl">
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-white/3 text-white/50 text-xs">
+                  <thead className="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] text-xs">
                     <tr>
                       <th className="text-left px-4 py-3">User</th>
                       <th className="text-left px-4 py-3">Email</th>
@@ -271,7 +272,7 @@ export default function WorkspaceMembersModal({ onClose }) {
                       const isOwner = m.role === "owner";
                       const busy = actingId === userId;
                       return (
-                        <tr key={userId} className="border-t border-white/8 hover:bg-white/3">
+                        <tr key={userId} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3 min-w-[220px]">
                               <div
@@ -281,19 +282,19 @@ export default function WorkspaceMembersModal({ onClose }) {
                                 {avatarText(u?.name || u?.email)}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-white/80 font-medium truncate">{u?.name || "—"}</p>
-                                <p className="text-xs text-white/35 truncate">{isOwner ? "Workspace owner" : "Member"}</p>
+                                <p className="text-[var(--color-text-primary)] font-medium truncate">{u?.name || "—"}</p>
+                                <p className="text-xs text-[var(--color-text-muted)] truncate">{isOwner ? "Workspace owner" : "Member"}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-white/60">{u?.email || "—"}</td>
+                          <td className="px-4 py-3 text-[var(--color-text-secondary)]">{u?.email || "—"}</td>
                           <td className="px-4 py-3">
                             {isAdmin && !isOwner ? (
                               <select
                                 value={m.role}
                                 disabled={busy}
                                 onChange={(e) => handleChangeRole(userId, e.target.value)}
-                                className="text-xs rounded-md bg-white/5 border border-white/10 text-white/70 px-2 py-1 focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-60"
+                                className="cursor-pointer rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none disabled:opacity-60"
                               >
                                 <option value="member">Member</option>
                                 <option value="admin">Admin</option>
@@ -309,12 +310,12 @@ export default function WorkspaceMembersModal({ onClose }) {
                               <button
                                 disabled={busy}
                                 onClick={() => handleRemoveMember(userId)}
-                                className="text-xs px-2.5 py-1.5 rounded-md bg-red-500/10 border border-red-500/25 text-red-200 hover:bg-red-500/15 disabled:opacity-60"
+                                className="rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-500/15 dark:text-red-200 disabled:opacity-60"
                               >
                                 Remove
                               </button>
                             ) : (
-                              <span className="text-xs text-white/20">—</span>
+                              <span className="text-xs text-[var(--color-text-muted)]">—</span>
                             )}
                           </td>
                         </tr>
@@ -323,7 +324,7 @@ export default function WorkspaceMembersModal({ onClose }) {
 
                     {!loadingMembers && members.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-white/30 text-sm">
+                        <td colSpan={4} className="px-4 py-6 text-center text-[var(--color-text-muted)] text-sm">
                           No members found.
                         </td>
                       </tr>
@@ -338,20 +339,20 @@ export default function WorkspaceMembersModal({ onClose }) {
           {tab === "invites" && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-white/70 font-medium">
+                <p className="text-sm text-[var(--color-text-secondary)] font-medium">
                   {loadingInvites ? "Loading invites..." : `${invites.length} pending invite(s)`}
                 </p>
                 <button
                   onClick={loadInvites}
-                  className="text-xs text-indigo-300 hover:text-indigo-200"
+                  className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200"
                 >
                   Refresh
                 </button>
               </div>
 
-              <div className="overflow-x-auto border border-white/8 rounded-xl">
+              <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-white/3 text-white/50 text-xs">
+                  <thead className="bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] text-xs">
                     <tr>
                       <th className="text-left px-4 py-3">Email</th>
                       <th className="text-left px-4 py-3">Role</th>
@@ -363,21 +364,21 @@ export default function WorkspaceMembersModal({ onClose }) {
                     {invites.map((inv) => {
                       const busy = actingId === inv._id;
                       return (
-                        <tr key={inv._id} className="border-t border-white/8 hover:bg-white/3">
-                          <td className="px-4 py-3 text-white/70">{inv.email}</td>
+                        <tr key={inv._id} className="border-t border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]">
+                          <td className="px-4 py-3 text-[var(--color-text-secondary)]">{inv.email}</td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex px-2 py-1 rounded-full border text-xs ${spaceRoleBadgeClass(inv.role)}`}>
                               {spaceRoleLabel(inv.role)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-white/50 text-xs">
+                          <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
                             {inv.expiresAt ? new Date(inv.expiresAt).toLocaleString() : "—"}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <button
                               disabled={busy}
                               onClick={() => handleRevokeInvite(inv._id)}
-                              className="text-xs px-2.5 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/8 disabled:opacity-60"
+                              className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-muted)] px-2.5 py-1.5 text-xs text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] disabled:opacity-60"
                             >
                               Revoke
                             </button>
@@ -388,7 +389,7 @@ export default function WorkspaceMembersModal({ onClose }) {
 
                     {!loadingInvites && invites.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-white/30 text-sm">
+                        <td colSpan={4} className="px-4 py-6 text-center text-[var(--color-text-muted)] text-sm">
                           No pending invites.
                         </td>
                       </tr>
@@ -401,33 +402,33 @@ export default function WorkspaceMembersModal({ onClose }) {
 
           {/* Invite (reuse existing InviteModal UI inline by rendering it) */}
           {tab === "invite" && (
-            <div className="rounded-xl border border-white/8 overflow-hidden">
-              <div className="p-4 bg-white/3 border-b border-white/8">
-                <p className="text-sm text-white/70 font-medium">Send a new invitation</p>
-                <p className="text-xs text-white/40 mt-1">
+            <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+              <div className="p-4 bg-[var(--color-surface-muted)] border-b border-[var(--color-border)]">
+                <p className="text-sm text-[var(--color-text-secondary)] font-medium">Send a new invitation</p>
+                <p className="text-xs text-[var(--color-text-muted)] mt-1">
                   Invite someone to join this workspace.
                 </p>
               </div>
               <div className="p-4">
-                <div className="text-xs text-white/40 mb-4">
-                  Tip: After sending, switch to <span className="text-white/60">Pending invites</span> to revoke if needed.
+                <div className="text-xs text-[var(--color-text-muted)] mb-4">
+                  Tip: After sending, switch to <span className="text-[var(--color-text-secondary)]">Pending invites</span> to revoke if needed.
                 </div>
                 <form onSubmit={handleSendInvite} className="space-y-4">
                   <div>
-                    <label className="text-xs text-white/50 mb-1.5 block">Email *</label>
+                    <label className="text-xs text-[var(--color-text-muted)] mb-1.5 block">Email *</label>
                     <input
                       type="email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="colleague@example.com"
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/60 transition"
+                      className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-2.5 text-sm text-[var(--color-text-primary)] transition focus:border-indigo-500/60 focus:outline-none"
                       required
                       disabled={!isAdmin || sendingInvite}
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs text-white/50 mb-1.5 block">Role</label>
+                    <label className="text-xs text-[var(--color-text-muted)] mb-1.5 block">Role</label>
                     <div className="grid grid-cols-2 gap-2">
                       {[
                         { value: "member", title: "Member", desc: "Can participate in projects they're added to" },
@@ -440,12 +441,12 @@ export default function WorkspaceMembersModal({ onClose }) {
                           disabled={!isAdmin || sendingInvite}
                           className={`text-left px-3 py-2.5 rounded-lg border transition disabled:opacity-60 ${
                             inviteRole === r.value
-                              ? "border-indigo-500/60 bg-indigo-600/15 text-white"
-                              : "border-white/8 bg-white/3 text-white/50 hover:border-white/20 hover:text-white/80"
+                              ? "border-indigo-500/60 bg-indigo-600/15 text-indigo-950 dark:text-white"
+                              : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-muted)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]"
                           }`}
                         >
                           <p className="text-sm font-medium">{r.title}</p>
-                          <p className="text-[11px] text-white/40 leading-tight mt-0.5">{r.desc}</p>
+                          <p className="text-[11px] text-[var(--color-text-muted)] leading-tight mt-0.5">{r.desc}</p>
                         </button>
                       ))}
                     </div>
@@ -461,14 +462,14 @@ export default function WorkspaceMembersModal({ onClose }) {
                 </form>
 
                 {inviteLink && (
-                  <div className="mt-4 bg-white/4 border border-white/8 rounded-lg p-3">
-                    <p className="text-xs text-white/40 mb-2">Share link directly:</p>
+                  <div className="mt-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-3">
+                    <p className="text-xs text-[var(--color-text-muted)] mb-2">Share link directly:</p>
                     <div className="flex items-center gap-2">
-                      <p className="flex-1 text-xs text-white/60 truncate font-mono">{inviteLink}</p>
+                      <p className="flex-1 text-xs text-[var(--color-text-secondary)] truncate font-mono">{inviteLink}</p>
                       <button
                         type="button"
                         onClick={copyLink}
-                        className="shrink-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition bg-white/8 text-white/60 hover:bg-white/15 hover:text-white"
+                        className="shrink-0 rounded-md bg-[var(--color-surface-muted)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                       >
                         Copy
                       </button>

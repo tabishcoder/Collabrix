@@ -20,7 +20,7 @@ export default function TaskListRow({ task, columns, canWrite, onOpen }) {
 
   return (
     <div
-      className="flex items-center gap-4 bg-[var(--color-card)] border border-white/5 rounded-lg px-4 py-3 hover:border-white/10 transition group cursor-pointer"
+      className="group flex cursor-pointer items-center gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 transition hover:border-[var(--color-border-strong)]"
       role="button"
       tabIndex={0}
       onClick={() => onOpen?.()}
@@ -29,13 +29,12 @@ export default function TaskListRow({ task, columns, canWrite, onOpen }) {
       }}
     >
 
-      {/* Status badge / selector */}
       {canWrite ? (
         <select
           value={task.status}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => handleStatusChange(e.target.value)}
-          className="text-xs rounded-md bg-white/5 border border-white/10 text-white/70 px-2 py-1 focus:outline-none focus:border-indigo-500/50 cursor-pointer"
+          className="cursor-pointer rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-2 py-1 text-xs text-[var(--color-text-primary)] focus:border-indigo-500/50 focus:outline-none"
         >
           {columns.map((col) => (
             <option key={col.key} value={col.key}>
@@ -44,16 +43,14 @@ export default function TaskListRow({ task, columns, canWrite, onOpen }) {
           ))}
         </select>
       ) : (
-        <span className="text-xs bg-white/8 text-white/50 px-2 py-1 rounded-md">{colName}</span>
+        <span className="rounded-md bg-[var(--color-surface-muted)] px-2 py-1 text-xs text-[var(--color-text-muted)]">{colName}</span>
       )}
 
-      {/* Title */}
-      <span className="flex-1 text-sm text-white/80 font-medium truncate">{task.title}</span>
+      <span className="flex-1 truncate text-sm font-medium text-[var(--color-text-primary)]">{task.title}</span>
 
-      {/* Assignee */}
       {task.assignee && (
         <div
-          className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white"
           title={task.assignee.name}
         >
           {task.assignee.name?.[0] ?? "?"}

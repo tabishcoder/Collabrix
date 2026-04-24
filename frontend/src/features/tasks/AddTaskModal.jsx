@@ -47,19 +47,19 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4">
-      <div className="bg-[var(--color-card)] border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 z-50 flex justify-center items-center px-4 py-10 sm:py-12 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-md overflow-hidden p-6 sm:p-7">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="font-semibold text-lg text-white">New Task</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-xl leading-none">×</button>
+          <h3 className="text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">New Task</h3>
+          <button type="button" onClick={onClose} className="rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xl leading-none text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs text-white/50 mb-1 block">Title *</label>
+            <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Title *</label>
             <input
               autoFocus
-              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] transition focus:border-indigo-500/55 focus:outline-none"
               placeholder="Task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -68,10 +68,10 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
           </div>
 
           <div>
-            <label className="text-xs text-white/50 mb-1 block">Description</label>
+            <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Description</label>
             <textarea
               rows={3}
-              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition resize-none"
+              className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] transition focus:border-indigo-500/55 focus:outline-none"
               placeholder="Optional description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -79,11 +79,11 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
           </div>
 
           <div>
-            <label className="text-xs text-white/50 mb-1 block">Initial column</label>
+            <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Initial column</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer"
+              className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/55 focus:outline-none"
             >
               {columns.map((col) => (
                 <option key={col.key} value={col.key}>{col.name}</option>
@@ -92,11 +92,11 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
           </div>
 
           <div>
-            <label className="text-xs text-white/50 mb-1 block">Assignee</label>
+            <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Assignee</label>
             <select
               value={assigneeId}
               onChange={(e) => setAssigneeId(e.target.value)}
-              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer"
+              className="w-full cursor-pointer rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] p-2.5 text-sm text-[var(--color-text-primary)] focus:border-indigo-500/55 focus:outline-none"
             >
               <option value="">Unassigned</option>
               {projectMembers.map((u) => (
@@ -106,7 +106,7 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
               ))}
             </select>
             {activeProject?._id !== projectId && (
-              <p className="text-[11px] text-white/30 mt-1">
+              <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">
                 Loading project members…
               </p>
             )}
@@ -116,14 +116,14 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-white/5 text-white/60 hover:text-white text-sm transition"
+              className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !title.trim()}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-medium transition"
+              className="px-4 py-2 rounded-[var(--radius-md)] bg-indigo-600 hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-medium shadow-lg shadow-indigo-600/20 transition"
             >
               {submitting ? "Creating…" : "Create Task"}
             </button>

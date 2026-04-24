@@ -18,6 +18,7 @@ import LogoutButton from "./LogoutButton";
 import InviteModal  from "../features/invites/InviteModal";
 import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
 import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../utils/roles";
+import ThemeToggle from "../theme/ThemeToggle";
 
 export default function TopNavbar({ onToggleSidebar }) {
   const dispatch  = useDispatch();
@@ -49,15 +50,16 @@ export default function TopNavbar({ onToggleSidebar }) {
 
   return (
     <>
-    <header className="h-16 bg-[#0a0a0b]/95 backdrop-blur-lg border-b border-white/8 flex items-center justify-between px-8 sticky top-0 z-50 shadow-sm">
+    <header className="h-16 shrink-0 z-50 sticky top-0 flex items-center justify-between px-4 md:px-6 lg:px-8 border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_88%,transparent)] backdrop-blur-lg shadow-[var(--shadow-nav)]">
 
       {/* LEFT SECTION */}
       <div className="flex items-center gap-6">
 
         {/* Mobile Menu */}
         <button
+          type="button"
           onClick={onToggleSidebar}
-          className="p-2 hover:bg-white/8 rounded-lg text-white/70 md:hidden transition-colors duration-200"
+          className="rounded-lg p-2 text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] md:hidden"
         >
           <FaBars size={18} />
         </button>
@@ -68,18 +70,19 @@ export default function TopNavbar({ onToggleSidebar }) {
           {/* 🔵 WORKSPACE */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => toggleDropdown("workspace")}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600/15 border border-indigo-500/30 hover:bg-indigo-600/25 transition-all duration-200 font-medium"
+              className="flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-600/15 px-4 py-2.5 font-medium transition-all duration-200 hover:bg-indigo-600/25 dark:border-indigo-500/30"
             >
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-[11px] font-bold text-white">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-[11px] font-bold text-white">
                 {activeSpace?.name?.[0] || "W"}
               </div>
 
-              <div className="hidden lg:flex flex-col leading-tight">
-                <span className="text-[11px] text-indigo-400 uppercase tracking-wider font-semibold">
+              <div className="hidden flex-col leading-tight lg:flex">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
                   Workspace
                 </span>
-                <span className="text-sm font-bold text-indigo-100">
+                <span className="text-sm font-bold text-indigo-950 dark:text-indigo-100">
                   {activeSpace?.name || "Workspace"}
                 </span>
               </div>
@@ -94,35 +97,40 @@ export default function TopNavbar({ onToggleSidebar }) {
               )}
 
               <FaChevronDown
-                className={`text-xs text-white/40 transition ${
+                className={`text-xs text-[var(--color-text-muted)] transition ${
                   openDropdown === "workspace" ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             {openDropdown === "workspace" && (
-              <div className="absolute left-0 mt-3 w-60 bg-[#0f0f11] border border-white/12 rounded-lg shadow-lg p-2 backdrop-blur-sm">
-                <p className="px-3 py-2 text-xs text-indigo-400 uppercase font-bold tracking-wider">
+              <div className="absolute left-0 mt-3 w-60 rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-2 shadow-lg backdrop-blur-sm">
+                <p className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                   Workspaces
                 </p>
 
-                <button className="w-full px-3 py-2.5 text-left rounded-md hover:bg-indigo-600/20 text-white font-medium transition-colors duration-150">
+                <button
+                  type="button"
+                  className="w-full rounded-md px-3 py-2.5 text-left font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-indigo-600/15 dark:hover:bg-indigo-600/20"
+                >
                   {activeSpace?.name}
                 </button>
 
                 {/* Invite Members — admin/owner only */}
                 {isSpaceAdmin && (
                   <>
-                    <div className="h-[1px] bg-white/8 my-1.5" />
+                    <div className="my-1.5 h-px bg-[var(--color-border)]" />
                     <button
+                      type="button"
                       onClick={() => { setOpenDropdown(null); setShowMembers(true); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors duration-150"
+                      className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                     >
                       Manage Members
                     </button>
                     <button
+                      type="button"
                       onClick={() => { setOpenDropdown(null); setShowInvite(true); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-indigo-300 hover:text-indigo-200 hover:bg-indigo-600/15 transition-colors duration-150"
+                      className="flex w-full items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-indigo-700 transition-colors duration-150 hover:bg-indigo-600/15 hover:text-indigo-900 dark:text-indigo-300 dark:hover:text-indigo-200"
                     >
                       <FaUserPlus className="text-xs" />
                       Invite Members
@@ -130,9 +138,12 @@ export default function TopNavbar({ onToggleSidebar }) {
                   </>
                 )}
 
-                <div className="h-[1px] bg-white/8 my-1.5" />
+                <div className="my-1.5 h-px bg-[var(--color-border)]" />
 
-                <button className="w-full px-3 py-2.5 text-left text-sm text-white/70 hover:text-white hover:bg-white/8 rounded-md transition-colors duration-150">
+                <button
+                  type="button"
+                  className="w-full rounded-md px-3 py-2.5 text-left text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                >
                   + New Workspace
                 </button>
               </div>
@@ -140,45 +151,46 @@ export default function TopNavbar({ onToggleSidebar }) {
           </div>
 
           {/* DOT SEPARATOR */}
-          <div className="w-1 h-1 bg-white/30 rounded-full" />
+          <div className="h-1 w-1 rounded-full bg-[var(--color-text-muted)]" />
 
           {/* 🟢 PROJECT */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => toggleDropdown("project")}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/12 border border-emerald-500/25 hover:bg-emerald-500/20 transition-all duration-200 font-medium"
+              className="flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/12 px-4 py-2.5 font-medium transition-all duration-200 hover:bg-emerald-500/20"
             >
-              <FaFolder className="text-emerald-400 text-sm" />
+              <FaFolder className="text-sm text-emerald-600 dark:text-emerald-400" />
 
               <div className="flex flex-col leading-tight">
-                <span className="text-[11px] text-emerald-400 uppercase font-semibold tracking-wider">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                   Project
                 </span>
-                <span className="text-sm text-white font-bold truncate max-w-[120px]">
+                <span className="max-w-[120px] truncate text-sm font-bold text-[var(--color-text-primary)]">
                   {activeProject?.name || "Select Project"}
                 </span>
               </div>
 
               <FaChevronDown
-                className={`text-xs text-white/40 transition ${
+                className={`text-xs text-[var(--color-text-muted)] transition ${
                   openDropdown === "project" ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             {openDropdown === "project" && (
-              <div className="absolute left-0 mt-3 w-72 bg-[#0f0f11] border border-white/12 rounded-lg shadow-lg overflow-hidden backdrop-blur-sm">
+              <div className="absolute left-0 mt-3 w-72 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-lg backdrop-blur-sm">
 
                 {/* Search */}
-                <div className="p-3 border-b border-white/8">
+                <div className="border-b border-[var(--color-border)] p-3">
                   <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-xs" />
+                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)]" />
                     <input
                       autoFocus
                       value={projectSearch}
                       onChange={(e) => setProjectSearch(e.target.value)}
                       placeholder="Search project..."
-                      className="w-full bg-white/8 border border-white/12 rounded-md py-2 pl-8 pr-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-150"
+                      className="w-full rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] py-2 pl-8 pr-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all duration-150"
                     />
                   </div>
                 </div>
@@ -187,23 +199,27 @@ export default function TopNavbar({ onToggleSidebar }) {
                 <div className="max-h-60 overflow-y-auto p-1.5">
                   {filteredProjects.map((p) => (
                     <button
+                      type="button"
                       key={p._id}
                       onClick={() => {
                         dispatch(setActiveProject(p));
                         navigate(`/projects/${p._id}`);
                         setOpenDropdown(null);
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-emerald-600/25 transition-colors duration-150"
+                      className="flex w-full items-center justify-between rounded-md px-3 py-2.5 text-sm text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-emerald-600/20 hover:text-[var(--color-text-primary)] dark:hover:bg-emerald-600/25"
                     >
                       <span className="font-medium">{p.name}</span>
                       {p._id === activeProject?._id && (
-                        <FaCheckCircle className="text-emerald-400 text-xs" />
+                        <FaCheckCircle className="text-xs text-emerald-600 dark:text-emerald-400" />
                       )}
                     </button>
                   ))}
                 </div>
 
-                <button className="w-full px-4 py-3 text-xs text-emerald-400 font-semibold border-t border-white/8 hover:bg-white/8 transition-colors duration-150">
+                <button
+                  type="button"
+                  className="w-full border-t border-[var(--color-border)] px-4 py-3 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-[var(--color-surface-muted)] dark:text-emerald-400 dark:hover:bg-white/[0.06]"
+                >
                   <FaPlus className="inline mr-2" />
                   New Project
                 </button>
@@ -216,11 +232,11 @@ export default function TopNavbar({ onToggleSidebar }) {
       {/* 🔍 CENTER SEARCH */}
       <div className="hidden md:flex flex-1 justify-center px-8">
         <div className="w-full max-w-md relative">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-xs" />
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--color-text-muted)]" />
           <input
             type="text"
             placeholder="Search anything..."
-            className="w-full bg-white/8 border border-white/12 rounded-lg py-2.5 pl-9 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all duration-150"
+            className="w-full rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] py-2.5 pl-9 pr-4 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all duration-150"
           />
         </div>
       </div>
@@ -229,25 +245,30 @@ export default function TopNavbar({ onToggleSidebar }) {
       <div className="flex items-center gap-4">
 
         {/* Timer */}
-        <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2 bg-emerald-500/15 border border-emerald-500/30 rounded-full">
-          <FaClock className="text-emerald-400 text-xs" />
-          <span className="text-xs text-emerald-400 font-mono font-bold">
+        <div className="hidden items-center gap-2.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-2 sm:flex">
+          <FaClock className="text-xs text-emerald-600 dark:text-emerald-400" />
+          <span className="font-mono text-xs font-bold text-emerald-700 dark:text-emerald-400">
             01:24:05
           </span>
         </div>
 
+        <ThemeToggle />
+
         {/* Notifications */}
-        <button className="p-2.5 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200 relative">
+        <button
+          type="button"
+          className="relative rounded-lg p-2.5 text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+        >
           <FaBell size={16} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
         </button>
 
         {/* Profile */}
         <div className="flex items-center gap-3">
-          <span className="hidden md:block text-sm text-white/70 font-medium">
+          <span className="hidden text-sm font-medium text-[var(--color-text-secondary)] md:block">
             {user?.name}
           </span>
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg hover:shadow-indigo-500/50 transition-shadow duration-200">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-lg transition-shadow duration-200 hover:shadow-indigo-500/50">
             {user?.name?.[0] || "U"}
           </div>
         </div>

@@ -47,21 +47,21 @@ export default function ProjectsSubSidebar({ collapsed }) {
   return (
     <aside
       className={`
-        h-screen flex flex-col
-        bg-[var(--color-card)]
-        border-r border-white/10
+        h-full min-h-0 flex flex-col shrink-0
+        bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)]
+        border-r border-[var(--color-border-strong)]
         transition-all duration-300
         ${collapsed ? "w-20" : "w-64"}
       `}
     >
       {/* HEADER */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-[var(--color-border)]">
         {collapsed ? (
           <div className="text-center text-lg">📁</div>
         ) : (
           <>
-            <h3 className="text-sm font-semibold text-white/80">Projects</h3>
-            <p className="text-xs text-white/40 mt-1 truncate">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Projects</h3>
+            <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate">
               {activeSpace?.name || "Workspace"}
             </p>
           </>
@@ -72,7 +72,7 @@ export default function ProjectsSubSidebar({ collapsed }) {
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {loading && (
           <div className="flex items-center justify-center py-6">
-            <FaSpinner className="animate-spin text-white/30" />
+            <FaSpinner className="animate-spin text-[var(--color-text-muted)]" />
           </div>
         )}
 
@@ -81,7 +81,7 @@ export default function ProjectsSubSidebar({ collapsed }) {
         )}
 
         {!loading && !error && projects.length === 0 && (
-          <p className="text-xs text-white/30 px-3 py-4 text-center">
+          <p className="px-3 py-4 text-center text-xs text-[var(--color-text-muted)]">
             {canCreate ? "No projects yet. Create one!" : "No projects yet."}
           </p>
         )}
@@ -92,10 +92,10 @@ export default function ProjectsSubSidebar({ collapsed }) {
             to={`/projects/${project._id}`}
             onClick={() => dispatch(setActiveProject(project))}
             className={({ isActive }) =>
-              `flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all duration-150 cursor-pointer
+              `flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150
                ${isActive
-                 ? "bg-indigo-600/30 text-indigo-300 font-medium"
-                 : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                 ? "bg-indigo-100 text-indigo-900 dark:bg-indigo-600/30 dark:text-indigo-300"
+                 : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                }`
             }
           >
@@ -109,7 +109,7 @@ export default function ProjectsSubSidebar({ collapsed }) {
 
       {/* NEW PROJECT */}
       {canCreate && (
-        <div className="p-3 border-t border-white/10">
+        <div className="border-t border-[var(--color-border)] p-3">
           {showCreate && !collapsed ? (
             <form onSubmit={handleCreate} className="space-y-2">
               <input
@@ -117,7 +117,7 @@ export default function ProjectsSubSidebar({ collapsed }) {
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Project name"
-                className="w-full px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-indigo-500/50"
+                className="w-full rounded-md border border-[var(--color-border-strong)] bg-[var(--color-input-bg)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none focus:border-indigo-500/50"
               />
               <div className="flex gap-2">
                 <button
@@ -130,7 +130,7 @@ export default function ProjectsSubSidebar({ collapsed }) {
                 <button
                   type="button"
                   onClick={() => { setShowCreate(false); setNewName(""); }}
-                  className="px-3 py-1.5 rounded-md bg-white/5 text-white/50 text-xs hover:bg-white/10 transition"
+                  className="rounded-md bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                 >
                   Cancel
                 </button>
@@ -138,8 +138,9 @@ export default function ProjectsSubSidebar({ collapsed }) {
             </form>
           ) : (
             <button
+              type="button"
               onClick={() => !collapsed && setShowCreate(true)}
-              className="w-full flex items-center justify-center gap-2 px-2 py-2 rounded-md bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-sm font-medium transition"
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600/20 px-2 py-2 text-sm font-medium text-indigo-800 transition hover:bg-indigo-600/30 dark:text-indigo-300"
               title="New Project"
             >
               <FaPlus className="text-xs" />

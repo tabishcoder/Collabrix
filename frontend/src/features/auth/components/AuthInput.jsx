@@ -4,7 +4,7 @@ export default function AuthInput({ error, ...props }) {
       <input
         {...props}
         className={`w-full px-5 py-3 bg-transparent border rounded-xl focus:outline-none
-        ${error ? "border-red-500" : "border-white/10"}
+        ${error ? "border-red-500" : "border-[var(--color-border-strong)]"}
         focus:ring-2 focus:ring-[var(--color-primary)]`}
       />
       {error && (

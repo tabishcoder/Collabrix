@@ -12,10 +12,9 @@ export default function JoinWorkspace() {
   const { isAuthenticated }     = useSelector((s) => s.auth);
 
   const [invite, setInvite]     = useState(null);
-  const [status, setStatus]     = useState("loading"); // loading | ready | accepting | done | error
+  const [status, setStatus]     = useState("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ── Fetch invite metadata ──────────────────────────────────────────────────
   useEffect(() => {
     if (!token) return;
 
@@ -31,15 +30,17 @@ export default function JoinWorkspace() {
       });
   }, [token]);
 
-  // Handle missing token without setState-in-effect
   if (!token && status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="bg-[#0f0f11] border border-red-500/30 rounded-xl p-8 max-w-md w-full mx-4 text-center">
-          <p className="text-2xl mb-2">⚠️</p>
-          <h2 className="text-xl font-bold text-white mb-2">Invitation Invalid</h2>
-          <p className="text-white/50 mb-6">No invitation token found in the link.</p>
-          <Link to="/login" className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4">
+        <div className="app-modal-panel w-full max-w-md rounded-xl border border-red-500/30 p-8 text-center">
+          <p className="mb-2 text-2xl">⚠️</p>
+          <h2 className="mb-2 text-xl font-bold text-[var(--color-text-primary)]">Invitation Invalid</h2>
+          <p className="mb-6 text-[var(--color-text-muted)]">No invitation token found in the link.</p>
+          <Link
+            to="/login"
+            className="inline-block rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-500"
+          >
             Back to Login
           </Link>
         </div>
@@ -47,10 +48,8 @@ export default function JoinWorkspace() {
     );
   }
 
-  // ── Accept invite ──────────────────────────────────────────────────────────
   const handleAccept = async () => {
     if (!isAuthenticated) {
-      // Preserve token so after login/register the user is redirected back
       navigate(`/login?redirect=/join-workspace?token=${token}`);
       return;
     }
@@ -60,7 +59,6 @@ export default function JoinWorkspace() {
       await acceptInvite(token);
       toast.success(`Joined "${invite.workspace.name}" successfully!`);
       setStatus("done");
-      // Give toast time to show, then navigate to dashboard
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to accept invitation.";
@@ -69,25 +67,24 @@ export default function JoinWorkspace() {
     }
   };
 
-  // ── UI ─────────────────────────────────────────────────────────────────────
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <p className="text-white/60">Loading invitation...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]">
+        <p className="text-[var(--color-text-secondary)]">Loading invitation...</p>
       </div>
     );
   }
 
   if (status === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
-        <div className="bg-[#0f0f11] border border-red-500/30 rounded-xl p-8 max-w-md w-full mx-4 text-center">
-          <p className="text-2xl mb-2">⚠️</p>
-          <h2 className="text-xl font-bold text-white mb-2">Invitation Invalid</h2>
-          <p className="text-white/50 mb-6">{errorMsg}</p>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4">
+        <div className="app-modal-panel w-full max-w-md rounded-xl border border-red-500/30 p-8 text-center">
+          <p className="mb-2 text-2xl">⚠️</p>
+          <h2 className="mb-2 text-xl font-bold text-[var(--color-text-primary)]">Invitation Invalid</h2>
+          <p className="mb-6 text-[var(--color-text-muted)]">{errorMsg}</p>
           <Link
             to="/login"
-            className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition"
+            className="inline-block rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-500"
           >
             Back to Login
           </Link>
@@ -98,11 +95,11 @@ export default function JoinWorkspace() {
 
   if (status === "done") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)]">
         <div className="text-center">
-          <p className="text-4xl mb-3">🎉</p>
-          <p className="text-white text-xl font-bold">You're in!</p>
-          <p className="text-white/50 mt-1">Redirecting to your dashboard...</p>
+          <p className="mb-3 text-4xl">🎉</p>
+          <p className="text-xl font-bold text-[var(--color-text-primary)]">You&apos;re in!</p>
+          <p className="mt-1 text-[var(--color-text-muted)]">Redirecting to your dashboard...</p>
         </div>
       </div>
     );
@@ -111,52 +108,53 @@ export default function JoinWorkspace() {
   const roleLabel = invite?.role === "admin" ? "Admin" : "Member";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050505] px-4">
-      <div className="bg-[#0f0f11] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4">
+      <div className="app-modal-panel w-full max-w-md rounded-2xl border border-[var(--color-border-strong)] p-8 shadow-2xl">
 
-        {/* Workspace avatar */}
-        <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-5">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-2xl font-bold text-white">
           {invite?.workspace?.name?.[0]?.toUpperCase() || "W"}
         </div>
 
-        <h1 className="text-2xl font-bold text-white text-center mb-1">
+        <h1 className="mb-1 text-center text-2xl font-bold text-[var(--color-text-primary)]">
           You&apos;re invited!
         </h1>
-        <p className="text-white/50 text-center mb-6">
-          <strong className="text-white/80">{invite?.invitedBy}</strong> invited you
+        <p className="mb-6 text-center text-[var(--color-text-muted)]">
+          <strong className="text-[var(--color-text-primary)]">{invite?.invitedBy}</strong> invited you
           to join{" "}
-          <strong className="text-indigo-400">{invite?.workspace?.name}</strong> as a{" "}
-          <span className="text-white/80 font-medium">{roleLabel}</span>.
+          <strong className="text-indigo-600 dark:text-indigo-400">{invite?.workspace?.name}</strong> as a{" "}
+          <span className="font-medium text-[var(--color-text-secondary)]">{roleLabel}</span>.
         </p>
 
         {!isAuthenticated ? (
           <div className="space-y-3">
             <button
+              type="button"
               onClick={handleAccept}
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition"
+              className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-500"
             >
               Sign in to Accept
             </button>
             <Link
               to={`/register?redirect=/join-workspace?token=${token}`}
-              className="block w-full py-3 text-center rounded-xl border border-white/12 text-white/70 hover:text-white hover:bg-white/5 font-medium transition"
+              className="block w-full rounded-xl border border-[var(--color-border-strong)] py-3 text-center font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
             >
               Create account first
             </Link>
           </div>
         ) : (
           <button
+            type="button"
             onClick={handleAccept}
             disabled={status === "accepting"}
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold transition"
+            className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
           >
             {status === "accepting" ? "Joining..." : `Join ${invite?.workspace?.name}`}
           </button>
         )}
 
-        <p className="text-center text-white/30 text-xs mt-5">
+        <p className="mt-5 text-center text-xs text-[var(--color-text-muted)]">
           This invitation was sent to{" "}
-          <span className="text-white/50">{invite?.email}</span>
+          <span className="text-[var(--color-text-secondary)]">{invite?.email}</span>
         </p>
       </div>
     </div>

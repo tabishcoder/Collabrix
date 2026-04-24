@@ -126,19 +126,20 @@ export default function TaskDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 px-4">
-      <div className="bg-[var(--color-card)] border border-white/10 rounded-2xl w-full max-w-5xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex justify-center items-center px-4 py-6 sm:py-10 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-5xl max-h-[min(92dvh,920px)] overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-[var(--color-border)] flex items-center justify-between">
           <div className="min-w-0">
-            <h3 className="font-semibold text-lg text-white truncate">Task details</h3>
-            <p className="text-xs text-white/40 truncate">
+            <h3 className="truncate text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">Task details</h3>
+            <p className="text-xs text-[var(--color-text-secondary)] truncate">
               {task.projectId?.name ? `Project: ${task.projectId.name}` : " "}
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-white/40 hover:text-white text-xl leading-none"
+            className="rounded-[var(--radius-sm)] px-1.5 py-0.5 text-xl leading-none text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
             aria-label="Close"
           >
             ×
@@ -150,10 +151,10 @@ export default function TaskDetailModal({
           {/* Left */}
           <div className="p-6 space-y-5">
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Title</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Title</label>
               <input
                 disabled={!canWrite}
-                className="w-full p-3 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition disabled:opacity-70"
+                className="w-full p-3 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 transition disabled:opacity-70"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Task title"
@@ -162,11 +163,11 @@ export default function TaskDetailModal({
             </div>
 
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Description</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Description</label>
               <textarea
                 disabled={!canWrite}
                 rows={8}
-                className="w-full p-3 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition resize-none disabled:opacity-70"
+                className="w-full p-3 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 transition resize-none disabled:opacity-70"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add more details..."
@@ -174,40 +175,40 @@ export default function TaskDetailModal({
             </div>
 
             <div>
-              <label className="text-xs text-white/50 mb-1 block">
-                Labels <span className="text-white/30">(comma-separated, max 5)</span>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">
+                Labels <span className="text-[var(--color-text-muted)]">(comma-separated, max 5)</span>
               </label>
               <input
                 disabled={!canWrite}
-                className="w-full p-3 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 transition disabled:opacity-70"
+                className="w-full p-3 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 transition disabled:opacity-70"
                 value={labelsText}
                 onChange={(e) => setLabelsText(e.target.value)}
                 placeholder="bug, frontend, urgent"
               />
             </div>
 
-            <div className="pt-3 border-t border-white/10 text-xs text-white/40 space-y-1">
+            <div className="pt-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] space-y-1">
               <div>
-                Created by: <span className="text-white/60">{task.createdBy?.name ?? "—"}</span>
+                Created by: <span className="text-[var(--color-text-primary)]">{task.createdBy?.name ?? "—"}</span>
               </div>
               <div>
-                Created: <span className="text-white/60">{formatDateTime(task.createdAt)}</span>
+                Created: <span className="text-[var(--color-text-primary)]">{formatDateTime(task.createdAt)}</span>
               </div>
               <div>
-                Updated: <span className="text-white/60">{formatDateTime(task.updatedAt)}</span>
+                Updated: <span className="text-[var(--color-text-primary)]">{formatDateTime(task.updatedAt)}</span>
               </div>
             </div>
           </div>
 
           {/* Right sidebar */}
-          <div className="p-6 border-t md:border-t-0 md:border-l border-white/10 space-y-4 bg-black/10">
+          <div className="p-6 border-t md:border-t-0 md:border-l border-[var(--color-border)] space-y-4 bg-[var(--color-bg-elevated)]/35">
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Status</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Status</label>
               <select
                 disabled={!canWrite}
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-70"
+                className="w-full p-2.5 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 cursor-pointer disabled:opacity-70"
               >
                 {columns.map((col) => (
                   <option key={col.key} value={col.key}>
@@ -218,12 +219,12 @@ export default function TaskDetailModal({
             </div>
 
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Assignee</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Assignee</label>
               <select
                 disabled={!canWrite}
                 value={assigneeId || ""}
                 onChange={(e) => setAssigneeId(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-70"
+                className="w-full p-2.5 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 cursor-pointer disabled:opacity-70"
               >
                 <option value="">Unassigned</option>
                 {(projectMembers || []).map((entry) => {
@@ -239,7 +240,7 @@ export default function TaskDetailModal({
               </select>
               {assigneeId && selectedAssigneeRole && (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className="text-[11px] text-white/40">Role in project</span>
+                  <span className="text-[11px] text-[var(--color-text-muted)]">Role in project</span>
                   <span
                     className={`inline-flex px-2 py-0.5 rounded-full border text-[11px] font-medium ${projectRoleBadgeClass(selectedAssigneeRole)}`}
                   >
@@ -248,19 +249,19 @@ export default function TaskDetailModal({
                 </div>
               )}
               {assigneeId && !selectedAssigneeRole && (
-                <p className="text-[11px] text-white/30 mt-2">
+                <p className="text-[11px] text-[var(--color-text-muted)] mt-2">
                   Role badge unavailable (assignee may be a space admin not listed on this project).
                 </p>
               )}
             </div>
 
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Priority</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Priority</label>
               <select
                 disabled={!canWrite}
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-70"
+                className="w-full p-2.5 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 cursor-pointer disabled:opacity-70"
               >
                 {PRIORITIES.map((p) => (
                   <option key={p.key} value={p.key}>
@@ -271,15 +272,15 @@ export default function TaskDetailModal({
             </div>
 
             <div>
-              <label className="text-xs text-white/50 mb-1 block">Due date</label>
+              <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Due date</label>
               <input
                 disabled={!canWrite}
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 disabled:opacity-70"
+                className="w-full p-2.5 rounded-[var(--radius-md)] bg-[var(--color-input-bg)] border border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-sm focus:outline-none focus:border-indigo-500/55 disabled:opacity-70"
               />
-              <p className="text-[11px] text-white/30 mt-1">
+              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
                 Stored as a date; rendered in your local timezone.
               </p>
             </div>
@@ -289,7 +290,7 @@ export default function TaskDetailModal({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="px-3 py-2 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 hover:bg-red-500/20 text-sm transition"
+                  className="rounded-[var(--radius-md)] border border-red-500/30 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 dark:text-red-200"
                 >
                   Delete
                 </button>
@@ -301,14 +302,14 @@ export default function TaskDetailModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg bg-white/5 text-white/60 hover:text-white text-sm transition"
+                  className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2 text-sm text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!canWrite || submitting || !title.trim()}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white text-sm font-medium transition"
+                  className="px-4 py-2 rounded-[var(--radius-md)] bg-indigo-600 hover:bg-[var(--color-primary-hover)] disabled:opacity-60 text-white text-sm font-medium shadow-lg shadow-indigo-600/20 transition"
                 >
                   {submitting ? "Saving…" : "Save"}
                 </button>

@@ -2,32 +2,35 @@ export default function ChatsSubSidebar({ collapsed }) {
   return (
     <aside
       className={`
-        h-screen flex flex-col
-        bg-[#0a0a0b]/95
-        border-r border-white/8
+        flex h-full min-h-0 shrink-0 flex-col
+        border-r border-[var(--color-border-strong)]
+        bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)]
         transition-all duration-300 ease-out
         ${collapsed ? "w-20" : "w-64"}
       `}
     >
-      <div className="p-4 border-b border-white/8">
+      <div className="border-b border-[var(--color-border)] p-4">
         {collapsed ? "💬" : (
-          <h3 className="text-sm font-bold text-white/90">Chats</h3>
+          <h3 className="text-sm font-bold text-[var(--color-text-primary)]">Chats</h3>
         )}
       </div>
 
-      <div className="flex-1 p-3 space-y-2">
+      <div className="flex-1 space-y-2 p-3">
         {[1, 2].map((_, i) => (
           <div
             key={i}
-            className="px-3 py-2.5 rounded-lg hover:bg-white/10 text-sm text-white/70 hover:text-white transition-colors duration-150 cursor-pointer font-medium"
+            className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
           >
             {collapsed ? "@" : "General Chat"}
           </div>
         ))}
       </div>
 
-      <div className="p-3 border-t border-white/8">
-        <button className="w-full px-3 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-sm font-medium text-white transition-colors duration-200">
+      <div className="border-t border-[var(--color-border)] p-3">
+        <button
+          type="button"
+          className="w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-indigo-700"
+        >
           {collapsed ? "+" : "New Chat"}
         </button>
       </div>
