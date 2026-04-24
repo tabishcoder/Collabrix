@@ -16,6 +16,7 @@ import {
 
 import LogoutButton from "./LogoutButton";
 import InviteModal  from "../features/invites/InviteModal";
+import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
 import { canManageSpace } from "../utils/roles";
 
 export default function TopNavbar({ onToggleSidebar }) {
@@ -30,6 +31,7 @@ export default function TopNavbar({ onToggleSidebar }) {
   const [openDropdown,  setOpenDropdown]  = useState(null);
   const [projectSearch, setProjectSearch] = useState("");
   const [showInvite,    setShowInvite]    = useState(false);
+  const [showMembers,   setShowMembers]   = useState(false);
 
   const isSpaceAdmin = canManageSpace(activeSpaceRole);
 
@@ -103,6 +105,12 @@ export default function TopNavbar({ onToggleSidebar }) {
                 {isSpaceAdmin && (
                   <>
                     <div className="h-[1px] bg-white/8 my-1.5" />
+                    <button
+                      onClick={() => { setOpenDropdown(null); setShowMembers(true); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors duration-150"
+                    >
+                      Manage Members
+                    </button>
                     <button
                       onClick={() => { setOpenDropdown(null); setShowInvite(true); }}
                       className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm text-indigo-300 hover:text-indigo-200 hover:bg-indigo-600/15 transition-colors duration-150"
@@ -241,6 +249,7 @@ export default function TopNavbar({ onToggleSidebar }) {
 
     {/* Invite modal — rendered outside header to avoid z-index stacking issues */}
     {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+    {showMembers && <WorkspaceMembersModal onClose={() => setShowMembers(false)} />}
   </>
   );
 }

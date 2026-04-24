@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { addTask } from "./tasksSlice";
 import toast from "react-hot-toast";
 
@@ -11,10 +11,17 @@ const DEFAULT_COLUMNS = [
 
 export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onClose }) {
   const dispatch = useDispatch();
+  const { activeProject } = useSelector((s) => s.projects);
+
+  const projectMembers = useMemo(() => {
+    if (!activeProject || activeProject?._id !== projectId) return [];
+    return (activeProject.members || []).map((m) => m?.user).filter(Boolean);
+  }, [activeProject, projectId]);
 
   const [title,       setTitle]       = useState("");
   const [description, setDescription] = useState("");
   const [status,      setStatus]      = useState(columns[0]?.key ?? "todo");
+  const [assigneeId,  setAssigneeId]  = useState("");
   const [submitting,  setSubmitting]  = useState(false);
 
   const handleSubmit = async (e) => {
@@ -23,7 +30,13 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
 
     setSubmitting(true);
     try {
-      await dispatch(addTask({ title: title.trim(), description, projectId, status })).unwrap();
+      await dispatch(addTask({
+        title: title.trim(),
+        description,
+        projectId,
+        status,
+        assignee: assigneeId || null,
+      })).unwrap();
       toast.success("Task created");
       onClose();
     } catch (err) {
@@ -76,6 +89,27 @@ export default function AddTaskModal({ projectId, columns = DEFAULT_COLUMNS, onC
                 <option key={col.key} value={col.key}>{col.name}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="text-xs text-white/50 mb-1 block">Assignee</label>
+            <select
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer"
+            >
+              <option value="">Unassigned</option>
+              {projectMembers.map((u) => (
+                <option key={u._id} value={u._id}>
+                  {u.name} ({u.email})
+                </option>
+              ))}
+            </select>
+            {activeProject?._id !== projectId && (
+              <p className="text-[11px] text-white/30 mt-1">
+                Loading project members…
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-1">

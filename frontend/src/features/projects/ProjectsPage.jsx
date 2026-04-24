@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProjectById } from "./projectSlice";
 import { Outlet, useParams, Link } from "react-router-dom";
-import { spaceRoleLabel, projectRoleLabel } from "../../utils/roles";
+import { canManageProject, spaceRoleLabel, projectRoleLabel } from "../../utils/roles";
+import ProjectMembersPanel from "./ProjectMembersPanel";
 
 export default function ProjectsPage() {
   const dispatch = useDispatch();
@@ -10,6 +11,15 @@ export default function ProjectsPage() {
 
   const { activeProject, loading, error } = useSelector((s) => s.projects);
   const { activeSpaceRole }               = useSelector((s) => s.spaces);
+  const [tab, setTab] = useState("board"); // board | members
+
+  const myRole = activeProject?.myRole ?? null;
+  const canManage = canManageProject(myRole);
+
+  const memberCountLabel = useMemo(() => {
+    const n = activeProject?.members?.length ?? 0;
+    return `${n} member${n !== 1 ? "s" : ""}`;
+  }, [activeProject?.members?.length]);
 
   useEffect(() => {
     if (projectId) dispatch(fetchProjectById(projectId));
@@ -61,15 +71,40 @@ export default function ProjectsPage() {
               </span>
             )}
           </div>
-          <span className="ml-auto text-xs text-white/25">
-            {activeProject.members?.length ?? 0} member{activeProject.members?.length !== 1 ? "s" : ""}
-          </span>
+          <span className="ml-auto text-xs text-white/25">{memberCountLabel}</span>
+
+          {projectId && (
+            <div className="flex rounded-lg border border-white/10 overflow-hidden">
+              <button
+                onClick={() => setTab("board")}
+                className={`px-3 py-1.5 text-xs font-medium transition ${
+                  tab === "board"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/5 text-white/50 hover:bg-white/10"
+                }`}
+              >
+                Board
+              </button>
+              <button
+                onClick={() => setTab("members")}
+                disabled={!canManage}
+                className={`px-3 py-1.5 text-xs font-medium transition ${
+                  tab === "members"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/5 text-white/50 hover:bg-white/10"
+                } ${!canManage ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={!canManage ? "Manager role required" : "Manage project members"}
+              >
+                Members
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {/* Board / outlet */}
       <div className="flex-1 overflow-auto">
-        <Outlet />
+        {tab === "members" ? <ProjectMembersPanel /> : <Outlet />}
       </div>
     </div>
   );
