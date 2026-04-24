@@ -1,67 +1,53 @@
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchProjectsBySpace, setActiveProject } from "../../features/projects/projectSlice";
-import { useNavigate, useParams } from "react-router-dom";
-import CreateProjectModal from "../../features/projects/CreateProjectModal";
-export default function ProjectsSubSidebar() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { projectId } = useParams();
-
-  const { activeSpace } = useSelector((s) => s.spaces);
-  const { projects, activeProject } = useSelector((s) => s.projects);
-  const [showModal, setShowModal] = useState(false);
-
-  // Fetch projects when activeSpace changes
-  useEffect(() => {
-    if (activeSpace?._id) {
-      dispatch(fetchProjectsBySpace(activeSpace._id));
-    }
-  }, [activeSpace, dispatch]);
-
-  const handleSelectProject = (project) => {
-    dispatch(setActiveProject(project));
-    navigate(`/projects/${project._id}`);
-  };
-
+export default function ProjectsSubSidebar({ collapsed }) {
   return (
-    <aside className="hidden md:flex w-60 bg-[var(--color-card)] border-r border-white/10 flex-col">
-      {/* Header */}
+    <aside
+      className={`
+        h-screen flex flex-col
+        bg-[var(--color-card)]
+        border-r border-white/10
+        transition-all duration-300
+        ${collapsed ? "w-20" : "w-64"}
+      `}
+    >
+      {/* HEADER */}
       <div className="p-4 border-b border-white/10">
-        <h3 className="text-sm font-semibold">Projects</h3>
-        {activeSpace && (
-          <p className="text-xs opacity-60 mt-1">{activeSpace.name}</p>
+        {collapsed ? (
+          <div className="text-center">📁</div>
+        ) : (
+          <>
+            <h3 className="text-sm font-semibold text-white/80">
+              Projects
+            </h3>
+            <p className="text-xs text-white/40 mt-1">
+              Workspace level
+            </p>
+          </>
         )}
       </div>
 
-      {/* Projects list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {projects.map((project) => (
+      {/* LIST */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-2">
+        {[1, 2, 3].map((_, i) => (
           <div
-            key={project._id}
-            onClick={() => handleSelectProject(project)}
-            className={`px-3 py-2 rounded-md text-sm cursor-pointer hover:bg-white/5
-              ${
-                projectId === project._id || activeProject?._id === project._id
-                  ? "bg-white/10"
-                  : ""
-              }`}
+            key={i}
+            className="
+              px-3 py-2 rounded-md
+              text-sm text-white/70
+              hover:bg-white/5 cursor-pointer
+              flex items-center gap-2
+            "
           >
-            {project.name}
+            {collapsed ? "📌" : "Project Name"}
           </div>
         ))}
-
-        {!projects.length && (
-          <p className="text-xs opacity-50">No projects yet</p>
-        )}
       </div>
-      <button
-        onClick={() => setShowModal(true)}
-        className="w-full mt-2 px-3 py-2 rounded-md bg-[var(--color-primary)] text-white text-sm hover:opacity-90"
-      >
-        + New Project
-      </button>
-      {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
+
+      {/* FOOTER */}
+      <div className="p-3 border-t border-white/10">
+        <button className="w-full px-2 py-2 rounded-md bg-indigo-600 text-white text-sm">
+          {collapsed ? "+" : "+ New Project"}
+        </button>
+      </div>
     </aside>
   );
 }

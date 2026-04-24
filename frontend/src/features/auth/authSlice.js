@@ -49,7 +49,7 @@ export const getMe = createAsyncThunk(
       console.log(res);
       return res.data;
     } catch (err) {
-      return rejectWithValue(null); // ✅ important
+      err.response?.data?.message || "Session expired"
     }
   },
 );
