@@ -1,24 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import {
   addProjectMemberApi,
   updateProjectMemberRoleApi,
   removeProjectMemberApi,
+  leaveProjectApi,
 } from "./projectApi";
 import { fetchProjectById } from "./projectSlice";
 import { getSpaceMembers } from "../spaces/spaceApi";
+import { setActiveProject } from "./projectSlice";
 import { canManageProject, projectRoleLabel, projectRoleBadgeClass } from "../../utils/roles";
 
 export default function ProjectMembersPanel() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { activeProject } = useSelector((s) => s.projects);
   const { activeSpace } = useSelector((s) => s.spaces);
+  const { user } = useSelector((s) => s.auth);
 
   const projectId = activeProject?._id;
   const myRole = activeProject?.myRole ?? null;
   const canManage = canManageProject(myRole);
+  const myUserId = user?._id;
 
   const [spaceMembers, setSpaceMembers] = useState([]); // [{user, role}]
   const [loading, setLoading] = useState(false);
@@ -114,6 +120,30 @@ export default function ProjectMembersPanel() {
     }
   };
 
+  const myMembership = useMemo(() => {
+    if (!myUserId) return null;
+    return (activeProject?.members || []).find((m) => m?.user?._id === myUserId) || null;
+  }, [activeProject?.members, myUserId]);
+
+  const canSelfLeaveProject =
+    Boolean(projectId && myMembership) && myRole !== "owner" && myRole !== "admin";
+
+  const handleLeaveProject = async () => {
+    if (!canSelfLeaveProject) return;
+    if (!window.confirm("Leave this project?")) return;
+    setActingId("leave-project");
+    try {
+      await leaveProjectApi(projectId);
+      toast.success("Left project");
+      dispatch(setActiveProject(null));
+      navigate("/projects");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to leave project");
+    } finally {
+      setActingId(null);
+    }
+  };
+
   if (!activeProject) {
     return <div className="p-6 text-white/40">Select a project.</div>;
   }
@@ -127,16 +157,29 @@ export default function ProjectMembersPanel() {
             Manage who is in this project and what they can do.
           </p>
         </div>
-        <button
-          onClick={async () => {
-            await refreshProject();
-            await load();
-            toast.success("Refreshed");
-          }}
-          className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white text-sm transition"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {canSelfLeaveProject && (
+            <button
+              type="button"
+              disabled={actingId === "leave-project"}
+              onClick={handleLeaveProject}
+              className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/25 text-red-200 hover:bg-red-500/15 disabled:opacity-60 text-sm transition"
+              title="Leave project"
+            >
+              {actingId === "leave-project" ? "Leaving…" : "Leave project"}
+            </button>
+          )}
+          <button
+            onClick={async () => {
+              await refreshProject();
+              await load();
+              toast.success("Refreshed");
+            }}
+            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white text-sm transition"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Add member */}

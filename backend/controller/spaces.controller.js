@@ -1,4 +1,5 @@
 const Space   = require('../models/Space');
+const Project = require('../models/Project');
 const History = require('../models/History');
 const { getSpaceRole, SPACE_ADMIN_ROLES } = require('../utils/rbac');
 
@@ -239,6 +240,50 @@ module.exports.getSpaceMembers = async (req, res) => {
     const space = await populateSpace(Space.findById(req.params.id));
     const owner = { user: space.owner, role: 'owner', joinedAt: space.createdAt };
     res.json([owner, ...space.members]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── Self leave ────────────────────────────────────────────────────────────────
+
+/**
+ * Any non-owner space member can leave the workspace.
+ * Also removes the user from all projects in the workspace to prevent orphan access.
+ *
+ * DELETE /api/spaces/:id/members/me
+ */
+module.exports.leaveSpace = async (req, res) => {
+  try {
+    const spaceId = req.params.id;
+    const userId = req.user._id.toString();
+
+    const { role, space } = await getSpaceRole(spaceId, req.user._id);
+    if (!role) return res.status(403).json({ message: 'Access denied.' });
+    if (role === 'owner') {
+      return res.status(400).json({ message: 'Workspace owner cannot leave their own workspace.' });
+    }
+
+    // Remove from space members
+    const beforeCount = space.members.length;
+    space.members = space.members.filter((m) => m.user.toString() !== userId);
+    if (space.members.length === beforeCount) {
+      return res.status(400).json({ message: 'You are not a member of this workspace.' });
+    }
+    await space.save();
+
+    // Remove from all project memberships in this space
+    await Project.updateMany(
+      { spaceId, 'members.user': req.user._id },
+      { $pull: { members: { user: req.user._id } } }
+    );
+
+    await logHistory('member', req.user._id, 'removed', req.user._id, { spaceId, self: true });
+
+    const io = getIO(req);
+    if (io) io.to(`space-${spaceId}`).emit('member-removed', { spaceId, userId });
+
+    res.json({ message: 'Left workspace successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

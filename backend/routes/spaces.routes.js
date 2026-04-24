@@ -11,7 +11,8 @@ const {
   deleteSpace,
   addSpaceMember,
   updateSpaceMemberRole,
-  removeSpaceMember
+  removeSpaceMember,
+  leaveSpace
 } = require('../controller/spaces.controller');
 
 const ADMIN = ['owner', 'admin'];
@@ -28,6 +29,7 @@ router.delete('/:id', auth, requireSpaceRole(OWNER), deleteSpace);
 router.get('/:id/members',                   auth, requireSpaceRole([...ADMIN, 'member']), getSpaceMembers);
 router.post('/:id/members',                  auth, requireSpaceRole(ADMIN), addSpaceMember);
 router.put('/:id/members/:userId/role',      auth, requireSpaceRole(ADMIN), updateSpaceMemberRole);
+router.delete('/:id/members/me',             auth, requireSpaceRole([...ADMIN, 'member']), leaveSpace);
 router.delete('/:id/members/:userId',        auth, requireSpaceRole(ADMIN), removeSpaceMember);
 
 module.exports = router;

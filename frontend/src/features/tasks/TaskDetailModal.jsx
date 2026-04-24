@@ -62,12 +62,6 @@ export default function TaskDetailModal({
   const [dueDate, setDueDate] = useState(initial.dueDate);
   const [labelsText, setLabelsText] = useState(initial.labelsText);
 
-  if (!task) return null;
-
-  const memberOptions = projectMembers
-    .map((m) => m?.user)
-    .filter(Boolean);
-
   const projectMemberRoleByUserId = useMemo(() => {
     const map = new Map();
     (projectMembers || []).forEach((entry) => {
@@ -78,8 +72,10 @@ export default function TaskDetailModal({
   }, [projectMembers]);
 
   const selectedAssigneeRole = assigneeId
-    ? projectMemberRoleByUserId.get(String(assigneeId))
+    ? projectMemberRoleByUserId.get(String(assigneeId)) ?? null
     : null;
+
+  if (!task) return null;
 
   const handleSave = async (e) => {
     e?.preventDefault?.();
@@ -230,11 +226,16 @@ export default function TaskDetailModal({
                 className="w-full p-2.5 rounded-lg bg-[var(--color-bg)] border border-white/10 text-white text-sm focus:outline-none focus:border-indigo-500/50 cursor-pointer disabled:opacity-70"
               >
                 <option value="">Unassigned</option>
-                {memberOptions.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.name} ({u.email})
-                  </option>
-                ))}
+                {(projectMembers || []).map((entry) => {
+                  const u = entry?.user;
+                  if (!u?._id) return null;
+                  const roleLabel = projectRoleLabel(entry.role);
+                  return (
+                    <option key={u._id} value={u._id}>
+                      {u.name} · {roleLabel}
+                    </option>
+                  );
+                })}
               </select>
               {assigneeId && selectedAssigneeRole && (
                 <div className="flex items-center gap-2 mt-2 flex-wrap">

@@ -11,7 +11,8 @@ const {
   updateBoardColumns,
   addProjectMember,
   updateProjectMemberRole,
-  removeProjectMember
+  removeProjectMember,
+  leaveProject
 } = require('../controller/projects.controller');
 
 const MANAGE = ['owner', 'admin', 'manager'];
@@ -31,6 +32,7 @@ router.put('/:id/board-columns', auth, requireProjectRole(MANAGE), updateBoardCo
 // Project members
 router.post('/:id/members',                 auth, requireProjectRole(MANAGE), addProjectMember);
 router.put('/:id/members/:userId/role',     auth, requireProjectRole(MANAGE), updateProjectMemberRole);
+router.delete('/:id/members/me',            auth, requireProjectRole(READ), leaveProject);
 router.delete('/:id/members/:userId',       auth, requireProjectRole(MANAGE), removeProjectMember);
 
 module.exports = router;

@@ -306,3 +306,53 @@ module.exports.removeProjectMember = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// ─── Self leave ────────────────────────────────────────────────────────────────
+
+/**
+ * A project member can leave the project.
+ * Note: Space owners/admins have implicit access; they cannot "leave" a project here.
+ *
+ * DELETE /api/projects/:id/members/me
+ */
+module.exports.leaveProject = async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user._id.toString();
+
+    const { role, project } = await getProjectRole(projectId, req.user._id);
+    if (!role) return res.status(403).json({ message: 'Access denied.' });
+
+    if (role === 'owner' || role === 'admin') {
+      return res.status(400).json({
+        message: 'Workspace owners/admins have workspace-level access and cannot leave projects via this endpoint.'
+      });
+    }
+
+    const membership = project.members.find((m) => m.user.toString() === userId);
+    if (!membership) {
+      return res.status(400).json({ message: 'You are not an explicit member of this project.' });
+    }
+
+    // Prevent last manager from leaving if there are other members
+    const managers = project.members.filter((m) => m.role === 'manager');
+    if (membership.role === 'manager' && managers.length === 1 && project.members.length > 1) {
+      return res.status(400).json({ message: 'You are the last manager. Assign another manager before leaving.' });
+    }
+
+    project.members = project.members.filter((m) => m.user.toString() !== userId);
+    await project.save();
+
+    await logHistory('member', req.user._id, 'removed', req.user._id, { projectId, self: true });
+
+    const io = getIO(req);
+    if (io) {
+      io.to(`project-${projectId}`).emit('project-member-removed', { projectId, userId });
+      io.to(`space-${project.spaceId}`).emit('project-member-removed', { projectId, userId });
+    }
+
+    res.json({ message: 'Left project successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

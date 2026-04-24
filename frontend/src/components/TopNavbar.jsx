@@ -17,7 +17,7 @@ import {
 import LogoutButton from "./LogoutButton";
 import InviteModal  from "../features/invites/InviteModal";
 import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
-import { canManageSpace } from "../utils/roles";
+import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../utils/roles";
 
 export default function TopNavbar({ onToggleSidebar }) {
   const dispatch  = useDispatch();
@@ -83,6 +83,15 @@ export default function TopNavbar({ onToggleSidebar }) {
                   {activeSpace?.name || "Workspace"}
                 </span>
               </div>
+
+              {activeSpaceRole && (
+                <span
+                  className={`hidden sm:inline-flex px-2 py-0.5 rounded-full border text-[10px] font-semibold shrink-0 ${spaceRoleBadgeClass(activeSpaceRole)}`}
+                  title={`Your workspace role: ${spaceRoleLabel(activeSpaceRole)}`}
+                >
+                  {spaceRoleLabel(activeSpaceRole)}
+                </span>
+              )}
 
               <FaChevronDown
                 className={`text-xs text-white/40 transition ${

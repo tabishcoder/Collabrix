@@ -31,6 +31,9 @@ export const updateProjectMemberRoleApi = (projectId, userId, role) =>
 export const removeProjectMemberApi = (projectId, userId) =>
   api.delete(`/projects/${projectId}/members/${userId}`);
 
+// Self leave
+export const leaveProjectApi = (projectId) => api.delete(`/projects/${projectId}/members/me`);
+
 // 9. Update board columns
 export const updateBoardColumnsApi = (projectId, columns) =>
   api.put(`/projects/${projectId}/board-columns`, { columns });

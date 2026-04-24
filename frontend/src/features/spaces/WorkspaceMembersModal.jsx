@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { FaTimes } from "react-icons/fa";
 
@@ -7,13 +7,17 @@ import {
   getSpaceMembers,
   updateSpaceMemberRole,
   removeSpaceMember,
+  leaveSpace,
 } from "./spaceApi";
 import { getWorkspaceInvites, revokeInvite, sendInvite } from "../invites/inviteApi";
+import { fetchSpaces, setActiveSpace } from "./spaceSlice";
+import { setActiveProject } from "../projects/projectSlice";
 import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass } from "../../utils/roles";
 
 const avatarText = (nameOrEmail) => (nameOrEmail?.[0] || "?").toUpperCase();
 
 export default function WorkspaceMembersModal({ onClose }) {
+  const dispatch = useDispatch();
   const { activeSpace, activeSpaceRole } = useSelector((s) => s.spaces);
   const isAdmin = canManageSpace(activeSpaceRole);
 
@@ -116,6 +120,28 @@ export default function WorkspaceMembersModal({ onClose }) {
     }
   };
 
+  const handleLeaveWorkspace = async () => {
+    if (!spaceId) return;
+    if (activeSpaceRole === "owner") {
+      toast.error("Workspace owner cannot leave");
+      return;
+    }
+    if (!window.confirm("Leave this workspace? You will lose access to its projects.")) return;
+    setActingId("leave-space");
+    try {
+      await leaveSpace(spaceId);
+      toast.success("Left workspace");
+      dispatch(setActiveProject(null));
+      dispatch(setActiveSpace(null));
+      await dispatch(fetchSpaces()).unwrap();
+      onClose();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to leave workspace");
+    } finally {
+      setActingId(null);
+    }
+  };
+
   const handleSendInvite = async (e) => {
     e.preventDefault();
     if (!isAdmin) return;
@@ -162,13 +188,26 @@ export default function WorkspaceMembersModal({ onClose }) {
               {activeSpace?.name} • Your role: {spaceRoleLabel(activeSpaceRole)}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/30 hover:text-white transition rounded-lg p-1"
-            aria-label="Close"
-          >
-            <FaTimes />
-          </button>
+          <div className="flex items-center gap-2">
+            {activeSpaceRole && activeSpaceRole !== "owner" && (
+              <button
+                type="button"
+                disabled={actingId === "leave-space"}
+                onClick={handleLeaveWorkspace}
+                className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/25 text-red-200 hover:bg-red-500/15 disabled:opacity-60 text-xs font-medium transition"
+                title="Leave workspace"
+              >
+                {actingId === "leave-space" ? "Leaving…" : "Leave"}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-white/30 hover:text-white transition rounded-lg p-1"
+              aria-label="Close"
+            >
+              <FaTimes />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

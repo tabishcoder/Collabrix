@@ -11,3 +11,6 @@ export const addSpaceMember        = (id, data)        => api.post(`/spaces/${id
 export const updateSpaceMemberRole = (id, userId, role) =>
   api.put(`/spaces/${id}/members/${userId}/role`, { role });
 export const removeSpaceMember     = (id, userId)      => api.delete(`/spaces/${id}/members/${userId}`);
+
+// Self leave
+export const leaveSpace = (id) => api.delete(`/spaces/${id}/members/me`);
