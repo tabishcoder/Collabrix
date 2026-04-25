@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-import { editTask, removeTask } from "./tasksSlice";
+import { editTask, removeTask, addTaskComment } from "./tasksSlice";
 import { projectRoleBadgeClass, projectRoleLabel } from "../../utils/roles";
 
 const PRIORITIES = [
@@ -61,6 +61,21 @@ export default function TaskDetailModal({
   const [priority, setPriority] = useState(initial.priority);
   const [dueDate, setDueDate] = useState(initial.dueDate);
   const [labelsText, setLabelsText] = useState(initial.labelsText);
+  const [commentText, setCommentText] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+
+  useEffect(() => {
+    if (!task?._id) return;
+    const labels = Array.isArray(task.labels) ? task.labels : [];
+    setTitle(task.title ?? "");
+    setDescription(task.description ?? "");
+    setStatus(task.status ?? (columns?.[0]?.key ?? "todo"));
+    setAssigneeId(task.assignee?._id ?? task.assignee ?? "");
+    setPriority(task.priority ?? "none");
+    setDueDate(toDateInputValue(task.dueDate));
+    setLabelsText(labels.join(", "));
+    setCommentText("");
+  }, [task?._id, columns]);
 
   const projectMemberRoleByUserId = useMemo(() => {
     const map = new Map();
@@ -110,6 +125,26 @@ export default function TaskDetailModal({
       toast.error(err || "Failed to update task");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e?.preventDefault?.();
+    if (!canWrite) return;
+    const text = commentText.trim();
+    if (!text) {
+      toast.error("Write a comment first");
+      return;
+    }
+    setCommentBusy(true);
+    try {
+      await dispatch(addTaskComment({ taskId: task._id, text })).unwrap();
+      setCommentText("");
+      toast.success("Comment added");
+    } catch (err) {
+      toast.error(err || "Failed to add comment");
+    } finally {
+      setCommentBusy(false);
     }
   };
 
@@ -185,6 +220,53 @@ export default function TaskDetailModal({
                 onChange={(e) => setLabelsText(e.target.value)}
                 placeholder="bug, frontend, urgent"
               />
+            </div>
+
+            <div className="border-t border-[var(--color-border)] pt-5">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                Comments
+              </h4>
+              <ul className="mb-3 max-h-52 space-y-3 overflow-y-auto pr-1">
+                {(Array.isArray(task.comments) ? task.comments : []).length === 0 && (
+                  <li className="text-[12px] text-[var(--color-text-muted)]">No comments yet.</li>
+                )}
+                {(Array.isArray(task.comments) ? task.comments : []).map((c) => (
+                  <li
+                    key={c._id || `${c.author?._id}-${c.createdAt}`}
+                    className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-muted)]/50 px-3 py-2"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="text-[12px] font-semibold text-[var(--color-text-primary)]">
+                        {c.author?.name || "Member"}
+                      </span>
+                      <span className="text-[10px] text-[var(--color-text-muted)]">{formatDateTime(c.createdAt)}</span>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                      {c.text}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              {canWrite ? (
+                <form onSubmit={handleAddComment} className="space-y-2">
+                  <textarea
+                    rows={3}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Add a comment…"
+                    className="app-control resize-none px-3 py-2 text-[13px] placeholder:text-[var(--color-text-muted)]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={commentBusy || !commentText.trim()}
+                    className="rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {commentBusy ? "Posting…" : "Post comment"}
+                  </button>
+                </form>
+              ) : (
+                <p className="text-[11px] text-[var(--color-text-muted)]">You can view comments but not add them.</p>
+              )}
             </div>
 
             <div className="pt-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] space-y-1">

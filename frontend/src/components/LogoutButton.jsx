@@ -1,6 +1,7 @@
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../features/auth/authSlice";
+import { disconnectSocket } from "../services/socket";
 import { FaSignOutAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
 
@@ -11,9 +12,11 @@ export default function LogoutButton({ variant = "default" }) {
   const handleLogout = async () => {
     try {
       await dispatch(logout()).unwrap();
+      disconnectSocket();
       toast.success("Logged out successfully");
       navigate("/login", { replace: true });
     } catch (err) {
+      disconnectSocket();
       toast.error(err || "Logout failed");
     }
   };

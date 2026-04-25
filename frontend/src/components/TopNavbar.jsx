@@ -9,20 +9,26 @@ import CreateWorkspaceModal from "../features/spaces/CreateWorkspaceModal";
 import {
   FaBars,
   FaChevronDown,
-  FaBell,
   FaSearch,
   FaFolder,
   FaPlus,
   FaCheckCircle,
   FaUserPlus,
   FaChevronRight,
+  FaUserCircle,
+  FaCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
-import LogoutButton from "./LogoutButton";
+import { logout } from "../features/auth/authSlice";
+import { disconnectSocket } from "../services/socket";
+import toast from "react-hot-toast";
 import InviteModal from "../features/invites/InviteModal";
 import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
 import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass, isPlatformAdmin } from "../utils/roles";
 import ThemeToggle from "../theme/ThemeToggle";
+import GlobalSearch from "./GlobalSearch";
+import NotificationsBell from "./NotificationsBell";
 
 /** Shared trigger style — neutral “breadcrumb control” */
 const chromeTrigger =
@@ -31,6 +37,7 @@ const chromeTrigger =
 export default function TopNavbar({ onToggleSidebar }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
   const { activeSpace, activeSpaceRole, spaces } = useSelector((s) => s.spaces);
   const { activeProject, projects } = useSelector((s) => s.projects);
@@ -56,6 +63,26 @@ export default function TopNavbar({ onToggleSidebar }) {
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      disconnectSocket();
+      toast.success("Logged out successfully");
+      navigate("/login", { replace: true });
+    } catch (err) {
+      disconnectSocket();
+      toast.error(err || "Logout failed");
+    } finally {
+      setOpenDropdown(null);
+    }
+  };
+
+  const shouldKeepRouteWhenSwitchingProject = (pathname) => {
+    if (!pathname) return false;
+    // These modules are project-scoped but don't carry projectId in the URL.
+    return pathname.startsWith("/chats") || pathname.startsWith("/meetings") || pathname.startsWith("/aibot");
   };
 
   return (
@@ -264,42 +291,80 @@ export default function TopNavbar({ onToggleSidebar }) {
           </div>
         </div>
 
-        {/* CENTER — search */}
-        <div className="mx-4 hidden max-w-md flex-1 md:block">
-          <div className="relative">
-            <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
-            <input
-              type="text"
-              placeholder="Search…"
-              className="app-control w-full border-[var(--color-border)] bg-[var(--color-input-bg)] py-2 pl-8 pr-3 text-[13px] placeholder:text-[var(--color-text-muted)]"
-            />
-          </div>
-        </div>
+        <GlobalSearch spaceId={activeSpace?._id} />
 
         {/* RIGHT */}
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
 
           <ThemeToggle />
 
-          <button
-            type="button"
-            className="relative rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-            title="Notifications"
-          >
-            <FaBell size={15} />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[var(--color-danger)] ring-2 ring-[var(--color-card)]" />
-          </button>
+          <NotificationsBell />
 
-          <div className="ml-0.5 flex items-center gap-2 pl-1">
-            <span className="hidden max-w-[8rem] truncate text-[13px] font-medium text-[var(--color-text-secondary)] lg:block">
-              {user?.name}
-            </span>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--color-primary)] text-[11px] font-semibold text-white">
-              {user?.name?.[0] || "U"}
-            </div>
+          <div className="relative ml-0.5 pl-1">
+            <button
+              type="button"
+              onClick={() => toggleDropdown("profile")}
+              aria-expanded={openDropdown === "profile"}
+              aria-haspopup="true"
+              className="flex items-center gap-2 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2 py-1.5 text-[13px] font-medium text-[var(--color-text-secondary)] shadow-sm transition-colors duration-150 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]"
+              title={user?.email || "Account"}
+            >
+              <span className="hidden max-w-[8rem] truncate lg:block">{user?.name || "Account"}</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--color-primary)] text-[11px] font-semibold text-white">
+                {user?.name?.[0] || "U"}
+              </span>
+              <FaChevronDown
+                className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                  openDropdown === "profile" ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {openDropdown === "profile" && (
+              <div className="absolute right-0 z-[60] mt-2 w-56 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+                <div className="border-b border-[var(--color-border)] px-3 py-2.5">
+                  <div className="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">{user?.name || "Account"}</div>
+                  <div className="truncate text-[12px] text-[var(--color-text-muted)]">{user?.email || ""}</div>
+                </div>
+
+                <div className="p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/profile");
+                      setOpenDropdown(null);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    <FaUserCircle className="text-[13px] opacity-80" aria-hidden />
+                    Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/settings");
+                      setOpenDropdown(null);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    <FaCog className="text-[13px] opacity-80" aria-hidden />
+                    Settings
+                  </button>
+
+                  <div className="my-1 h-px bg-[var(--color-border)]" />
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-red-700 transition-colors duration-150 hover:bg-red-500/[0.08] dark:text-red-300"
+                  >
+                    <FaSignOutAlt className="text-[13px] opacity-90" aria-hidden />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-
-          <LogoutButton variant="dropdown" />
         </div>
       </header>
 

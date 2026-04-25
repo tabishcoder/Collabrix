@@ -20,6 +20,8 @@ const historyRoutes = require('./routes/history.routes');
 const chatRoutes   = require('./routes/chats.routes');
 const inviteRoutes = require('./routes/invites.routes');
 const adminRoutes = require('./routes/admin.routes');
+const notificationsRoutes = require('./routes/notifications.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -103,6 +105,8 @@ app.use('/api/history', historyRoutes);
 app.use('/api/chats',   chatRoutes);
 app.use('/api/invites', inviteRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/search', searchRoutes);
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
@@ -111,6 +115,8 @@ app.get("/", (req, res) => {
 // Socket.io connection handling
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
+
+    socket.join(`user-${socket.user._id}`);
 
     // Join space room for real-time updates
     socket.on('join-space', async (spaceId) => {

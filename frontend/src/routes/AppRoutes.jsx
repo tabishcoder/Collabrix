@@ -15,6 +15,8 @@ import ChatsPage       from "../features/modules/ChatsPage.jsx";
 import MeetingsPage    from "../features/modules/MeetingsPage.jsx";
 import AIAssistantPage from "../features/modules/AIAssistantPage.jsx";
 import JoinWorkspace   from "../features/invites/JoinWorkspace.jsx";
+import ProfilePage     from "../features/profile/ProfilePage.jsx";
+import SettingsPage    from "../features/settings/SettingsPage.jsx";
 
 import ProtectedRoute  from "./ProtectedRoute";
 import PublicRoute     from "./PublicRoutes";
@@ -74,6 +76,10 @@ export default function AppRoutes() {
           <Route path="/chats"    element={<ChatsPage />} />
           <Route path="/meetings" element={<MeetingsPage />} />
           <Route path="/aibot"    element={<AIAssistantPage />} />
+
+          {/* User */}
+          <Route path="/profile"  element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

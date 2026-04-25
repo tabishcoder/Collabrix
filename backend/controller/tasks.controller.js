@@ -2,6 +2,7 @@ const Project = require('../models/Project');
 const Task    = require('../models/Task');
 const History = require('../models/History');
 const { getProjectRole, PROJECT_WRITE_ROLES } = require('../utils/rbac');
+const { createNotification } = require('../utils/pushNotification');
 
 const getIO = (req) => req.app.get('io');
 
@@ -16,7 +17,8 @@ const populateTask = (query) =>
   query
     .populate('projectId')
     .populate('assignee',  'name email avatar')
-    .populate('createdBy', 'name email avatar');
+    .populate('createdBy', 'name email avatar')
+    .populate('comments.author', 'name email avatar');
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
@@ -261,7 +263,85 @@ module.exports.updateTask = async (req, res) => {
       io.to(`project-${task.projectId._id}`).emit('task-updated', populatedTask);
     }
 
+    if (assignee !== undefined && assignee !== oldAssignee && assignee) {
+      const assigneeStr = assignee.toString();
+      if (assigneeStr !== req.user._id.toString()) {
+        await createNotification(req, {
+          userId: assigneeStr,
+          type: 'task_assigned',
+          title: 'Task assigned to you',
+          body: task.title,
+          link: `/projects/${task.projectId._id}`,
+          meta: { taskId: task._id.toString(), projectId: task.projectId._id.toString() },
+        });
+      }
+    }
+
     res.json(populatedTask);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── Comment ─────────────────────────────────────────────────────────────────
+
+module.exports.addTaskComment = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id).populate('projectId');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+
+    const { role, project } = await getProjectRole(task.projectId._id, req.user._id);
+    if (!PROJECT_WRITE_ROLES.includes(role)) {
+      return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
+    }
+
+    const text = (req.body?.text || '').trim();
+    if (!text) return res.status(400).json({ message: 'text is required' });
+    if (text.length > 8000) return res.status(400).json({ message: 'Comment too long' });
+
+    task.comments.push({
+      text,
+      author: req.user._id,
+      createdAt: new Date(),
+    });
+    await task.save();
+
+    await logHistory('task', task._id, 'commented', req.user._id, {
+      preview: text.slice(0, 160),
+      projectId: task.projectId._id,
+    });
+
+    const populatedTask = await populateTask(Task.findById(task._id));
+
+    const io = getIO(req);
+    if (io) {
+      const spaceId = project.spaceId;
+      io.to(`space-${spaceId}`).emit('task-updated', populatedTask);
+      io.to(`project-${task.projectId._id}`).emit('task-updated', populatedTask);
+    }
+
+    const pid = task.projectId._id.toString();
+    const tid = task._id.toString();
+    const authorId = req.user._id.toString();
+    const notifyIds = new Set();
+    if (task.assignee && task.assignee.toString() !== authorId) {
+      notifyIds.add(task.assignee.toString());
+    }
+    if (task.createdBy && task.createdBy.toString() !== authorId) {
+      notifyIds.add(task.createdBy.toString());
+    }
+    for (const uid of notifyIds) {
+      await createNotification(req, {
+        userId: uid,
+        type: 'task_commented',
+        title: 'New comment on task',
+        body: `${req.user.name || req.user.email || 'Someone'}: ${text.slice(0, 140)}${text.length > 140 ? '…' : ''}`,
+        link: `/projects/${pid}`,
+        meta: { taskId: tid, projectId: pid },
+      });
+    }
+
+    res.status(201).json(populatedTask);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

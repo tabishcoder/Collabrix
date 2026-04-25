@@ -6,6 +6,7 @@ import {
   createTaskApi,
   updateTaskApi,
   deleteTaskApi,
+  addTaskCommentApi,
 } from "./tasksApi";
 
 const initialState = {
@@ -65,6 +66,21 @@ export const editTask = createAsyncThunk(
   },
 );
 
+// Add comment (returns full updated task)
+export const addTaskComment = createAsyncThunk(
+  "tasks/addComment",
+  async ({ taskId, text }, thunkAPI) => {
+    try {
+      const res = await addTaskCommentApi(taskId, text);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err.response?.data?.message || "Failed to add comment",
+      );
+    }
+  },
+);
+
 // Delete task
 export const removeTask = createAsyncThunk(
   "tasks/removeTask",
@@ -92,6 +108,20 @@ const tasksSlice = createSlice({
     if (task) {
       task.status = status;
     }
+  },
+
+  mergeRemoteTask(state, action) {
+    const task = action.payload;
+    if (!task?._id) return;
+    const idx = state.tasks.findIndex((t) => t._id === task._id);
+    if (idx !== -1) state.tasks[idx] = task;
+    else state.tasks.unshift(task);
+  },
+
+  removeRemoteTask(state, action) {
+    const taskId = action.payload?.taskId;
+    if (!taskId) return;
+    state.tasks = state.tasks.filter((t) => t._id !== taskId);
   },
 },
   extraReducers: (builder) => {
@@ -139,6 +169,17 @@ const tasksSlice = createSlice({
         state.tasks = state.tasks.filter((t) => t._id !== action.payload);
       })
 
+      .addCase(addTaskComment.fulfilled, (state, action) => {
+        const task = action.payload;
+        const idx = state.tasks.findIndex((t) => t._id === task._id);
+        if (idx !== -1) state.tasks[idx] = task;
+        else state.tasks.unshift(task);
+      })
+      .addCase(addTaskComment.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload;
+      })
+
       .addCase(addTask.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload;
@@ -154,5 +195,5 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { resetTasks, optimisticStatusUpdate } = tasksSlice.actions;
+export const { resetTasks, optimisticStatusUpdate, mergeRemoteTask, removeRemoteTask } = tasksSlice.actions;
 export default tasksSlice.reducer;

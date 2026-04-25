@@ -5,7 +5,8 @@ import { useDispatch, useSelector }  from "react-redux";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import { getProjectTasks, editTask, optimisticStatusUpdate } from "./tasksSlice";
+import { getProjectTasks, editTask, optimisticStatusUpdate, mergeRemoteTask, removeRemoteTask } from "./tasksSlice";
+import { getSocket } from "../../services/socket";
 import { fetchProjectById }   from "../projects/projectSlice";
 import { updateBoardColumnsApi } from "../projects/projectApi";
 import { canManageProject, canWriteTasks } from "../../utils/roles";
@@ -14,6 +15,7 @@ import TaskListRow  from "./TaskListRow";
 import AddTaskModal from "./AddTaskModal";
 import BoardColumnsEditor from "./BoardColumnsEditor";
 import TaskDetailModal from "./TaskDetailModal";
+import ProjectActivityModal from "./ProjectActivityModal";
 import TaskFilters, { defaultTaskFilters, applyTaskFilters } from "./TaskFilters";
 import { TasksBoardSkeleton } from "../../components/ui/Skeleton";
 
@@ -35,6 +37,7 @@ export default function TasksBoard() {
   const [showColEditor,   setShowColEditor]   = useState(false);
   const [savingCols,      setSavingCols]      = useState(false);
   const [activeTaskId,    setActiveTaskId]    = useState(null);
+  const [showActivity,   setShowActivity]   = useState(false);
   const [taskFilters, setTaskFilters] = useState(() => defaultTaskFilters());
 
   // Resolve columns: prefer activeProject boardColumns, fallback to defaults
@@ -70,6 +73,25 @@ export default function TasksBoard() {
       dispatch(fetchProjectById(projectId));
     }
   }, [dispatch, projectId, activeProject?._id]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const socket = getSocket();
+    socket.emit("join-project", projectId);
+    const onCreated = (t) => dispatch(mergeRemoteTask(t));
+    const onUpdated = (t) => dispatch(mergeRemoteTask(t));
+    const onDeleted = (payload) =>
+      dispatch(removeRemoteTask({ taskId: payload?.taskId || payload }));
+    socket.on("task-created", onCreated);
+    socket.on("task-updated", onUpdated);
+    socket.on("task-deleted", onDeleted);
+    return () => {
+      socket.emit("leave-project", projectId);
+      socket.off("task-created", onCreated);
+      socket.off("task-updated", onUpdated);
+      socket.off("task-deleted", onDeleted);
+    };
+  }, [projectId, dispatch]);
 
   // ── Drag end ──────────────────────────────────────────────────────────────
   const handleDragEnd = async (event) => {
@@ -193,6 +215,14 @@ export default function TasksBoard() {
           </div>
 
           {/* Column editor (managers) */}
+          <button
+            type="button"
+            onClick={() => setShowActivity(true)}
+            className="rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+          >
+            Activity
+          </button>
+
           {canManage && (
             <button
               type="button"
@@ -306,6 +336,10 @@ export default function TasksBoard() {
           canManage={canManage}
           onClose={() => setActiveTaskId(null)}
         />
+      )}
+
+      {showActivity && projectId && (
+        <ProjectActivityModal projectId={projectId} onClose={() => setShowActivity(false)} />
       )}
     </div>
   );

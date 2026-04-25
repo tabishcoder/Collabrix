@@ -19,7 +19,9 @@ const HistorySchema = new mongoose.Schema({
       // RBAC + invites
       'role_changed', 'invite_sent', 'invite_accepted',
       // board management
-      'columns_updated'
+      'columns_updated',
+      // collaboration
+      'commented'
     ],
     required: true
   },
