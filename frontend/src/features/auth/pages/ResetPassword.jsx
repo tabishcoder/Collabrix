@@ -32,8 +32,8 @@ export default function ResetPasswordPage() {
 
       toast.success("Password reset successful 🎉");
       navigate("/login");
-    } catch (err) {
-      toast.error("Reset failed");
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Reset failed");
     }
   };
 
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
         <AuthButton loading={isSubmitting}>
           Reset Password
         </AuthButton>
-         <p className="text-sm text-center mt-4 text-[var(--color-text-secondary)]">
+        <p className="text-sm text-center mt-4 text-[var(--color-text-secondary)]">
           Back to{" "}
           <Link
             to="/login"

@@ -13,7 +13,16 @@ const HistorySchema = new mongoose.Schema({
   },
   action: {
     type: String,
-    enum: ['created', 'updated', 'moved', 'deleted', 'assigned', 'added', 'removed'],
+    enum: [
+      // existing
+      'created', 'updated', 'moved', 'deleted', 'assigned', 'added', 'removed',
+      // RBAC + invites
+      'role_changed', 'invite_sent', 'invite_accepted',
+      // board management
+      'columns_updated',
+      // collaboration
+      'commented'
+    ],
     required: true
   },
   performedBy: {

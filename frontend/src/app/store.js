@@ -3,6 +3,7 @@ import authReducer from '../features/auth/authSlice'
 import spacesReducer from "../features/spaces/spaceSlice";
 import projectsReducer from "../features/projects/projectSlice";
 import tasksReducer from "../features/tasks/tasksSlice";
+import notificationsReducer from "../features/notifications/notificationsSlice";
 
 export const store = configureStore({
   reducer:{
@@ -10,5 +11,6 @@ export const store = configureStore({
     spaces: spacesReducer,
     projects: projectsReducer,
     tasks: tasksReducer,
+    notifications: notificationsReducer,
   }
 })

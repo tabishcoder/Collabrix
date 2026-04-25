@@ -1,14 +1,12 @@
-export default function AuthInput({ label, error, ...props }) {
+export default function AuthInput({ error, ...props }) {
   return (
     <div className="w-full">
       <input
         {...props}
-        className={`w-full px-5 py-3 bg-transparent border rounded-xl focus:outline-none
-        ${error ? "border-red-500" : "border-white/10"}
-        focus:ring-2 focus:ring-[var(--color-primary)]`}
+        className={`app-control app-control--auth placeholder:text-[var(--color-text-muted)] ${error ? "app-control--invalid" : ""}`}
       />
       {error && (
-        <p className="text-red-400 text-xs mt-1">{error}</p>
+        <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">{error}</p>
       )}
     </div>
   );

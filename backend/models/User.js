@@ -8,6 +8,14 @@ const UserSchema = new mongoose.Schema({
   avatar: { type: String },
   isVerified: { type: Boolean, default: false },
 
+  /** Platform operator (Collabrix staff). Not workspace owner/admin. */
+  platformRole: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+    index: true,
+  },
+
   // for password and email verification
   meta: {
     resendCount: { type: Number, default: 0 },

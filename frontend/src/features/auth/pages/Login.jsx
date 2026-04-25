@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "../auth.validation";
 import { useDispatch } from "react-redux";
 import { login, getMe } from "../authSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import AuthInput from "../components/AuthInput";
@@ -13,6 +13,8 @@ import AuthLayout from "../components/AuthLayout";
 export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
   const {
     register,
@@ -27,8 +29,8 @@ export default function LoginPage() {
       await dispatch(login(data)).unwrap();
       await dispatch(getMe()).unwrap();
 
-      toast.success("Welcome back 🚀");
-      navigate("/dashboard");
+      toast.success("Welcome back!");
+      navigate(redirect, { replace: true });
     } catch (err) {
       toast.error(err || "Login failed");
     }

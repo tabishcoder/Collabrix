@@ -8,13 +8,13 @@ export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="h-screen flex flex-col bg-[#050505]">
+    <div className="h-dvh min-h-0 flex flex-col bg-[var(--color-bg)] text-[var(--color-text-primary)]">
 
       {/* TOP NAVBAR */}
-      <TopNavbar />
+      <TopNavbar onToggleSidebar={() => setCollapsed((c) => !c)} />
 
       {/* BODY */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* MAIN SIDEBAR */}
         <Sidebar
@@ -26,8 +26,10 @@ export default function AppLayout() {
         <SubSidebarSwitch collapsed={collapsed} />
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 overflow-y-auto p-8 bg-gradient-to-br from-[#050505] via-[#0a0a0b] to-[#050505]">
-          <Outlet />
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[radial-gradient(1200px_520px_at_18%_-8%,var(--gradient-page-spot1),transparent_62%),radial-gradient(800px_420px_at_92%_0%,var(--gradient-page-spot2),transparent_58%),var(--color-bg)] px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-7">
+          <div className="mx-auto max-w-[1600px] pb-2">
+            <Outlet />
+          </div>
         </main>
 
       </div>

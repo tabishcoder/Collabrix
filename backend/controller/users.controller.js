@@ -11,7 +11,8 @@ module.exports.getMe = async (req, res) => {
     const userDTO = {
         _id: req.user._id,
         name: req.user.name,
-        email: req.user.email
+        email: req.user.email,
+        platformRole: req.user.platformRole || 'user',
     }
     res.json(userDTO);
 }

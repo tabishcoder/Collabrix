@@ -1,4 +1,5 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   FaTachometerAlt,
   FaProjectDiagram,
@@ -7,38 +8,55 @@ import {
   FaRobot,
   FaChevronLeft,
   FaChevronRight,
+  FaShieldAlt,
 } from "react-icons/fa";
-
-const navItems = [
-  { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
-  { label: "Projects", to: "/projects", icon: FaProjectDiagram },
-  { label: "Chats", to: "/chats", icon: FaComments },
-  { label: "Meetings", to: "/meetings", icon: FaUsers },
-  { label: "AI Bot", to: "/aibot", icon: FaRobot },
-];
+import { isPlatformAdmin } from "../utils/roles";
 
 export default function Sidebar({ collapsed, setCollapsed }) {
+  const user = useSelector((s) => s.auth.user);
+  const { pathname } = useLocation();
+  const activeProject = useSelector((s) => s.projects.activeProject);
+  const projectsTo = activeProject?._id ? `/projects/${activeProject._id}` : "/projects";
+
+  const baseNavItems = [
+    { label: "Dashboard", to: "/dashboard", icon: FaTachometerAlt },
+    { label: "Projects", to: projectsTo, icon: FaProjectDiagram },
+    { label: "Chats", to: "/chats", icon: FaComments },
+    { label: "Meetings", to: "/meetings", icon: FaUsers },
+    { label: "AI Bot", to: "/aibot", icon: FaRobot },
+  ];
+
+  const navItems = isPlatformAdmin(user)
+    ? [
+        ...baseNavItems.slice(0, 1),
+        { label: "Platform", to: "/admin", icon: FaShieldAlt },
+        ...baseNavItems.slice(1),
+      ]
+    : baseNavItems;
+
   return (
     <aside
       className={`
-        h-screen flex flex-col sticky top-0
-        bg-[#0a0a0b]/95
-        border-r border-white/8
-        transition-all duration-300 ease-out
-        ${collapsed ? "w-20" : "w-64"}
+        h-full min-h-0 flex flex-col shrink-0
+        border-r border-[var(--color-border-strong)]
+        bg-[var(--color-sidebar-bg)]
+        shadow-[var(--shadow-nav)]
+        transition-[width] duration-200 ease-out
+        ${collapsed ? "w-20" : "w-60"}
       `}
     >
       {/* HEADER */}
-      <div className="flex items-center justify-between p-4 border-b border-white/8">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-3">
         {!collapsed && (
-          <h1 className="text-sm font-bold text-white/90">
+          <h1 className="text-[13px] font-semibold tracking-tight text-[var(--color-text-primary)]">
             Collabrix
           </h1>
         )}
 
         <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
-          className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-all duration-200"
+          className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
         >
           {collapsed ? (
             <FaChevronRight size={14} />
@@ -49,36 +67,44 @@ export default function Sidebar({ collapsed, setCollapsed }) {
       </div>
 
       {/* NAVIGATION */}
-      <nav className="flex-1 px-3 py-4 space-y-2">
-        {navItems.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `
-              flex items-center gap-3 px-3.5 py-2.5 rounded-lg
-              transition-all duration-200
-              ${
-                isActive
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }
-            `
-            }
-          >
-            <Icon className="text-base min-w-[20px]" />
-            {!collapsed && <span className="text-sm font-medium">{label}</span>}
-          </NavLink>
-        ))}
+      <nav className="flex-1 space-y-0.5 px-2 py-3">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <NavLink
+              key={`${item.label}-${item.to}`}
+              to={item.to}
+              className={({ isActive }) => {
+                const active =
+                  item.label === "Projects"
+                    ? pathname.startsWith("/projects")
+                    : isActive;
+                return `
+                flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium
+                transition-colors duration-150
+                ${
+                  active
+                    ? "bg-[color-mix(in_oklab,var(--color-primary)_14%,transparent)] text-[var(--color-primary)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-primary)_28%,transparent)] dark:text-indigo-200"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                }
+              `;
+              }}
+            >
+              <Icon className="min-w-[18px] text-[15px] opacity-90" />
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* FOOTER */}
       {!collapsed && (
-        <div className="p-4 m-3 rounded-lg bg-white/8 border border-white/12">
-          <p className="text-[10px] text-white/50 uppercase mb-2.5 font-bold tracking-wider">
-            Support
-          </p>
-          <button className="text-sm text-white/70 hover:text-white transition-colors duration-150 font-medium">
+        <div className="m-2 rounded-md border border-[var(--color-border)] bg-[var(--color-card)]/50 p-3">
+          <p className="mb-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Support</p>
+          <button
+            type="button"
+            className="text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:text-[var(--color-text-primary)]"
+          >
             Help Center
           </button>
         </div>

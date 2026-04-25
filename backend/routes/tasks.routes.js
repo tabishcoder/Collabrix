@@ -6,13 +6,19 @@ const {
   getTaskById,
   createTask,
   updateTask,
-  deleteTask
+  deleteTask,
+  addTaskComment,
 } = require('../controller/tasks.controller');
 
 // @desc Get all tasks in a project
 // @route GET /api/tasks/project/:projectId
 // @access Private
 router.get('/project/:projectId', auth, getTasksByProject);
+
+// @desc Add comment to task
+// @route POST /api/tasks/:id/comments
+// @access Private
+router.post('/:id/comments', auth, addTaskComment);
 
 // @desc Get a specific task by ID
 // @route GET /api/tasks/:id

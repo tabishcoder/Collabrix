@@ -75,7 +75,11 @@ export default function VerifyOtpPage() {
   return (
     <AuthLayout
       title="Verify OTP"
-      subtitle="Enter the 6-digit code sent to your email"
+      subtitle={
+        email
+          ? `Enter the 6-digit code sent to ${email}`
+          : "Enter the 6-digit code sent to your email"
+      }
     >
       <div className="space-y-4">
 
@@ -105,15 +109,15 @@ export default function VerifyOtpPage() {
         </button>
 
       </div>
- <p className="text-sm text-center mt-4 text-[var(--color-text-secondary)]">
-          Back to{" "}
-          <Link
-            to="/login"
-            className="text-[var(--color-accent)] font-medium hover:underline"
-          >
-            Sign in
-          </Link>
-        </p>
+      <p className="text-sm text-center mt-4 text-[var(--color-text-secondary)]">
+        Back to{" "}
+        <Link
+          to="/login"
+          className="text-[var(--color-accent)] font-medium hover:underline"
+        >
+          Sign in
+        </Link>
+      </p>
 
     </AuthLayout>
   );

@@ -6,6 +6,10 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server } = require('socket.io');
+const JWTService = require('./services/JWTService');
+const User = require('./models/User');
+const Space = require('./models/Space');
+const Project = require('./models/Project');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/users.routes');
@@ -13,6 +17,11 @@ const spaceRoutes = require('./routes/spaces.routes');
 const projectRoutes = require('./routes/projects.routes');
 const taskRoutes = require('./routes/tasks.routes');
 const historyRoutes = require('./routes/history.routes');
+const chatRoutes   = require('./routes/chats.routes');
+const inviteRoutes = require('./routes/invites.routes');
+const adminRoutes = require('./routes/admin.routes');
+const notificationsRoutes = require('./routes/notifications.routes');
+const searchRoutes = require('./routes/search.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -29,9 +38,36 @@ const io = new Server(server, {
   }
 });
 
+function getCookieValue(cookieHeader, name) {
+  if (!cookieHeader) return null;
+  const parts = cookieHeader.split(';').map((p) => p.trim());
+  const match = parts.find((p) => p.startsWith(`${name}=`));
+  if (!match) return null;
+  return decodeURIComponent(match.slice(name.length + 1));
+}
+
+io.use(async (socket, next) => {
+  try {
+    const cookieHeader = socket.request.headers?.cookie;
+    const accessToken = getCookieValue(cookieHeader, 'accessToken');
+    if (!accessToken) return next(new Error('Not authorized'));
+
+    const decoded = JWTService.verifyAccessToken(accessToken);
+    if (!decoded?._id) return next(new Error('Not authorized'));
+
+    const user = await User.findById(decoded._id).select('_id name email');
+    if (!user) return next(new Error('Not authorized'));
+
+    socket.user = user;
+    return next();
+  } catch (err) {
+    return next(new Error('Not authorized'));
+  }
+});
+
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB connected');
     } catch (err) {
         console.error(err);
@@ -66,6 +102,11 @@ app.use('/api/spaces', spaceRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/chats',   chatRoutes);
+app.use('/api/invites', inviteRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/search', searchRoutes);
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
@@ -75,10 +116,22 @@ app.get("/", (req, res) => {
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
+    socket.join(`user-${socket.user._id}`);
+
     // Join space room for real-time updates
-    socket.on('join-space', (spaceId) => {
-        socket.join(`space-${spaceId}`);
-        console.log(`User ${socket.id} joined space-${spaceId}`);
+    socket.on('join-space', async (spaceId) => {
+        try {
+            const space = await Space.findOne({
+                _id: spaceId,
+                $or: [{ owner: socket.user._id }, { 'members.user': socket.user._id }],
+            }).select('_id');
+            if (!space) return;
+
+            socket.join(`space-${spaceId}`);
+            console.log(`User ${socket.id} joined space-${spaceId}`);
+        } catch {
+            // ignore invalid ids / transient errors
+        }
     });
 
     // Leave space room
@@ -88,9 +141,28 @@ io.on('connection', (socket) => {
     });
 
     // Join project room
-    socket.on('join-project', (projectId) => {
-        socket.join(`project-${projectId}`);
-        console.log(`User ${socket.id} joined project-${projectId}`);
+    socket.on('join-project', async (projectId) => {
+        try {
+            const project = await Project.findOne({ _id: projectId })
+                .select('_id spaceId members')
+                .populate('spaceId', 'owner members');
+
+            if (!project) return;
+            const space = project.spaceId;
+            const uid = socket.user._id.toString();
+
+            const isSpaceOwner  = space?.owner?.toString() === uid;
+            const isSpaceMember = Array.isArray(space?.members) &&
+                space.members.some((m) => m.user?.toString() === uid);
+            const isProjectMember = project.members.some((m) => m.user?.toString() === uid);
+
+            if (!isSpaceOwner && !isSpaceMember && !isProjectMember) return;
+
+            socket.join(`project-${projectId}`);
+            console.log(`User ${socket.id} joined project-${projectId}`);
+        } catch {
+            // ignore invalid ids / transient errors
+        }
     });
 
     // Leave project room

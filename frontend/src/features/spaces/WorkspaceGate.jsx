@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSpaces, createSpace, setActiveSpace } from "./spaceSlice";
+import { Skeleton } from "../../components/ui/Skeleton";
 
 export default function WorkspaceGate() {
   const dispatch = useDispatch();
-  const { spaces, loading } = useSelector((s) => s.spaces);
+  const { spaces, loading, error } = useSelector((s) => s.spaces);
   const [spaceName, setSpaceName] = useState("");
 
   useEffect(() => {
     if (!spaces.length) dispatch(fetchSpaces());
-  }, [dispatch]);
+  }, [dispatch, spaces.length]);
 
   const handleSelect = (space) => {
     dispatch(setActiveSpace(space));
@@ -22,53 +23,62 @@ export default function WorkspaceGate() {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
-      <div className="w-[80vw] h-[80vh] bg-[var(--color-card)] rounded-xl p-6 overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-6 text-[var(--color-primary)]">
-          Choose a Workspace
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-lg max-h-[min(88dvh,720px)] overflow-y-auto p-5 sm:p-6">
+        <p className="mb-1 text-[11px] font-medium text-[var(--color-text-muted)]">Workspace</p>
+        <h1 className="mb-1.5 text-xl font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
+          Choose a workspace
         </h1>
+        <p className="mb-5 text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+          Select an existing workspace or create a new one to continue.
+        </p>
 
-        {loading && <p>Loading workspaces...</p>}
+        {loading && (
+          <div className="space-y-2" aria-busy="true" aria-label="Loading workspaces">
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+          </div>
+        )}
+        {error && !loading && (
+          <p className="mb-4 text-[13px] text-red-600 dark:text-red-400">Failed to load workspaces: {error}</p>
+        )}
 
         {spaces.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {spaces.map((space) => (
               <button
                 key={space._id}
+                type="button"
                 onClick={() => handleSelect(space)}
-                className="w-full text-left px-4 py-3 rounded-md bg-white/5 hover:bg-white/10 transition"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2.5 text-left shadow-sm transition-colors duration-150 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-muted)]"
               >
-                <p className="font-medium text-[var(--color-text-primary)]">
-                  {space.name}
-                </p>
-                <p className="text-xs opacity-70 text-[var(--color-text-secondary)]">
-                  Owner: {space.owner?.name}
-                </p>
+                <p className="text-[13px] font-semibold text-[var(--color-text-primary)]">{space.name}</p>
+                <p className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">Owner: {space.owner?.name}</p>
               </button>
             ))}
           </div>
         )}
 
-        <div className="mt-6 max-w-md">
-          <p className="mb-4 text-lg text-[var(--color-text-primary)]">
-            {spaces.length === 0
-              ? "Welcome! Create your first workspace 🚀"
-              : "Or create a new workspace"}
+        <div className="mt-5 max-w-md border-t border-[var(--color-border)] pt-5">
+          <p className="mb-3 text-[13px] font-semibold text-[var(--color-text-primary)]">
+            {spaces.length === 0 ? "Create your first workspace" : "Create a new workspace"}
           </p>
 
           <input
             value={spaceName}
             onChange={(e) => setSpaceName(e.target.value)}
             placeholder="Workspace name"
-            className="w-full px-4 py-2 rounded-md bg-black/40 mb-4 outline-none text-[var(--color-text-primary)] placeholder:text-gray-400"
+            className="app-control mb-3 px-3 py-2 text-[13px] placeholder:text-[var(--color-text-muted)]"
           />
 
           <button
+            type="button"
             disabled={!spaceName}
             onClick={handleCreate}
-            className="px-4 py-2 rounded-md bg-[var(--color-primary)] text-white font-medium disabled:opacity-50 hover:bg-[var(--color-highlight)] transition"
+            className="app-btn-modal-primary w-full justify-center py-2 text-[13px] sm:w-auto"
           >
-            Create Workspace
+            Create workspace
           </button>
         </div>
       </div>
