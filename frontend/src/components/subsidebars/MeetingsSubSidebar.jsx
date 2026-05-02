@@ -1,8 +1,24 @@
+import { useMemo } from "react";
 import { useSelector } from "react-redux";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaCalendarAlt, FaPlus } from "react-icons/fa";
+import { loadRecentMeetings } from "../../features/meetings/recentMeetingsStorage";
 
 export default function MeetingsSubSidebar({ collapsed }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const activeProject = useSelector((s) => s.projects.activeProject);
+
+  const recent = useMemo(() => {
+    if (!activeProject?._id) return [];
+    return loadRecentMeetings(String(activeProject._id));
+    // pathname: re-read sessionStorage when navigating between meeting routes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProject?._id, location.pathname]);
+
+  const openSchedule = () => {
+    navigate("/meetings", { state: { focusCreate: true } });
+  };
 
   return (
     <aside
@@ -30,24 +46,38 @@ export default function MeetingsSubSidebar({ collapsed }) {
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
-        {[1, 2].map((_, i) => (
-          <div
-            key={i}
-            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-          >
-            <FaCalendarAlt size={14} />
-            Weekly Sync
-          </div>
-        ))}
+        {!activeProject?._id ? (
+          <p className="px-2 text-[11px] text-[var(--color-text-muted)]">
+            Pick a project in the header to see recent rooms.
+          </p>
+        ) : recent.length === 0 ? (
+          <p className="px-2 text-[11px] text-[var(--color-text-muted)]">
+            Recent meetings for this project will appear here after you start or join one.
+          </p>
+        ) : (
+          recent.map((m) => (
+            <Link
+              key={m._id}
+              to={`/meetings/${m._id}`}
+              className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+            >
+              <FaCalendarAlt size={14} className="shrink-0 opacity-80" />
+              <span className="min-w-0 flex-1 truncate" title={m.title}>
+                {m.title}
+              </span>
+            </Link>
+          ))
+        )}
       </div>
 
       <div className="border-t border-[var(--color-border)] p-3">
         <button
           type="button"
+          onClick={openSchedule}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-indigo-700"
         >
           <FaPlus size={12} />
-          Schedule Meeting
+          {!collapsed && "Schedule meeting"}
         </button>
       </div>
     </aside>

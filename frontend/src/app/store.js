@@ -4,6 +4,7 @@ import spacesReducer from "../features/spaces/spaceSlice";
 import projectsReducer from "../features/projects/projectSlice";
 import tasksReducer from "../features/tasks/tasksSlice";
 import notificationsReducer from "../features/notifications/notificationsSlice";
+import meetingsReducer from "../features/meetings/meetingsSlice";
 
 export const store = configureStore({
   reducer:{
@@ -12,5 +13,6 @@ export const store = configureStore({
     projects: projectsReducer,
     tasks: tasksReducer,
     notifications: notificationsReducer,
+    meetings: meetingsReducer,
   }
 })

@@ -13,6 +13,7 @@ import ProjectsPage    from "../features/projects/ProjectsPage.jsx";
 import TasksBoard      from "../features/tasks/TasksBoard.jsx";
 import ChatsPage       from "../features/modules/ChatsPage.jsx";
 import MeetingsPage    from "../features/modules/MeetingsPage.jsx";
+import MeetingRoomPage from "../features/meetings/MeetingRoomPage.jsx";
 import AIAssistantPage from "../features/modules/AIAssistantPage.jsx";
 import JoinWorkspace   from "../features/invites/JoinWorkspace.jsx";
 import ProfilePage     from "../features/profile/ProfilePage.jsx";
@@ -75,6 +76,7 @@ export default function AppRoutes() {
           {/* Modules – scoped to active project (header picker) */}
           <Route path="/chats"    element={<ChatsPage />} />
           <Route path="/meetings" element={<MeetingsPage />} />
+          <Route path="/meetings/:meetingId" element={<MeetingRoomPage />} />
           <Route path="/aibot"    element={<AIAssistantPage />} />
 
           {/* User */}
