@@ -8,6 +8,7 @@ const {
   PROJECT_MANAGE_ROLES,
   PROJECT_WRITE_ROLES
 } = require('../utils/rbac');
+const { ensureProjectChannel, syncProjectChannelParticipants } = require('../services/chatService');
 
 const getIO = (req) => req.app.get('io');
 
@@ -19,7 +20,14 @@ const logHistory = async (entityType, entityId, action, performedBy, details = {
 
 const populateProject = (query) =>
   query
-    .populate('spaceId', 'name owner members')
+    .populate({
+      path: 'spaceId',
+      select: 'name owner members',
+      populate: [
+        { path: 'owner', select: 'name email avatar' },
+        { path: 'members.user', select: 'name email avatar' },
+      ],
+    })
     .populate({ path: 'members.user', select: 'name email avatar' })
     .populate('tasks');
 
@@ -96,6 +104,12 @@ module.exports.createProject = async (req, res) => {
     const io = getIO(req);
     if (io) {
       io.to(`space-${spaceId}`).emit('project-created', populated);
+    }
+
+    try {
+      await ensureProjectChannel(project._id);
+    } catch (e) {
+      console.error('ensureProjectChannel', e?.message);
     }
 
     res.status(201).json(withMyRole(populated, 'manager'));
@@ -245,6 +259,12 @@ module.exports.addProjectMember = async (req, res) => {
       io.to(`project-${project._id}`).emit('project-member-added', { project: populated, userId });
     }
 
+    try {
+      await syncProjectChannelParticipants(project._id);
+    } catch (e) {
+      console.error('syncProjectChannelParticipants', e?.message);
+    }
+
     res.json(withMyRole(populated, callerRole));
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -312,6 +332,12 @@ module.exports.removeProjectMember = async (req, res) => {
       io.to(`project-${project._id}`).emit('project-member-removed', { project: populated, userId });
     }
 
+    try {
+      await syncProjectChannelParticipants(project._id);
+    } catch (e) {
+      console.error('syncProjectChannelParticipants', e?.message);
+    }
+
     res.json(withMyRole(populated, callerRole));
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -360,6 +386,12 @@ module.exports.leaveProject = async (req, res) => {
     if (io) {
       io.to(`project-${projectId}`).emit('project-member-removed', { projectId, userId });
       io.to(`space-${project.spaceId}`).emit('project-member-removed', { projectId, userId });
+    }
+
+    try {
+      await syncProjectChannelParticipants(projectId);
+    } catch (e) {
+      console.error('syncProjectChannelParticipants', e?.message);
     }
 
     res.json({ message: 'Left project successfully' });

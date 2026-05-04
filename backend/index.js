@@ -10,6 +10,10 @@ const JWTService = require('./services/JWTService');
 const User = require('./models/User');
 const Space = require('./models/Space');
 const Project = require('./models/Project');
+const Chat = require('./models/Chat');
+const Message = require('./models/Message');
+const UserChatState = require('./models/UserChatState');
+const { userCanAccessChat, computeReceiptStatus } = require('./services/chatService');
 
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/users.routes');
@@ -169,6 +173,57 @@ io.on('connection', (socket) => {
     socket.on('leave-project', (projectId) => {
         socket.leave(`project-${projectId}`);
         console.log(`User ${socket.id} left project-${projectId}`);
+    });
+
+    socket.on('join-chat', async (chatId) => {
+        try {
+            if (!chatId) return;
+            const chat = await Chat.findById(chatId).select('_id kind projectId participants isGroup');
+            const ok = await userCanAccessChat(socket.user._id, chat);
+            if (!ok) return;
+            socket.join(`chat-${chatId}`);
+        } catch {
+            // invalid id / transient
+        }
+    });
+
+    socket.on('leave-chat', (chatId) => {
+        if (!chatId) return;
+        socket.leave(`chat-${chatId}`);
+    });
+
+    socket.on('chat:ack-delivered', async (payload) => {
+        try {
+            const { chatId, messageIds } = payload || {};
+            if (!chatId || !Array.isArray(messageIds) || !messageIds.length) return;
+            const chat = await Chat.findById(chatId).select('participants');
+            if (!chat || !(await userCanAccessChat(socket.user._id, chat))) return;
+            const uid = socket.user._id;
+            const participantIds = chat.participants.map((p) => p.toString());
+            const unique = [...new Set(messageIds)].slice(0, 60);
+            for (const mid of unique) {
+                if (!mongoose.Types.ObjectId.isValid(mid)) continue;
+                const existing = await Message.findOne({ _id: mid, chat: chatId }).select('sender');
+                if (!existing || existing.sender.toString() === uid.toString()) continue;
+                await Message.updateOne(
+                    { _id: mid, chat: chatId },
+                    { $addToSet: { deliveredTo: uid } },
+                );
+                const upd = await Message.findById(mid).populate('sender', '_id name email avatar');
+                if (!upd) continue;
+                const states = await UserChatState.find({ chat: chatId }).lean();
+                const plain = upd.toObject();
+                const receiptStatus = computeReceiptStatus(plain, participantIds, states);
+                io.to(`chat-${chatId}`).emit('chat:message-status', {
+                    chatId: String(chatId),
+                    messageId: String(mid),
+                    deliveredTo: plain.deliveredTo,
+                    receiptStatus,
+                });
+            }
+        } catch (e) {
+            console.error('chat:ack-delivered', e?.message);
+        }
     });
 
     socket.on('disconnect', () => {
