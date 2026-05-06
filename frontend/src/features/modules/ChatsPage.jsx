@@ -1,14 +1,35 @@
+import { useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import ProjectScopedModule from "../project-scope/ProjectScopedModule";
+import { fetchProjectById } from "../projects/projectSlice";
+import { clearChatUi, fetchProjectChats } from "../chats/chatSlice";
+import ChatThread from "../chats/ChatThread";
 
 export default function ChatsPage() {
+  const dispatch = useDispatch();
+  const activeProject = useSelector((s) => s.projects.activeProject);
+  const lastProjectId = useRef(null);
+
+  useEffect(() => {
+    const id = activeProject?._id;
+    if (!id) return;
+    if (lastProjectId.current !== id) {
+      dispatch(clearChatUi());
+      lastProjectId.current = id;
+    }
+    dispatch(fetchProjectChats(id));
+    dispatch(fetchProjectById(id));
+  }, [dispatch, activeProject?._id]);
+
   return (
-    <ProjectScopedModule
-      title="Chats"
-      description="Project-scoped conversations will appear here. Channels and threads will be tied to this board’s team."
-    >
-      <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-card)]/60 px-4 py-10 text-center text-[13px] text-[var(--color-text-muted)]">
-        Messaging for this project is not wired up yet — layout and scope are ready for when you connect the API.
-      </div>
-    </ProjectScopedModule>
+    <div className="flex min-h-0 w-full flex-1 flex-col">
+      <ProjectScopedModule
+        compact
+        title="Chats"
+        description="Project channel, DMs & groups — live sync."
+      >
+        <ChatThread />
+      </ProjectScopedModule>
+    </div>
   );
 }
