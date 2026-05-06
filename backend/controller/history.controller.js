@@ -3,12 +3,15 @@ const Space = require('../models/Space');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 
+const uidStr = (id) => (id && id.toString ? id.toString() : String(id));
+
 // Helper function to check if user is space member
 const isSpaceMember = async (spaceId, userId) => {
     const space = await Space.findById(spaceId);
     if (!space) return { allowed: false, space: null };
-    const isOwner = space.owner.toString() === userId.toString();
-    const isMember = space.members.some(member => member.toString() === userId.toString());
+    const uid = uidStr(userId);
+    const isOwner = uidStr(space.owner) === uid;
+    const isMember = (space.members || []).some((m) => uidStr(m.user) === uid);
     return { allowed: isOwner || isMember, space };
 };
 
@@ -18,12 +21,13 @@ const isProjectMember = async (projectId, userId) => {
     if (!project) return { allowed: false, project: null, space: null };
 
     const space = project.spaceId;
-    const isSpaceOwner = space.owner.toString() === userId.toString();
-    const isSpaceMember = space.members.some(member => member.toString() === userId.toString());
-    const isProjectMember = project.members.some(member => member.toString() === userId.toString());
+    const uid = uidStr(userId);
+    const isSpaceOwner = space && uidStr(space.owner) === uid;
+    const isSpaceMemberRow = space && (space.members || []).some((m) => uidStr(m.user) === uid);
+    const isProjectMemberRow = (project.members || []).some((m) => uidStr(m.user) === uid);
 
     return {
-        allowed: isSpaceOwner || isSpaceMember || isProjectMember,
+        allowed: Boolean(isSpaceOwner || isSpaceMemberRow || isProjectMemberRow),
         project,
         space
     };

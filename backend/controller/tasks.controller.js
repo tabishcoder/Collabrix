@@ -1,112 +1,122 @@
 const Project = require('../models/Project');
-const Task = require('../models/Task');
+const Task    = require('../models/Task');
 const History = require('../models/History');
+const { getProjectRole, PROJECT_WRITE_ROLES } = require('../utils/rbac');
+const { createNotification } = require('../utils/pushNotification');
 
-// Helper to get Socket.io instance
-const getIO = (req) => {
-  return req.app.get ? req.app.get('io') : null;
-};
+const getIO = (req) => req.app.get('io');
 
-// Helper function to check if user is project member
-const isProjectMember = async (projectId, userId) => {
-  const project = await Project.findById(projectId).populate('spaceId');
-  if (!project) return { allowed: false, project: null, space: null };
+const PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent'];
+const MAX_LABELS = 5;
 
-  const space = project.spaceId;
-  const isSpaceOwner = space.owner.toString() === userId.toString();
-  const isSpaceMember = space.members.some(member => member.toString() === userId.toString());
-  const isProjectMember = project.members.some(member => member.toString() === userId.toString());
-
-  return {
-    allowed: isSpaceOwner || isSpaceMember || isProjectMember,
-    project,
-    space
-  };
-};
-
-// Helper function to log history
 const logHistory = async (entityType, entityId, action, performedBy, details = {}) => {
-  await History.create({
-    entityType,
-    entityId,
-    action,
-    performedBy,
-    details
-  });
+  await History.create({ entityType, entityId, action, performedBy, details });
 };
+
+const populateTask = (query) =>
+  query
+    .populate('projectId')
+    .populate('assignee',  'name email avatar')
+    .populate('createdBy', 'name email avatar')
+    .populate('comments.author', 'name email avatar');
+
+// ─── Read ─────────────────────────────────────────────────────────────────────
 
 module.exports.getTasksByProject = async (req, res) => {
   try {
-    const { allowed } = await isProjectMember(req.params.projectId, req.user._id);
+    const { role } = await getProjectRole(req.params.projectId, req.user._id);
+    if (!role) return res.status(403).json({ message: 'Access denied.' });
 
-    if (!allowed) {
-      return res.status(403).json({ message: 'Access denied. Project member required.' });
-    }
-
-    const tasks = await Task.find({ projectId: req.params.projectId })
-      .populate('assignee', 'name email avatar')
-      .populate('createdBy', 'name email avatar')
-      .sort({ createdAt: -1 });
-
+    const tasks = await populateTask(
+      Task.find({ projectId: req.params.projectId }).sort({ createdAt: -1 })
+    );
     res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
 module.exports.getTaskById = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate('projectId');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
+    const { role } = await getProjectRole(task.projectId._id, req.user._id);
+    if (!role) return res.status(403).json({ message: 'Access denied.' });
 
-    const { allowed } = await isProjectMember(task.projectId._id, req.user._id);
-
-    if (!allowed) {
-      return res.status(403).json({ message: 'Access denied. Project member required.' });
-    }
-
-    const populatedTask = await Task.findById(req.params.id)
-      .populate('projectId')
-      .populate('assignee', 'name email avatar')
-      .populate('createdBy', 'name email avatar');
-
-    res.json(populatedTask);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.json(await populateTask(Task.findById(req.params.id)));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
+// ─── Create ───────────────────────────────────────────────────────────────────
+
 module.exports.createTask = async (req, res) => {
   try {
-    const { title, description, projectId, assignee } = req.body;
-
+    const { title, description, projectId, assignee, status, priority, dueDate, labels } = req.body;
     if (!title || !projectId) {
-      return res.status(400).json({ message: 'Task title and projectId are required' });
+      return res.status(400).json({ message: 'title and projectId are required' });
     }
 
-    const { allowed, project } = await isProjectMember(projectId, req.user._id);
-
-    if (!allowed) {
-      return res.status(403).json({ message: 'Access denied. Project member required.' });
+    const { role, project } = await getProjectRole(projectId, req.user._id);
+    if (!PROJECT_WRITE_ROLES.includes(role)) {
+      return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
     }
 
+    // Validate assignee is a project/space member
     if (assignee) {
-      const isSpaceOwner = project.spaceId.owner.toString() === assignee.toString();
-      const isSpaceMember = project.spaceId.members.some(member => member.toString() === assignee.toString());
-      const isProjectMember = project.members.some(member => member.toString() === assignee.toString());
-
-      if (!isSpaceOwner && !isSpaceMember && !isProjectMember) {
+      const { role: assigneeRole } = await getProjectRole(projectId, assignee);
+      if (!assigneeRole) {
         return res.status(400).json({ message: 'Assignee must be a project member' });
       }
+    }
+
+    // Validate status is a valid column key (or default to first column)
+    const validKeys = project.boardColumns.map((c) => c.key);
+    const taskStatus = status && validKeys.includes(status)
+      ? status
+      : (validKeys[0] || 'todo');
+
+    // Validate priority
+    const taskPriority = priority && PRIORITIES.includes(priority)
+      ? priority
+      : 'none';
+
+    // Validate dueDate (allow null)
+    let taskDueDate = null;
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === '') {
+        taskDueDate = null;
+      } else {
+        const parsed = new Date(dueDate);
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({ message: 'dueDate must be a valid date or null' });
+        }
+        taskDueDate = parsed;
+      }
+    }
+
+    // Validate labels (max 5)
+    let taskLabels = [];
+    if (labels !== undefined) {
+      if (!Array.isArray(labels)) {
+        return res.status(400).json({ message: 'labels must be an array of strings' });
+      }
+      taskLabels = labels
+        .filter((l) => typeof l === 'string')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, MAX_LABELS);
     }
 
     const task = await Task.create({
       title,
       description: description || '',
-      status: 'todo',
+      status: taskStatus,
+      priority: taskPriority,
+      dueDate: taskDueDate,
+      labels: taskLabels,
       projectId,
       assignee: assignee || null,
       createdBy: req.user._id
@@ -118,151 +128,252 @@ module.exports.createTask = async (req, res) => {
     await logHistory('task', task._id, 'created', req.user._id, {
       title,
       projectId,
-      assignee: assignee || null
+      assignee,
+      priority: taskPriority,
+      dueDate: taskDueDate,
+      labels: taskLabels
     });
 
-    const populatedTask = await Task.findById(task._id)
-      .populate('projectId')
-      .populate('assignee', 'name email avatar')
-      .populate('createdBy', 'name email avatar');
+    const populatedTask = await populateTask(Task.findById(task._id));
 
     const io = getIO(req);
     if (io) {
-      const projId = populatedTask.projectId._id || populatedTask.projectId;
-      const proj = await Project.findById(projId).populate('spaceId');
-      const spaceId = proj.spaceId._id || proj.spaceId;
-
+      const spaceId = project.spaceId;
       io.to(`space-${spaceId}`).emit('task-created', populatedTask);
-      io.to(`project-${projId}`).emit('task-created', populatedTask);
+      io.to(`project-${projectId}`).emit('task-created', populatedTask);
     }
 
     res.status(201).json(populatedTask);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
+
+// ─── Update ───────────────────────────────────────────────────────────────────
 
 module.exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate('projectId');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+    const { role, project } = await getProjectRole(task.projectId._id, req.user._id);
+    if (!PROJECT_WRITE_ROLES.includes(role)) {
+      return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
     }
 
-    const { allowed } = await isProjectMember(task.projectId._id, req.user._id);
+    const { title, description, status, assignee, priority, dueDate, labels } = req.body;
+    const oldStatus   = task.status;
+    const oldAssignee = task.assignee?.toString() ?? null;
+    const oldPriority = task.priority ?? 'none';
+    const oldDueDate  = task.dueDate ? new Date(task.dueDate).toISOString() : null;
+    const oldLabels   = Array.isArray(task.labels) ? task.labels.join('|') : '';
 
-    if (!allowed) {
-      return res.status(403).json({ message: 'Access denied. Project member required.' });
-    }
-
-    const { title, description, status, assignee } = req.body;
-    const oldStatus = task.status;
-    const oldAssignee = task.assignee ? task.assignee.toString() : null;
-
-    if (title) task.title = title;
+    if (title)                   task.title = title;
     if (description !== undefined) task.description = description;
+
     if (status) {
-      if (!['todo', 'in_progress', 'done'].includes(status)) {
-        return res.status(400).json({ message: 'Invalid status. Must be todo, in_progress, or done' });
+      const validKeys = project.boardColumns.map((c) => c.key);
+      if (!validKeys.includes(status)) {
+        return res.status(400).json({
+          message: `Invalid status. Valid values: ${validKeys.join(', ')}`
+        });
       }
       task.status = status;
     }
+
     if (assignee !== undefined) {
       if (assignee === null) {
         task.assignee = null;
       } else {
-        const proj = await Project.findById(task.projectId._id).populate('spaceId');
-        const isSpaceOwner = proj.spaceId.owner.toString() === assignee.toString();
-        const isSpaceMember = proj.spaceId.members.some(member => member.toString() === assignee.toString());
-        const isProjectMember = proj.members.some(member => member.toString() === assignee.toString());
-
-        if (!isSpaceOwner && !isSpaceMember && !isProjectMember) {
+        const { role: assigneeRole } = await getProjectRole(task.projectId._id, assignee);
+        if (!assigneeRole) {
           return res.status(400).json({ message: 'Assignee must be a project member' });
         }
         task.assignee = assignee;
       }
     }
 
+    if (priority !== undefined) {
+      if (priority === null || priority === '') {
+        task.priority = 'none';
+      } else if (!PRIORITIES.includes(priority)) {
+        return res.status(400).json({
+          message: `Invalid priority. Valid values: ${PRIORITIES.join(', ')}`
+        });
+      } else {
+        task.priority = priority;
+      }
+    }
+
+    if (dueDate !== undefined) {
+      if (dueDate === null || dueDate === '') {
+        task.dueDate = null;
+      } else {
+        const parsed = new Date(dueDate);
+        if (Number.isNaN(parsed.getTime())) {
+          return res.status(400).json({ message: 'dueDate must be a valid date or null' });
+        }
+        task.dueDate = parsed;
+      }
+    }
+
+    if (labels !== undefined) {
+      if (!Array.isArray(labels)) {
+        return res.status(400).json({ message: 'labels must be an array of strings' });
+      }
+      task.labels = labels
+        .filter((l) => typeof l === 'string')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, MAX_LABELS);
+    }
+
     await task.save();
 
     if (status && status !== oldStatus) {
-      await logHistory('task', task._id, 'moved', req.user._id, {
-        oldStatus,
-        newStatus: status
-      });
+      await logHistory('task', task._id, 'moved', req.user._id, { oldStatus, newStatus: status });
     }
-
     if (assignee !== undefined && assignee !== oldAssignee) {
-      await logHistory('task', task._id, 'assigned', req.user._id, {
-        oldAssignee,
-        newAssignee: assignee
-      });
+      await logHistory('task', task._id, 'assigned', req.user._id, { oldAssignee, newAssignee: assignee });
     }
 
-    if (title || description !== undefined) {
+    const newDueDate = task.dueDate ? new Date(task.dueDate).toISOString() : null;
+    const newLabels  = Array.isArray(task.labels) ? task.labels.join('|') : '';
+    const metaChanged =
+      (priority !== undefined && task.priority !== oldPriority) ||
+      (dueDate !== undefined && newDueDate !== oldDueDate) ||
+      (labels !== undefined && newLabels !== oldLabels);
+
+    if (title || description !== undefined || metaChanged) {
       await logHistory('task', task._id, 'updated', req.user._id, {
-        title: title || task.title,
-        description: description !== undefined ? description : task.description
+        title,
+        description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        labels: task.labels
       });
     }
 
-    const populatedTask = await Task.findById(task._id)
-      .populate('projectId')
-      .populate('assignee', 'name email avatar')
-      .populate('createdBy', 'name email avatar');
+    const populatedTask = await populateTask(Task.findById(task._id));
 
     const io = getIO(req);
     if (io) {
-      const projId = populatedTask.projectId._id || populatedTask.projectId;
-      const proj = await Project.findById(projId).populate('spaceId');
-      const spaceId = proj.spaceId._id || proj.spaceId;
-
+      const spaceId = project.spaceId;
       io.to(`space-${spaceId}`).emit('task-updated', populatedTask);
-      io.to(`project-${projId}`).emit('task-updated', populatedTask);
+      io.to(`project-${task.projectId._id}`).emit('task-updated', populatedTask);
+    }
+
+    if (assignee !== undefined && assignee !== oldAssignee && assignee) {
+      const assigneeStr = assignee.toString();
+      if (assigneeStr !== req.user._id.toString()) {
+        await createNotification(req, {
+          userId: assigneeStr,
+          type: 'task_assigned',
+          title: 'Task assigned to you',
+          body: task.title,
+          link: `/projects/${task.projectId._id}`,
+          meta: { taskId: task._id.toString(), projectId: task.projectId._id.toString() },
+        });
+      }
     }
 
     res.json(populatedTask);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
+
+// ─── Comment ─────────────────────────────────────────────────────────────────
+
+module.exports.addTaskComment = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id).populate('projectId');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+
+    const { role, project } = await getProjectRole(task.projectId._id, req.user._id);
+    if (!PROJECT_WRITE_ROLES.includes(role)) {
+      return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
+    }
+
+    const text = (req.body?.text || '').trim();
+    if (!text) return res.status(400).json({ message: 'text is required' });
+    if (text.length > 8000) return res.status(400).json({ message: 'Comment too long' });
+
+    task.comments.push({
+      text,
+      author: req.user._id,
+      createdAt: new Date(),
+    });
+    await task.save();
+
+    await logHistory('task', task._id, 'commented', req.user._id, {
+      preview: text.slice(0, 160),
+      projectId: task.projectId._id,
+    });
+
+    const populatedTask = await populateTask(Task.findById(task._id));
+
+    const io = getIO(req);
+    if (io) {
+      const spaceId = project.spaceId;
+      io.to(`space-${spaceId}`).emit('task-updated', populatedTask);
+      io.to(`project-${task.projectId._id}`).emit('task-updated', populatedTask);
+    }
+
+    const pid = task.projectId._id.toString();
+    const tid = task._id.toString();
+    const authorId = req.user._id.toString();
+    const notifyIds = new Set();
+    if (task.assignee && task.assignee.toString() !== authorId) {
+      notifyIds.add(task.assignee.toString());
+    }
+    if (task.createdBy && task.createdBy.toString() !== authorId) {
+      notifyIds.add(task.createdBy.toString());
+    }
+    for (const uid of notifyIds) {
+      await createNotification(req, {
+        userId: uid,
+        type: 'task_commented',
+        title: 'New comment on task',
+        body: `${req.user.name || req.user.email || 'Someone'}: ${text.slice(0, 140)}${text.length > 140 ? '…' : ''}`,
+        link: `/projects/${pid}`,
+        meta: { taskId: tid, projectId: pid },
+      });
+    }
+
+    res.status(201).json(populatedTask);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
 
 module.exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate('projectId');
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
+    const { role, project } = await getProjectRole(task.projectId._id, req.user._id);
+    if (!PROJECT_WRITE_ROLES.includes(role)) {
+      return res.status(403).json({ message: 'Access denied. Contributor or above required.' });
     }
 
-    const { allowed, project } = await isProjectMember(task.projectId._id, req.user._id);
-
-    if (!allowed) {
-      return res.status(403).json({ message: 'Access denied. Project member required.' });
-    }
-
-    project.tasks = project.tasks.filter(
-      taskId => taskId.toString() !== task._id.toString()
-    );
+    project.tasks = project.tasks.filter((t) => t.toString() !== task._id.toString());
     await project.save();
 
     await logHistory('task', task._id, 'deleted', req.user._id, { title: task.title });
 
-    const projectId = task.projectId._id || task.projectId;
-    const projectWithSpace = await Project.findById(projectId).populate('spaceId');
-    const spaceId = projectWithSpace.spaceId._id || projectWithSpace.spaceId;
-
     const io = getIO(req);
     if (io) {
-      io.to(`space-${spaceId}`).emit('task-deleted', { taskId: task._id, projectId });
-      io.to(`project-${projectId}`).emit('task-deleted', { taskId: task._id, projectId });
+      const spaceId = project.spaceId;
+      io.to(`space-${spaceId}`).emit('task-deleted', { taskId: task._id, projectId: task.projectId._id });
+      io.to(`project-${task.projectId._id}`).emit('task-deleted', { taskId: task._id, projectId: task.projectId._id });
     }
 
     await Task.findByIdAndDelete(req.params.id);
-
     res.json({ message: 'Task deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

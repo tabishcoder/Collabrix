@@ -17,3 +17,5 @@ export const requestResetPasswordApi = (data) =>
 
 export const resetPasswordApi = (data) =>
   api.post("/auth/reset-password", data);
+
+export const refreshTokenApi = () => api.post("/auth/refresh");

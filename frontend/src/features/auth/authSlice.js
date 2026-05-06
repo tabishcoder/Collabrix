@@ -46,10 +46,9 @@ export const getMe = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await getMeApi();
-      console.log(res);
       return res.data;
     } catch (err) {
-      return rejectWithValue(null); // ✅ important
+      return rejectWithValue(err.response?.data?.message || "Session expired");
     }
   },
 );
@@ -174,6 +173,11 @@ const authSlice = createSlice({
 
       /* LOGOUT */
       .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(logout.rejected, (state) => {
+        // Still end the client session if the API fails (cookies may remain; user can retry).
         state.user = null;
         state.isAuthenticated = false;
       })

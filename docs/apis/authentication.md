@@ -160,14 +160,15 @@
 ## 6. POST `/api/auth/resend-otp`
 
 ### Description
-- Resends OTP for **email verification**.
+- Resends OTP for **email verification** and **password reset**.
 - Rate limited: 1 per minute, max 3 per hour.
 - Publicly accessible.
 
 ### Request Body
 ```json
 {
-  "email": "john@example.com"
+  "userId": "692d7eb14dfff59216e3448e", 
+  "type": "email_verification"
 }
 ```
 

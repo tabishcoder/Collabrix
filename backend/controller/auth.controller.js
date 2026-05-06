@@ -127,6 +127,7 @@ module.exports.loginUser = async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            platformRole: user.platformRole || 'user',
             message: "Logged in Successfully"
         });
     } catch (err) {
@@ -232,7 +233,7 @@ module.exports.verifyOtp = async (req, res) => {
         if (verification.type === "password_reset") {
             await Verification.deleteOne({ _id: verification._id });
 
-            const resetToken = JWTService.signResetToken({userId: verification.userId});
+            const resetToken = JWTService.signResetToken({ userId: verification.userId });
 
             return res.json({
                 success: true,
@@ -261,73 +262,69 @@ module.exports.verifyOtp = async (req, res) => {
 // @access Private
 module.exports.resendOtp = async (req, res) => {
     try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ message: "Email required" });
+        const { userId, type } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!userId || !type) {
+            return res.status(400).json({ message: "userId and type required" });
+        }
 
-        if (user.isVerified)
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (type === "email_verification" && user.isVerified) {
             return res.status(400).json({ message: "User already verified" });
+        }
 
         const now = Date.now();
-        const OTP_TTL_MS = 5 * 60 * 1000;             // 5 minutes
+        const OTP_TTL_MS = 5 * 60 * 1000;
 
-        // Extract unified meta
         const meta = user.meta || {};
 
-        // Initialize hour window start if empty
         if (!meta.hourWindowStart) meta.hourWindowStart = now;
 
-        // Enforce cooldown
         if (meta.lastSentAt && now - meta.lastSentAt < RESEND_COOLDOWN_MS) {
             return res
                 .status(429)
                 .json({ message: "Please wait before requesting a new OTP." });
         }
 
-        // Reset hourly window if needed
         if (now - meta.hourWindowStart >= 3600000) {
             meta.hourWindowStart = now;
             meta.resendCount = 0;
         }
 
-        // Enforce hourly rate limit
-        if (meta.resendCount >= MAX_RESENDS_PER_HOUR) {
+        if ((meta.resendCount || 0) >= MAX_RESENDS_PER_HOUR) {
             return res
                 .status(429)
-                .json({ message: "Too many OTP requests this hour. Try again later." });
+                .json({ message: "Too many OTP requests. Try again later." });
         }
 
-        // Delete previous verification doc if it exists (optional but clean)
         await Verification.deleteMany({
             userId: user._id,
-            type: "email_verification"
+            type,
         });
 
-        // Generate new OTP
         const otp = generateOTP();
         const otpHash = hashOTP(otp);
 
-        // Create fresh verification doc
         await Verification.create({
             userId: user._id,
             otpHash,
-            type: "email_verification",
+            type,
             expiresAt: new Date(now + OTP_TTL_MS),
-            attempts: 0
+            attempts: 0,
         });
 
-        // Update meta rate-limit counters
         meta.resendCount = (meta.resendCount || 0) + 1;
         meta.lastSentAt = now;
-        user.meta = meta;
 
+        user.meta = meta;
         await user.save();
 
-        // Send the email
         await sendEmail(user.email, otp);
-        // console.log("Mock Email Send");
 
         return res.json({ message: "OTP sent" });
 

@@ -28,32 +28,27 @@ export default function CreateProjectModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-[var(--color-card)] p-6 rounded-lg w-80">
-        <h2 className="text-lg font-semibold mb-4">Create New Project</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10 app-modal-backdrop">
+      <div className="app-modal-panel w-full max-w-sm p-6 sm:p-7">
+        <h2 className="mb-1 text-lg font-semibold tracking-tight text-[var(--color-text-primary)]">Create New Project</h2>
+        <p className="mb-5 text-xs text-[var(--color-text-muted)]">Add a project in the current workspace.</p>
 
         <form onSubmit={handleSubmit}>
+          <label className="mb-1.5 block text-xs text-[var(--color-text-muted)]">Name</label>
           <input
             type="text"
             placeholder="Project name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded-md bg-black/20 border border-white/10 mb-4"
+            className="app-control mb-5 px-3 py-2.5 placeholder:text-[var(--color-text-muted)]"
           />
 
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-2 text-sm"
-            >
+            <button type="button" onClick={onClose} className="app-btn-modal-secondary !px-3">
               Cancel
             </button>
 
-            <button
-              type="submit"
-              className="px-3 py-2 bg-[var(--color-primary)] text-white rounded-md text-sm"
-            >
+            <button type="submit" className="app-btn-modal-primary !px-3">
               Create
             </button>
           </div>

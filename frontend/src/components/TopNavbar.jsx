@@ -1,224 +1,377 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+import { setActiveProject, fetchProjectsBySpace, fetchProjectById } from "../features/projects/projectSlice";
+import { resetTasks } from "../features/tasks/tasksSlice";
+import { setActiveSpace } from "../features/spaces/spaceSlice";
+import CreateProjectModal from "../features/projects/CreateProjectModal";
+import CreateWorkspaceModal from "../features/spaces/CreateWorkspaceModal";
 import {
   FaBars,
   FaChevronDown,
-  FaBell,
   FaSearch,
   FaFolder,
   FaPlus,
-  FaClock,
   FaCheckCircle,
+  FaUserPlus,
+  FaChevronRight,
+  FaUserCircle,
+  FaCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
-// 1. Import your logo (Update the path if your folder is named 'assets' vs 'assests')
-import {assests} from "../assets/images/assests.js";
-import LogoutButton from "./LogoutButton";
+import { logout } from "../features/auth/authSlice";
+import { disconnectSocket } from "../services/socket";
+import toast from "react-hot-toast";
+import InviteModal from "../features/invites/InviteModal";
+import WorkspaceMembersModal from "../features/spaces/WorkspaceMembersModal";
+import { canManageSpace, spaceRoleLabel, spaceRoleBadgeClass, isPlatformAdmin } from "../utils/roles";
+import ThemeToggle from "../theme/ThemeToggle";
+import GlobalSearch from "./GlobalSearch";
+import NotificationsBell from "./NotificationsBell";
+
+/** Shared trigger style — neutral “breadcrumb control” */
+const chromeTrigger =
+  "inline-flex max-w-[200px] items-center gap-2 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2.5 py-1.5 text-left shadow-sm transition-colors duration-150 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-muted)] sm:max-w-[240px] sm:px-3 sm:py-2";
 
 export default function TopNavbar({ onToggleSidebar }) {
   const dispatch = useDispatch();
-
-  // Redux State
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useSelector((state) => state.auth);
-  const { activeSpace } = useSelector((s) => s.spaces);
-  const { activeProject, allProjects } = useSelector((s) => s.projects);
+  const { activeSpace, activeSpaceRole, spaces } = useSelector((s) => s.spaces);
+  const { activeProject, projects } = useSelector((s) => s.projects);
 
-  // Local UI State
   const [openDropdown, setOpenDropdown] = useState(null);
   const [projectSearch, setProjectSearch] = useState("");
+  const [showInvite, setShowInvite] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
 
-  // Filter projects based on search
-  const filteredProjects = useMemo(() => {
-    return (
-      allProjects?.filter((p) =>
-        p.name.toLowerCase().includes(projectSearch.toLowerCase()),
-      ) || []
-    );
-  }, [allProjects, projectSearch]);
+  const isSpaceAdmin = canManageSpace(activeSpaceRole);
+
+  useEffect(() => {
+    if (activeSpace?._id) dispatch(fetchProjectsBySpace(activeSpace._id));
+  }, [dispatch, activeSpace?._id]);
+
+  const filteredProjects = useMemo(
+    () =>
+      projects?.filter((p) => p.name.toLowerCase().includes(projectSearch.toLowerCase())) || [],
+    [projects, projectSearch],
+  );
 
   const toggleDropdown = (name) => {
     setOpenDropdown(openDropdown === name ? null : name);
   };
 
+  const handleLogout = async () => {
+    try {
+      await dispatch(logout()).unwrap();
+      disconnectSocket();
+      toast.success("Logged out successfully");
+      navigate("/login", { replace: true });
+    } catch (err) {
+      disconnectSocket();
+      toast.error(err || "Logout failed");
+    } finally {
+      setOpenDropdown(null);
+    }
+  };
+
+  const shouldKeepRouteWhenSwitchingProject = (pathname) => {
+    if (!pathname) return false;
+    // These modules are project-scoped but don't carry projectId in the URL.
+    return pathname.startsWith("/chats") || pathname.startsWith("/meetings") || pathname.startsWith("/aibot");
+  };
+
   return (
-    <header className="h-16 bg-[#0d0d0e]/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 sticky top-0 z-50">
-      {/* LEFT: Logo + Brand + Hierarchy Navigation */}
-      <div className="flex items-center gap-2 md:gap-4">
-        {/* BRAND SECTION */}
-        <div className="flex items-center gap-2.5 pr-4 border-r border-white/10">
-          <img
-            src={assests.logo}
-            alt="Collabrix Logo"
-            className="w-20 object-contain rounded-md"
-          />
-          
-        </div>
+    <>
+      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-card)] px-3 shadow-[var(--shadow-nav)] md:px-5 lg:px-6">
 
-        {/* Mobile Sidebar Toggle (Shows after Brand on mobile) */}
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 hover:bg-white/5 rounded-lg text-white/70 md:hidden"
-        >
-          <FaBars size={18} />
-        </button>
+        {/* LEFT — breadcrumb-style context */}
+        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
 
-        {/* BREADCRUMBS / NAVIGATION HIERARCHY */}
-        <div className="flex items-center gap-1 md:gap-2">
-          {/* 1. Workspace Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => toggleDropdown("workspace")}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 transition group"
-            >
-              <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-indigo-500/20">
-                {activeSpace?.name?.[0] || "W"}
-              </div>
-              <span className="hidden lg:block font-semibold text-sm text-white/90">
-                {activeSpace?.name || "Workspace"}
-              </span>
-              <FaChevronDown
-                className={`text-[10px] text-white/30 transition-transform ${openDropdown === "workspace" ? "rotate-180" : ""}`}
-              />
-            </button>
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] md:hidden"
+          >
+            <FaBars size={18} />
+          </button>
 
-            {openDropdown === "workspace" && (
-              <div className="absolute left-0 top-full mt-2 w-56 bg-[#161617] border border-white/10 shadow-2xl rounded-xl p-1 animate-in fade-in zoom-in-95">
-                <div className="px-3 py-2 text-[10px] font-bold text-white/30 uppercase tracking-widest">
-                  Switch Space
-                </div>
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-white bg-white/5 rounded-lg transition">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                  {activeSpace?.name}
-                </button>
-                <div className="h-[1px] bg-white/5 my-1" />
-                <button className="w-full text-left px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition">
-                  + Create New Workspace
-                </button>
-              </div>
-            )}
-          </div>
+          <div className="flex min-w-0 items-center gap-1 sm:gap-1.5">
+            {/* Workspace */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("workspace")}
+                className={chromeTrigger}
+                aria-expanded={openDropdown === "workspace"}
+                aria-haspopup="true"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[var(--color-surface-muted)] text-[10px] font-semibold text-[var(--color-text-secondary)] ring-1 ring-[var(--color-border)]">
+                  {activeSpace?.name?.[0] || "W"}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
+                  {activeSpace?.name || "Workspace"}
+                </span>
+                {activeSpaceRole && (
+                  <span
+                    className={`hidden shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium sm:inline-flex ${spaceRoleBadgeClass(activeSpaceRole)}`}
+                    title={spaceRoleLabel(activeSpaceRole)}
+                  >
+                    {spaceRoleLabel(activeSpaceRole)}
+                  </span>
+                )}
+                <FaChevronDown
+                  className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                    openDropdown === "workspace" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-          <span className="text-white/10 text-xl font-thin select-none">/</span>
+              {openDropdown === "workspace" && (
+                <div className="absolute left-0 z-50 mt-1.5 w-64 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
+                  <p className="px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Workspace</p>
+                  {isPlatformAdmin(user) && (
+                    <p className="px-2.5 pb-1.5 text-[10px] leading-snug text-amber-800/90 dark:text-amber-200/80">
+                      Platform admin — switch tenant context here.
+                    </p>
+                  )}
 
-          {/* 2. Searchable Project Switcher */}
-          <div className="relative">
-            <button
-              onClick={() => toggleDropdown("project")}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 transition group border border-transparent hover:border-white/10"
-            >
-              <FaFolder className="text-emerald-400/80" size={14} />
-              <span className="font-medium text-sm text-white max-w-[100px] md:max-w-none truncate">
-                {activeProject?.name || "Select Project"}
-              </span>
-              <FaChevronDown
-                className={`text-[10px] text-white/30 transition-transform ${openDropdown === "project" ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {openDropdown === "project" && (
-              <div className="absolute left-0 top-full mt-2 w-72 bg-[#161617] border border-white/10 shadow-2xl rounded-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 border-b border-white/5">
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-xs" />
-                    <input
-                      autoFocus
-                      className="w-full bg-white/5 border border-white/10 rounded-lg py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      placeholder="Find project..."
-                      value={projectSearch}
-                      onChange={(e) => setProjectSearch(e.target.value)}
-                    />
+                  <div className="max-h-52 overflow-y-auto p-0.5">
+                    {(!spaces || spaces.length === 0) && (
+                      <p className="px-2 py-2 text-[12px] text-[var(--color-text-muted)]">No workspaces yet.</p>
+                    )}
+                    {(spaces || []).map((s) => (
+                      <button
+                        key={s._id}
+                        type="button"
+                        onClick={() => {
+                          dispatch(setActiveSpace(s));
+                          setOpenDropdown(null);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)]"
+                      >
+                        <span className="min-w-0 truncate">{s.name}</span>
+                        {activeSpace?._id === s._id && (
+                          <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" aria-label="Active" />
+                        )}
+                      </button>
+                    ))}
                   </div>
+
+                  {activeSpace && isSpaceAdmin && (
+                    <>
+                      <div className="my-1 h-px bg-[var(--color-border)]" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setShowMembers(true);
+                        }}
+                        className="w-full rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                      >
+                        Manage members
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setShowInvite(true);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-primary)] transition-colors duration-150 hover:bg-[color-mix(in_oklab,var(--color-primary)_10%,transparent)]"
+                      >
+                        <FaUserPlus className="text-xs opacity-80" />
+                        Invite members
+                      </button>
+                    </>
+                  )}
+
+                  <div className="my-1 h-px bg-[var(--color-border)]" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenDropdown(null);
+                      setShowCreateWorkspace(true);
+                    }}
+                    className="w-full rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    + New workspace
+                  </button>
                 </div>
-                <div className="max-h-64 overflow-y-auto p-1 custom-scrollbar">
-                  {filteredProjects.map((project) => (
-                    <button
-                      key={project.id}
-                      className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-indigo-600 transition group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-2 h-2 rounded-full ${project.id === activeProject?.id ? "bg-emerald-400" : "bg-white/10"}`}
-                        />
-                        {project.name}
-                      </div>
-                      {project.id === activeProject?.id && (
-                        <FaCheckCircle className="text-emerald-400 text-xs" />
-                      )}
-                    </button>
-                  ))}
-                  {filteredProjects.length === 0 && (
-                    <div className="p-4 text-center text-xs text-white/30">
-                      No projects found
+              )}
+            </div>
+
+            <FaChevronRight className="hidden shrink-0 text-[9px] text-[var(--color-text-muted)] opacity-70 sm:block" aria-hidden />
+
+            {/* Project */}
+            <div className="relative min-w-0 shrink">
+              <button
+                type="button"
+                onClick={() => toggleDropdown("project")}
+                className={`${chromeTrigger} max-w-[min(12rem,calc(100vw-8rem))]`}
+                aria-expanded={openDropdown === "project"}
+                aria-haspopup="true"
+              >
+                <FaFolder className="shrink-0 text-[13px] text-[var(--color-text-muted)]" aria-hidden />
+                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
+                  {activeProject?.name || "Select project"}
+                </span>
+                <FaChevronDown
+                  className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                    openDropdown === "project" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {openDropdown === "project" && (
+                <div className="absolute left-0 z-50 mt-1.5 w-[min(calc(100vw-1.5rem),18rem)] overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05] sm:left-auto sm:right-0">
+
+                  <div className="border-b border-[var(--color-border)] p-2.5">
+                    <div className="relative">
+                      <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
+                      <input
+                        autoFocus
+                        value={projectSearch}
+                        onChange={(e) => setProjectSearch(e.target.value)}
+                        placeholder="Search projects…"
+                        className="app-control w-full py-1.5 pl-8 pr-2.5 text-[13px] placeholder:text-[var(--color-text-muted)]"
+                      />
                     </div>
+                  </div>
+
+                  <div className="max-h-56 overflow-y-auto p-1">
+                    {filteredProjects.map((p) => (
+                      <button
+                        type="button"
+                        key={p._id}
+                        onClick={() => {
+                          const prevId = activeProject?._id;
+                          if (prevId !== p._id) {
+                            dispatch(resetTasks());
+                          }
+                          dispatch(setActiveProject(p));
+                          const stay = shouldKeepRouteWhenSwitchingProject(location.pathname);
+                          if (stay) {
+                            dispatch(fetchProjectById(p._id));
+                          } else {
+                            navigate(`/projects/${p._id}`);
+                          }
+                          setOpenDropdown(null);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                      >
+                        <span className="min-w-0 truncate font-medium">{p.name}</span>
+                        {p._id === activeProject?._id && (
+                          <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {isSpaceAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        setShowCreateProject(true);
+                      }}
+                      className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-border)] px-2.5 py-2.5 text-[12px] font-semibold text-[var(--color-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]"
+                    >
+                      <FaPlus className="text-[10px]" />
+                      New project
+                    </button>
                   )}
                 </div>
-                <button className="w-full p-3 text-xs text-indigo-400 hover:bg-indigo-500/10 border-t border-white/5 font-semibold transition">
-                  <FaPlus className="inline mr-2" /> Create New Project
-                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <GlobalSearch spaceId={activeSpace?._id} />
+
+        {/* RIGHT */}
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+
+          <ThemeToggle />
+
+          <NotificationsBell />
+
+          <div className="relative ml-0.5 pl-1">
+            <button
+              type="button"
+              onClick={() => toggleDropdown("profile")}
+              aria-expanded={openDropdown === "profile"}
+              aria-haspopup="true"
+              className="flex items-center gap-2 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-card)] px-2 py-1.5 text-[13px] font-medium text-[var(--color-text-secondary)] shadow-sm transition-colors duration-150 hover:border-[var(--color-border)] hover:bg-[var(--color-surface-muted)]"
+              title={user?.email || "Account"}
+            >
+              <span className="hidden max-w-[8rem] truncate lg:block">{user?.name || "Account"}</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--color-primary)] text-[11px] font-semibold text-white">
+                {user?.name?.[0] || "U"}
+              </span>
+              <FaChevronDown
+                className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                  openDropdown === "profile" ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {openDropdown === "profile" && (
+              <div className="absolute right-0 z-[60] mt-2 w-56 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+                <div className="border-b border-[var(--color-border)] px-3 py-2.5">
+                  <div className="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">{user?.name || "Account"}</div>
+                  <div className="truncate text-[12px] text-[var(--color-text-muted)]">{user?.email || ""}</div>
+                </div>
+
+                <div className="p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/profile");
+                      setOpenDropdown(null);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    <FaUserCircle className="text-[13px] opacity-80" aria-hidden />
+                    Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/settings");
+                      setOpenDropdown(null);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    <FaCog className="text-[13px] opacity-80" aria-hidden />
+                    Settings
+                  </button>
+
+                  <div className="my-1 h-px bg-[var(--color-border)]" />
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-[13px] font-medium text-red-700 transition-colors duration-150 hover:bg-red-500/[0.08] dark:text-red-300"
+                  >
+                    <FaSignOutAlt className="text-[13px] opacity-90" aria-hidden />
+                    Logout
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* RIGHT: Tools & User */}
-      <div className="flex items-center gap-1 md:gap-3">
-        {/* Global Timer Widget */}
-        <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full mr-2 group cursor-pointer hover:bg-emerald-500/20 transition">
-          <FaClock className="text-emerald-500 animate-pulse text-xs" />
-          <span className="text-xs font-mono font-bold text-emerald-500">
-            01:24:05
-          </span>
-        </div>
-
-        {/* Notifications */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown("notif")}
-            className="p-2.5 text-white/50 hover:text-white hover:bg-white/5 rounded-full transition relative"
-          >
-            <FaBell size={18} />
-            <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0d0d0e]"></span>
-          </button>
-          {/* Notifications Dropdown (Omitted for brevity, kept structure) */}
-        </div>
-
-        <div className="w-[1px] h-6 bg-white/10 mx-1 hidden md:block" />
-
-        {/* Profile Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown("profile")}
-            className="flex items-center gap-2 p-1 pl-2 rounded-full hover:bg-white/5 transition"
-          >
-            <span className="hidden md:block text-xs font-medium text-white/60">
-              {user?.name}
-            </span>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg">
-              {user?.name?.[0] || "U"}
-            </div>
-          </button>
-
-          {openDropdown === "profile" && (
-            <div className="absolute right-0 top-full mt-2 w-52 bg-[#161617] border border-white/10 shadow-2xl rounded-xl p-1.5 animate-in fade-in zoom-in-95">
-              <div className="px-3 py-2 mb-1">
-                <p className="text-xs font-bold text-white truncate">
-                  {user?.name}
-                </p>
-                <p className="text-[10px] text-white/40 truncate">
-                  {user?.email || "owner"}
-                </p>
-              </div>
-              <div className="h-[1px] bg-white/5 my-1" />
-              <button className="w-full text-left px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition">
-                Profile Settings
-              </button>
-              <div className="h-[1px] bg-white/5 my-1" />
-              <LogoutButton variant="dropdown" />
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
+      {showMembers && <WorkspaceMembersModal onClose={() => setShowMembers(false)} />}
+      {showCreateProject && <CreateProjectModal onClose={() => setShowCreateProject(false)} />}
+      {showCreateWorkspace && <CreateWorkspaceModal onClose={() => setShowCreateWorkspace(false)} />}
+    </>
   );
 }

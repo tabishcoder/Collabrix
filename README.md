@@ -8,6 +8,8 @@
   <img src="https://img.shields.io/badge/AI-powered-purple" alt="AI">
 </p>
 
+``` Version: 1.0.0 ```
+
 ## 🚀 Overview
 **Collabirx** is an AI-driven workspace designed to eliminate the friction of remote work. By centralizing communication, project management, and documentation into a single intelligent ecosystem, Collabirx helps teams move faster and stay aligned.
 

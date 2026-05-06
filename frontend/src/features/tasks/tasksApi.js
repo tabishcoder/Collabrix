@@ -19,3 +19,7 @@ export const updateTaskApi = (taskId, data) =>
 
 // DELETE /api/tasks/:id
 export const deleteTaskApi = (taskId) => api.delete(`/tasks/${taskId}`);
+
+// POST /api/tasks/:id/comments
+export const addTaskCommentApi = (taskId, text) =>
+  api.post(`/tasks/${taskId}/comments`, { text });

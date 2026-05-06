@@ -16,7 +16,7 @@ module.exports.auth = async (req, res, next) => {
     }
 
     // Get user and attach to the request object
-    req.user = await User.findById(decoded).select('-passwordHash');
+    req.user = await User.findById(decoded._id).select('-passwordHash');
 
     if (!req.user) {
       res.status(401);
