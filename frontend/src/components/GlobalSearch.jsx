@@ -74,7 +74,7 @@ export default function GlobalSearch({ spaceId }) {
       </div>
 
       {showPanel && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-80 overflow-y-auto rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-2 shadow-lg ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+        <div className="absolute left-0 right-0 top-full z-[200] mt-1 max-h-80 overflow-y-auto rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-2 shadow-lg ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
           {loading && <p className="px-2 py-2 text-[12px] text-[var(--color-text-muted)]">Searching…</p>}
           {!loading && !projects.length && !tasks.length && (
             <p className="px-2 py-2 text-[12px] text-[var(--color-text-muted)]">No matches.</p>

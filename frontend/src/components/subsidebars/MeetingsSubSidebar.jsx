@@ -23,9 +23,9 @@ export default function MeetingsSubSidebar({ collapsed }) {
   return (
     <aside
       className={`
-        hidden h-full min-h-0 shrink-0 flex-col border-r border-[var(--color-border-strong)]
-        bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)] transition-all duration-300 ease-out md:flex
-        ${collapsed ? "w-20" : "w-60"}
+        flex h-full min-h-0 w-full shrink-0 flex-col border-r border-[var(--color-border-strong)]
+        bg-[color-mix(in_oklab,var(--color-card)_96%,transparent)] transition-all duration-300 ease-out
+        ${collapsed ? "lg:w-20" : "lg:w-60"}
       `}
     >
       <div className="border-b border-[var(--color-border)] p-4">

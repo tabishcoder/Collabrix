@@ -49,11 +49,11 @@ export default function ChatsSubSidebar({ collapsed }) {
     <>
       <aside
         className={`
-        flex h-full min-h-0 shrink-0 flex-col
+        flex h-full min-h-0 w-full shrink-0 flex-col
         border-r border-[var(--color-border-strong)]
         bg-[color-mix(in_oklab,var(--color-card)_97%,transparent)]
         transition-all duration-300 ease-out
-        ${collapsed ? "w-20" : "w-[280px]"}
+        ${collapsed ? "lg:w-20" : "lg:w-[280px]"}
       `}
       >
         <div className="border-b border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-card)_88%,transparent)] px-3 py-3">
