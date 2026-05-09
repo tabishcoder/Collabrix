@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { editTask, removeTask, addTaskComment } from "./tasksSlice";
 import { projectRoleBadgeClass, projectRoleLabel } from "../../utils/roles";
+import TaskTimeSection from "./TaskTimeSection.jsx";
 
 const PRIORITIES = [
   { key: "none", label: "None" },
@@ -39,6 +40,7 @@ export default function TaskDetailModal({
   onClose,
 }) {
   const dispatch = useDispatch();
+  const currentUserId = useSelector((s) => s.auth.user?._id);
   const [submitting, setSubmitting] = useState(false);
 
   const initial = useMemo(() => {
@@ -221,6 +223,8 @@ export default function TaskDetailModal({
                 placeholder="bug, frontend, urgent"
               />
             </div>
+
+            <TaskTimeSection task={task} canWrite={canWrite} currentUserId={currentUserId} />
 
             <div className="border-t border-[var(--color-border)] pt-5">
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">

@@ -4,6 +4,7 @@ import TopNavbar from "../components/TopNavbar";
 import Sidebar from "../components/Sidebar";
 import SubSidebarSwitch from "../components/subsidebars/SubSidebarSwitch";
 import ChatSocketBridge from "../features/chats/ChatSocketBridge";
+import ActiveTimerBanner from "../features/time/ActiveTimerBanner";
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -14,6 +15,8 @@ export default function AppLayout() {
 
       {/* TOP NAVBAR */}
       <TopNavbar onToggleSidebar={() => setCollapsed((c) => !c)} />
+
+      <ActiveTimerBanner />
 
       {/* BODY */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
