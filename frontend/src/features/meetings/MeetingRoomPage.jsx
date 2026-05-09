@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaMicrophone, FaMicrophoneSlash, FaVideo, FaVideoSlash, FaPhoneSlash } from "react-icons/fa";
+import {
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaVideo,
+  FaVideoSlash,
+  FaPhoneSlash,
+  FaSignInAlt,
+} from "react-icons/fa";
 import { getSocket } from "../../services/socket";
 import {
   applyMeetingFromSocket,
@@ -14,6 +21,72 @@ import {
 } from "./meetingsSlice";
 import { useAcsGroupCall } from "./useAcsGroupCall";
 import { pushRecentMeeting } from "./recentMeetingsStorage";
+
+function formatMeetingWhen(iso) {
+  if (!iso) return "—";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  } catch {
+    return String(iso);
+  }
+}
+
+function formatDuration(startIso, endIso) {
+  if (!startIso || !endIso) return null;
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return null;
+  const totalMin = Math.round(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m} min`;
+}
+
+function participantDisplayName(p) {
+  const u = p?.user;
+  if (u && typeof u === "object") return u.name || u.email || "User";
+  return "User";
+}
+
+function MeetingParticipantTable({ participants }) {
+  const rows = [...(participants || [])].sort(
+    (a, b) => new Date(a.joinedAt || 0).getTime() - new Date(b.joinedAt || 0).getTime(),
+  );
+  if (!rows.length) {
+    return (
+      <p className="text-[12px] text-[var(--color-text-muted)]">No join records for this session.</p>
+    );
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-[var(--color-border)]">
+      <table className="w-full min-w-[320px] border-collapse text-left text-[12px]">
+        <thead>
+          <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-hover)]/60">
+            <th className="px-3 py-2 font-semibold text-[var(--color-text-secondary)]">Participant</th>
+            <th className="px-3 py-2 font-semibold text-[var(--color-text-secondary)]">Role</th>
+            <th className="px-3 py-2 font-semibold text-[var(--color-text-secondary)]">Joined</th>
+            <th className="px-3 py-2 font-semibold text-[var(--color-text-secondary)]">Left</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((p, idx) => (
+            <tr key={`${participantDisplayName(p)}-${idx}`} className="border-b border-[var(--color-border)] last:border-0">
+              <td className="px-3 py-2 text-[var(--color-text-primary)]">{participantDisplayName(p)}</td>
+              <td className="px-3 py-2 capitalize text-[var(--color-text-muted)]">{p.role || "—"}</td>
+              <td className="px-3 py-2 text-[var(--color-text-secondary)]">{formatMeetingWhen(p.joinedAt)}</td>
+              <td className="px-3 py-2 text-[var(--color-text-secondary)]">
+                {p.leftAt ? formatMeetingWhen(p.leftAt) : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function MeetingRoomPage() {
   const { meetingId } = useParams();
@@ -28,6 +101,7 @@ export default function MeetingRoomPage() {
 
   const [localHost, setLocalHost] = useState(null);
   const [remoteHost, setRemoteHost] = useState(null);
+  const [joinUiError, setJoinUiError] = useState(null);
   const localHostRef = useRef(null);
   const remoteHostRef = useRef(null);
   useEffect(() => {
@@ -69,8 +143,28 @@ export default function MeetingRoomPage() {
     dispatch(clearMeetingSession());
   }, [disconnect, dispatch]);
 
+  const runJoinMeeting = useCallback(() => {
+    if (!meetingId || meeting?.status !== "active") return;
+    joinAttemptedRef.current = true;
+    dispatch(joinMeeting(meetingId))
+      .unwrap()
+      .then((data) => {
+        setJoinUiError(null);
+        if (activeProject?._id && data?.meeting && (data.meeting.callKind || "meeting") !== "chat_voice") {
+          pushRecentMeeting(String(activeProject._id), data.meeting);
+        }
+      })
+      .catch((msg) => {
+        joinAttemptedRef.current = false;
+        const m = typeof msg === "string" ? msg : "Could not join meeting";
+        setJoinUiError(m);
+        toast.error(m);
+      });
+  }, [dispatch, meetingId, meeting?.status, activeProject?._id]);
+
   useEffect(() => {
     joinAttemptedRef.current = false;
+    setJoinUiError(null);
   }, [meetingId]);
 
   useEffect(() => {
@@ -86,21 +180,10 @@ export default function MeetingRoomPage() {
   useEffect(() => {
     if (!meetingId || !meeting || meeting.status !== "active") return undefined;
     if (joinAttemptedRef.current) return undefined;
-    joinAttemptedRef.current = true;
-    dispatch(joinMeeting(meetingId))
-      .unwrap()
-      .then((data) => {
-        if (activeProject?._id && data?.meeting) {
-          pushRecentMeeting(String(activeProject._id), data.meeting);
-        }
-      })
-      .catch((msg) => {
-        joinAttemptedRef.current = false;
-        toast.error(typeof msg === "string" ? msg : "Could not join meeting");
-      });
+    runJoinMeeting();
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- joinAttemptedRef avoids re-POST when `meeting` reference changes from sockets
-  }, [dispatch, meetingId, meeting?.status, meeting?._id, activeProject?._id]);
+  }, [runJoinMeeting, meetingId, meeting?.status, meeting?._id]);
 
   useEffect(() => {
     if (!meetingId) return undefined;
@@ -232,6 +315,14 @@ export default function MeetingRoomPage() {
     );
   }
 
+  if (loading && !meeting && !loadError) {
+    return (
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-8 text-center text-[var(--color-text-muted)]">
+        Loading meeting…
+      </div>
+    );
+  }
+
   if (loadError && !meeting) {
     return (
       <div className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-6">
@@ -247,12 +338,64 @@ export default function MeetingRoomPage() {
   }
 
   if (meeting?.status === "ended") {
+    const hostName = meeting.createdBy && typeof meeting.createdBy === "object"
+      ? meeting.createdBy.name || meeting.createdBy.email || "Host"
+      : "Host";
+    const duration = formatDuration(meeting.createdAt, meeting.endedAt);
+
     return (
-      <div className="space-y-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-6">
-        <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
-          {meeting.title || "Meeting"}
-        </h1>
-        <p className="text-[13px] text-[var(--color-text-muted)]">This meeting has ended.</p>
+      <div className="space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+        <div>
+          <Link
+            to="/meetings"
+            className="text-[12px] font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            Meetings
+          </Link>
+          <h1 className="mt-2 text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+            {meeting.title || "Meeting"}
+          </h1>
+          <p className="mt-1 inline-flex rounded-md bg-[var(--color-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+            Ended
+          </p>
+        </div>
+
+        <dl className="grid gap-3 text-[13px] sm:grid-cols-2">
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+              Started
+            </dt>
+            <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+              Ended
+            </dt>
+            <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.endedAt)}</dd>
+          </div>
+          {duration ? (
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+                Duration
+              </dt>
+              <dd className="mt-0.5 text-[var(--color-text-primary)]">{duration}</dd>
+            </div>
+          ) : null}
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+              Host
+            </dt>
+            <dd className="mt-0.5 text-[var(--color-text-primary)]">{hostName}</dd>
+          </div>
+        </dl>
+
+        <div>
+          <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+            Who joined
+          </h2>
+          <MeetingParticipantTable participants={meeting.participants} />
+        </div>
+
         <Link
           to="/meetings"
           className="inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-500"
@@ -262,6 +405,13 @@ export default function MeetingRoomPage() {
       </div>
     );
   }
+
+  const liveHostName =
+    meeting?.createdBy && typeof meeting.createdBy === "object"
+      ? meeting.createdBy.name || meeting.createdBy.email || "Host"
+      : "Host";
+
+  const joiningRoom = Boolean(loading && !acs?.token);
 
   return (
     <div className="space-y-4">
@@ -292,9 +442,68 @@ export default function MeetingRoomPage() {
         </div>
       </div>
 
-      {(acsError || loadError) && (
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]/80 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <dl className="grid gap-3 text-[13px] sm:grid-cols-2">
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+                Started
+              </dt>
+              <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting?.createdAt)}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+                Host
+              </dt>
+              <dd className="mt-0.5 text-[var(--color-text-primary)]">{liveHostName}</dd>
+            </div>
+          </dl>
+          <p className="inline-flex shrink-0 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            Live
+          </p>
+        </div>
+
+        {!acs?.token ? (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-4">
+            <button
+              type="button"
+              disabled={joiningRoom}
+              onClick={() => runJoinMeeting()}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <FaSignInAlt />
+              {joiningRoom ? "Joining…" : joinUiError ? "Try again" : "Join meeting"}
+            </button>
+            {!joiningRoom ? (
+              <span className="text-[12px] text-[var(--color-text-muted)]">
+                Join to receive a media token and open the room.
+              </span>
+            ) : null}
+          </div>
+        ) : sdkState !== "connected" && sdkState !== "connecting" ? (
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] pt-4">
+            <button
+              type="button"
+              onClick={() => runJoinMeeting()}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            >
+              <FaSignInAlt />
+              Rejoin meeting
+            </button>
+            <span className="text-[12px] text-[var(--color-text-muted)]">
+              Refreshes your token if media dropped.
+            </span>
+          </div>
+        ) : sdkState === "connecting" ? (
+          <p className="mt-4 border-t border-[var(--color-border)] pt-4 text-[12px] text-[var(--color-text-muted)]">
+            Connecting camera and microphone…
+          </p>
+        ) : null}
+      </div>
+
+      {(acsError || loadError || joinUiError) && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[13px] text-amber-900 dark:text-amber-100">
-          {acsError || loadError}
+          {acsError || joinUiError || loadError}
         </div>
       )}
 
@@ -319,24 +528,12 @@ export default function MeetingRoomPage() {
         </div>
       </div>
 
-      {meeting?.participants?.length ? (
-        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]/80 p-3">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-            Roster (app)
-          </p>
-          <ul className="flex flex-wrap gap-2 text-[12px] text-[var(--color-text-secondary)]">
-            {meeting.participants.map((p) => (
-              <li
-                key={String(p.user?._id || p.user)}
-                className="rounded-md bg-[var(--color-surface-hover)] px-2 py-1"
-              >
-                {p.user?.name || p.user?.email || "User"}{" "}
-                <span className="text-[var(--color-text-muted)]">({p.role})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)]/80 p-3">
+        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+          Attendance
+        </p>
+        <MeetingParticipantTable participants={meeting?.participants} />
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-4">
         <button

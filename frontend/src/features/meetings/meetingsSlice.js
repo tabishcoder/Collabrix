@@ -95,15 +95,22 @@ const meetingsSlice = createSlice({
       if (!meetingId || !state.activeMeeting?._id) return;
       if (String(state.activeMeeting._id) !== String(meetingId)) return;
       if (!meeting) return;
+
+      const nextStatus = meeting.status ?? state.activeMeeting.status;
+
       state.activeMeeting = {
         ...state.activeMeeting,
         title: meeting.title ?? state.activeMeeting.title,
-        status: meeting.status ?? state.activeMeeting.status,
+        status: nextStatus,
         groupId: meeting.groupId ?? state.activeMeeting.groupId,
         projectId: meeting.projectId ?? state.activeMeeting.projectId,
-        participants: meeting.participants ?? state.activeMeeting.participants,
         createdBy: meeting.createdBy ?? state.activeMeeting.createdBy,
       };
+
+      // Socket payloads only include currently present participants; keep full history after a session ends.
+      if (nextStatus !== "ended" && meeting.participants) {
+        state.activeMeeting.participants = meeting.participants;
+      }
     },
   },
   extraReducers: (builder) => {

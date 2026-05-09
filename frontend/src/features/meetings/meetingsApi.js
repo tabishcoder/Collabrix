@@ -1,5 +1,9 @@
 import api from "../../services/api";
 
+export function listMeetingsForProjectApi(projectId) {
+  return api.get("/meetings", { params: { projectId } });
+}
+
 export function createMeetingApi({ title, projectId }) {
   return api.post("/meetings/create", { title, projectId: projectId || undefined });
 }
