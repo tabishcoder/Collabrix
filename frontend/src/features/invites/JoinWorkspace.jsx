@@ -71,7 +71,7 @@ export default function JoinWorkspace() {
       await acceptInvite(token);
       toast.success(`Joined "${invite.workspace.name}" successfully!`);
       setStatus("done");
-      setTimeout(() => navigate("/dashboard"), 1500);
+      setTimeout(() => navigate("/welcome"), 1500);
     } catch (err) {
       const msg = err.response?.data?.message || "Failed to accept invitation.";
       toast.error(msg);
