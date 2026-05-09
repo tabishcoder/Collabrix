@@ -15,6 +15,8 @@ function meetingSummaryForSocket(m) {
     status: meeting.status,
     groupId: meeting.groupId,
     projectId: meeting.projectId,
+    chatId: meeting.chatId ?? null,
+    callKind: meeting.callKind || 'meeting',
     createdBy: meeting.createdBy,
     participants: meetingService.buildParticipantPayload({ participants: meeting.participants || [] }),
   };
@@ -28,8 +30,10 @@ function meetingJsonBody(m) {
     status: meeting.status,
     groupId: meeting.groupId,
     projectId: meeting.projectId,
+    chatId: meeting.chatId ?? null,
+    callKind: meeting.callKind || 'meeting',
     createdBy: meeting.createdBy,
-    participants: meetingService.buildParticipantPayload({ participants: meeting.participants || [] }),
+    participants: meetingService.buildDetailParticipantPayload(m),
     endedAt: meeting.endedAt,
     createdAt: meeting.createdAt,
     updatedAt: meeting.updatedAt,
@@ -126,12 +130,17 @@ module.exports.endMeeting = async (req, res) => {
 
     const io = getIO(req);
     const meetingId = String(meeting._id);
+    const chatId = meeting.chatId ? String(meeting.chatId) : null;
+    const callKind = meeting.callKind || 'meeting';
     if (io) {
       io.to(`meeting-${meetingId}`).emit('meeting:ended', {
         meetingId,
         user: userSocketPayload(req.user),
         meeting: meetingSummaryForSocket(meeting),
       });
+      if (callKind === 'chat_voice' && chatId) {
+        io.to(`chat-${chatId}`).emit('chat:voice-call-ended', { chatId, meetingId });
+      }
     }
 
     return res.json({ meeting: meetingJsonBody(meeting) });
@@ -146,6 +155,21 @@ module.exports.getMeetingById = async (req, res) => {
   try {
     const { meeting } = await meetingService.getMeetingById(req.params.id, req.user._id);
     return res.json({ meeting });
+  } catch (e) {
+    const status = e.statusCode || 500;
+    if (status >= 500) console.error(e);
+    return res.status(status).json({ message: e.message || 'Server error' });
+  }
+};
+
+module.exports.listMeetingsForProject = async (req, res) => {
+  try {
+    const projectId = req.query.projectId;
+    if (!projectId) {
+      return res.status(400).json({ message: 'projectId query parameter is required' });
+    }
+    const meetings = await meetingService.listMeetingsForProject(projectId, req.user._id);
+    return res.json({ meetings });
   } catch (e) {
     const status = e.statusCode || 500;
     if (status >= 500) console.error(e);

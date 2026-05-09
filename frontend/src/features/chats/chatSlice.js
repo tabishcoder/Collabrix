@@ -12,14 +12,22 @@ import {
 } from "./chatApi";
 import { mergeMessagesById } from "../../utils/chatReceipts";
 
+function pickApiError(err, fallback) {
+  const d = err.response?.data;
+  if (!d) return fallback;
+  return d.error || d.message || fallback;
+}
+
 export const fetchProjectChats = createAsyncThunk(
   "chats/fetchProjectChats",
   async (projectId, { rejectWithValue }) => {
     try {
       const res = await fetchProjectChatsApi(projectId);
-      return { projectId, chats: res.data };
+      const payload = res.data?.chats ?? res.data;
+      const chats = Array.isArray(payload) ? payload : [];
+      return { projectId, chats };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Failed to load chats");
+      return rejectWithValue(pickApiError(err, "Failed to load chats"));
     }
   },
 );
@@ -31,7 +39,7 @@ export const fetchChatMessages = createAsyncThunk(
       const res = await fetchChatMessagesApi(chatId, { before, limit: 40 });
       return { chatId, ...res.data };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Failed to load messages");
+      return rejectWithValue(pickApiError(err, "Failed to load messages"));
     }
   },
 );
@@ -43,7 +51,7 @@ export const sendChatMessage = createAsyncThunk(
       const res = await sendChatMessageApi(chatId, { content, clientMessageId });
       return { chatId, message: res.data };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Send failed");
+      return rejectWithValue(pickApiError(err, "Send failed"));
     }
   },
 );
@@ -60,7 +68,7 @@ export const markChatRead = createAsyncThunk(
         readAt: new Date().toISOString(),
       };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Failed to mark read");
+      return rejectWithValue(pickApiError(err, "Failed to mark read"));
     }
   },
 );
@@ -72,7 +80,7 @@ export const createPrivateChat = createAsyncThunk(
       const res = await createPrivateChatApi(userId, projectId);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Could not start chat");
+      return rejectWithValue(pickApiError(err, "Could not start chat"));
     }
   },
 );
@@ -84,7 +92,7 @@ export const createGroupChat = createAsyncThunk(
       const res = await createGroupChatApi(name, participantIds, projectId);
       return res.data;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Could not create group");
+      return rejectWithValue(pickApiError(err, "Could not create group"));
     }
   },
 );
@@ -96,7 +104,7 @@ export const deleteMessage = createAsyncThunk(
       const res = await deleteMessageApi(chatId, messageId);
       return { chatId, message: res.data };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Could not delete message");
+      return rejectWithValue(pickApiError(err, "Could not delete message"));
     }
   },
 );
@@ -108,7 +116,7 @@ export const deleteChat = createAsyncThunk(
       await deleteChatApi(chatId);
       return { chatId };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.error || "Could not delete chat");
+      return rejectWithValue(pickApiError(err, "Could not delete chat"));
     }
   },
 );
@@ -147,6 +155,8 @@ const initialState = {
   listLoading: false,
   listError: null,
   sendError: null,
+  /** Another member started a chat voice session — prompt to join ({ chatId, meetingId }). */
+  incomingVoiceInvite: null,
 };
 
 const chatSlice = createSlice({
@@ -163,6 +173,15 @@ const chatSlice = createSlice({
       state.projectId = null;
       state.listError = null;
       state.sendError = null;
+      state.incomingVoiceInvite = null;
+    },
+    setIncomingVoiceInvite(state, action) {
+      const { chatId, meetingId } = action.payload || {};
+      if (!chatId || !meetingId) return;
+      state.incomingVoiceInvite = { chatId: String(chatId), meetingId: String(meetingId) };
+    },
+    clearIncomingVoiceInvite(state) {
+      state.incomingVoiceInvite = null;
     },
     receiveSocketMessage(state, action) {
       const { chatId, message } = action.payload;
@@ -379,6 +398,8 @@ const chatSlice = createSlice({
 export const {
   setActiveChat,
   clearChatUi,
+  setIncomingVoiceInvite,
+  clearIncomingVoiceInvite,
   receiveSocketMessage,
   receiveInboxPreview,
   receiveMessageStatus,

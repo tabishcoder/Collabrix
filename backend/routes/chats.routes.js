@@ -9,6 +9,7 @@ const {
   markChatRead,
   deleteMessage,
   deleteChat,
+  startChatVoiceCall,
 } = require('../controller/chats.controller');
 
 const router = express.Router();
@@ -18,6 +19,8 @@ router.get('/', auth, getAllChats);
 router.post('/private', auth, findOrCreatePrivateChat);
 
 router.post('/group', auth, createGroupChat);
+
+router.post('/:chatId/voice-call/start', auth, startChatVoiceCall);
 
 router.delete('/:chatId/messages/:messageId', auth, deleteMessage);
 

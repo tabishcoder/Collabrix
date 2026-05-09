@@ -6,10 +6,12 @@ const {
   leaveMeeting,
   endMeeting,
   getMeetingById,
+  listMeetingsForProject,
 } = require('../controller/meetings.controller');
 
 const router = express.Router();
 
+router.get('/', auth, listMeetingsForProject);
 router.post('/create', auth, createMeeting);
 router.post('/:id/join', auth, joinMeeting);
 router.post('/:id/leave', auth, leaveMeeting);

@@ -11,6 +11,7 @@ import {
   sendChatMessage,
 } from "./chatSlice";
 import MessageReceiptTicks from "./MessageReceiptTicks";
+import ChatVoiceBar from "./ChatVoiceBar";
 
 function chatHeading(chat, selfId) {
   if (!chat) return "";
@@ -231,6 +232,8 @@ export default function ChatThread() {
           ) : null}
         </div>
       </div>
+
+      <ChatVoiceBar chatId={activeChatId} />
 
       <div
         ref={scrollRef}

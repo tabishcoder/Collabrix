@@ -87,15 +87,15 @@ export default function TopNavbar({ onToggleSidebar }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-card)] px-3 shadow-[var(--shadow-nav)] md:px-5 lg:px-6">
+      <header className="sticky top-0 z-[100] flex min-w-0 shrink-0 items-center justify-between gap-2 overflow-visible border-b border-[var(--color-border)] bg-[var(--color-card)] px-2 py-2 shadow-[var(--shadow-nav)] sm:h-14 sm:px-3 md:px-5 lg:px-6">
 
         {/* LEFT — breadcrumb-style context */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 md:gap-3">
 
           <button
             type="button"
             onClick={onToggleSidebar}
-            className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] md:hidden"
+            className="rounded-md p-2 text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)] lg:hidden"
           >
             <FaBars size={18} />
           </button>
@@ -132,7 +132,7 @@ export default function TopNavbar({ onToggleSidebar }) {
               </button>
 
               {openDropdown === "workspace" && (
-                <div className="absolute left-0 z-50 mt-1.5 w-64 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
+                <div className="absolute left-0 z-[200] mt-1.5 w-64 rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] p-1.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]">
                   <p className="px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-text-muted)]">Workspace</p>
                   {isPlatformAdmin(user) && (
                     <p className="px-2.5 pb-1.5 text-[10px] leading-snug text-amber-800/90 dark:text-amber-200/80">
@@ -149,8 +149,8 @@ export default function TopNavbar({ onToggleSidebar }) {
                         key={s._id}
                         type="button"
                         onClick={() => {
-                          dispatch(setActiveSpace(s));
                           setOpenDropdown(null);
+                          dispatch(setActiveSpace(s));
                         }}
                         className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-medium text-[var(--color-text-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)]"
                       >
@@ -205,89 +205,97 @@ export default function TopNavbar({ onToggleSidebar }) {
               )}
             </div>
 
-            <FaChevronRight className="hidden shrink-0 text-[9px] text-[var(--color-text-muted)] opacity-70 sm:block" aria-hidden />
+            {activeSpace ? (
+              <>
+                <FaChevronRight className="hidden shrink-0 text-[9px] text-[var(--color-text-muted)] opacity-70 sm:block" aria-hidden />
 
-            {/* Project */}
-            <div className="relative min-w-0 shrink">
-              <button
-                type="button"
-                onClick={() => toggleDropdown("project")}
-                className={`${chromeTrigger} max-w-[min(12rem,calc(100vw-8rem))]`}
-                aria-expanded={openDropdown === "project"}
-                aria-haspopup="true"
-              >
-                <FaFolder className="shrink-0 text-[13px] text-[var(--color-text-muted)]" aria-hidden />
-                <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
-                  {activeProject?.name || "Select project"}
-                </span>
-                <FaChevronDown
-                  className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
-                    openDropdown === "project" ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+                {/* Project */}
+                <div className="relative min-w-0 shrink">
+                  <button
+                    type="button"
+                    onClick={() => toggleDropdown("project")}
+                    className={`${chromeTrigger} max-w-[min(12rem,calc(100vw-8rem))]`}
+                    aria-expanded={openDropdown === "project"}
+                    aria-haspopup="true"
+                  >
+                    <FaFolder className="shrink-0 text-[13px] text-[var(--color-text-muted)]" aria-hidden />
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[var(--color-text-primary)]">
+                      {activeProject?.name || "Select project"}
+                    </span>
+                    <FaChevronDown
+                      className={`shrink-0 text-[10px] text-[var(--color-text-muted)] transition-transform duration-150 ${
+                        openDropdown === "project" ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-              {openDropdown === "project" && (
-                <div className="absolute left-0 z-50 mt-1.5 w-[min(calc(100vw-1.5rem),18rem)] overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05] sm:left-auto sm:right-0">
+                  {openDropdown === "project" && (
+                    <div className="absolute left-0 z-[200] mt-1.5 w-[min(calc(100vw-1.5rem),18rem)] overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05] sm:left-auto sm:right-0">
 
-                  <div className="border-b border-[var(--color-border)] p-2.5">
-                    <div className="relative">
-                      <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
-                      <input
-                        autoFocus
-                        value={projectSearch}
-                        onChange={(e) => setProjectSearch(e.target.value)}
-                        placeholder="Search projects…"
-                        className="app-control w-full py-1.5 pl-8 pr-2.5 text-[13px] placeholder:text-[var(--color-text-muted)]"
-                      />
+                      <div className="border-b border-[var(--color-border)] p-2.5">
+                        <div className="relative">
+                          <FaSearch className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)]" />
+                          <input
+                            autoFocus
+                            value={projectSearch}
+                            onChange={(e) => setProjectSearch(e.target.value)}
+                            placeholder="Search projects…"
+                            className="app-control w-full py-1.5 pl-8 pr-2.5 text-[13px] placeholder:text-[var(--color-text-muted)]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="max-h-56 overflow-y-auto p-1">
+                        {filteredProjects.map((p) => (
+                          <button
+                            type="button"
+                            key={p._id}
+                            onClick={() => {
+                              setOpenDropdown(null);
+                              const prevId = activeProject?._id;
+                              if (prevId !== p._id) {
+                                dispatch(resetTasks());
+                              }
+                              dispatch(setActiveProject(p));
+                              const stay = shouldKeepRouteWhenSwitchingProject(location.pathname);
+                              if (stay) {
+                                dispatch(fetchProjectById(p._id));
+                              } else {
+                                navigate(`/projects/${p._id}`);
+                              }
+                            }}
+                            className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                          >
+                            <span className="min-w-0 truncate font-medium">{p.name}</span>
+                            {p._id === activeProject?._id && (
+                              <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {isSpaceAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            setShowCreateProject(true);
+                          }}
+                          className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-border)] px-2.5 py-2.5 text-[12px] font-semibold text-[var(--color-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]"
+                        >
+                          <FaPlus className="text-[10px]" />
+                          New project
+                        </button>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="max-h-56 overflow-y-auto p-1">
-                    {filteredProjects.map((p) => (
-                      <button
-                        type="button"
-                        key={p._id}
-                        onClick={() => {
-                          const prevId = activeProject?._id;
-                          if (prevId !== p._id) {
-                            dispatch(resetTasks());
-                          }
-                          dispatch(setActiveProject(p));
-                          const stay = shouldKeepRouteWhenSwitchingProject(location.pathname);
-                          if (stay) {
-                            dispatch(fetchProjectById(p._id));
-                          } else {
-                            navigate(`/projects/${p._id}`);
-                          }
-                          setOpenDropdown(null);
-                        }}
-                        className="flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-                      >
-                        <span className="min-w-0 truncate font-medium">{p.name}</span>
-                        {p._id === activeProject?._id && (
-                          <FaCheckCircle className="shrink-0 text-xs text-[var(--color-primary)]" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  {isSpaceAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOpenDropdown(null);
-                        setShowCreateProject(true);
-                      }}
-                      className="flex w-full items-center justify-center gap-2 border-t border-[var(--color-border)] px-2.5 py-2.5 text-[12px] font-semibold text-[var(--color-primary)] transition-colors duration-150 hover:bg-[var(--color-surface-muted)]"
-                    >
-                      <FaPlus className="text-[10px]" />
-                      New project
-                    </button>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <p className="hidden max-w-[14rem] truncate text-[11px] leading-snug text-[var(--color-text-muted)] sm:block">
+                Pick or create a workspace to enable projects and scoped modules.
+              </p>
+            )}
           </div>
         </div>
 
@@ -321,7 +329,7 @@ export default function TopNavbar({ onToggleSidebar }) {
             </button>
 
             {openDropdown === "profile" && (
-              <div className="absolute right-0 z-[60] mt-2 w-56 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+              <div className="absolute right-0 z-[200] mt-2 w-56 overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
                 <div className="border-b border-[var(--color-border)] px-3 py-2.5">
                   <div className="truncate text-[13px] font-semibold text-[var(--color-text-primary)]">{user?.name || "Account"}</div>
                   <div className="truncate text-[12px] text-[var(--color-text-muted)]">{user?.email || ""}</div>

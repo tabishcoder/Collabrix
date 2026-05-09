@@ -10,6 +10,8 @@ import {
   receiveReadUpdated,
   receiveSocketMessage,
   removeChatFromList,
+  setIncomingVoiceInvite,
+  clearIncomingVoiceInvite,
 } from "./chatSlice";
 
 export default function ChatSocketBridge() {
@@ -81,6 +83,23 @@ export default function ChatSocketBridge() {
     socket.on("chat:read-updated", onReadUpdated);
     socket.on("chat:message-deleted", onMessageDeleted);
     socket.on("chat:removed", onChatRemoved);
+
+    const onVoiceStarted = (data) => {
+      if (!data?.chatId || !data?.meetingId) return;
+      const me = store.getState().auth.user?._id;
+      if (data.starter?._id && String(data.starter._id) === String(me)) return;
+      dispatch(setIncomingVoiceInvite({ chatId: String(data.chatId), meetingId: String(data.meetingId) }));
+    };
+
+    const onVoiceEnded = (data) => {
+      const inv = store.getState().chats.incomingVoiceInvite;
+      if (inv && String(inv.meetingId) === String(data?.meetingId)) {
+        dispatch(clearIncomingVoiceInvite());
+      }
+    };
+
+    socket.on("chat:voice-call-started", onVoiceStarted);
+    socket.on("chat:voice-call-ended", onVoiceEnded);
     socket.on("connect", resyncActiveChat);
     socket.on("reconnect", resyncActiveChat);
 
@@ -91,6 +110,8 @@ export default function ChatSocketBridge() {
       socket.off("chat:read-updated", onReadUpdated);
       socket.off("chat:message-deleted", onMessageDeleted);
       socket.off("chat:removed", onChatRemoved);
+      socket.off("chat:voice-call-started", onVoiceStarted);
+      socket.off("chat:voice-call-ended", onVoiceEnded);
       socket.off("connect", resyncActiveChat);
       socket.off("reconnect", resyncActiveChat);
     };

@@ -6,7 +6,7 @@ import PlatformAdminDashboard from "../features/dashboard/PlatformAdminDashboard
 export default function PlatformAdminRoute() {
   const user = useSelector((s) => s.auth.user);
   if (!isPlatformAdmin(user)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/welcome" replace />;
   }
   return <PlatformAdminDashboard />;
 }

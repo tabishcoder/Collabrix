@@ -15,6 +15,7 @@ const {
   assertUserIdsAreProjectScoped,
   computeReceiptStatus,
 } = require('../services/chatService');
+const meetingService = require('../services/communication/meetingService');
 
 const DEFAULT_PAGE = 40;
 
@@ -462,5 +463,58 @@ module.exports.createGroupChat = async (req, res) => {
   } catch (err) {
     const code = err.status || 500;
     res.status(code).json({ error: err.message });
+  }
+};
+
+function chatVoiceMeetingJson(m) {
+  const meeting = m.toObject ? m.toObject({ virtuals: false }) : m;
+  return {
+    _id: meeting._id,
+    title: meeting.title,
+    status: meeting.status,
+    groupId: meeting.groupId,
+    projectId: meeting.projectId,
+    chatId: meeting.chatId ?? null,
+    callKind: meeting.callKind || 'chat_voice',
+    createdBy: meeting.createdBy,
+    participants: meetingService.buildParticipantPayload({ participants: meeting.participants || [] }),
+    endedAt: meeting.endedAt,
+    createdAt: meeting.createdAt,
+    updatedAt: meeting.updatedAt,
+  };
+}
+
+module.exports.startChatVoiceCall = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { meeting, acs, reused } = await meetingService.startOrGetChatVoiceMeeting(req.user._id, chatId);
+
+    const io = getIO(req);
+    if (io) {
+      const meetingId = String(meeting._id);
+      io.to(`chat-${chatId}`).emit('chat:voice-call-started', {
+        chatId: String(chatId),
+        meetingId,
+        reused: !!reused,
+        meeting: chatVoiceMeetingJson(meeting),
+        starter: { _id: req.user._id, name: req.user.name, email: req.user.email },
+      });
+    }
+
+    const status = reused ? 200 : 201;
+    return res.status(status).json({
+      meeting: chatVoiceMeetingJson(meeting),
+      acs: {
+        groupId: meeting.groupId,
+        communicationUserId: acs.communicationUserId,
+        token: acs.token,
+        expiresOn: acs.expiresOn,
+      },
+      reused: !!reused,
+    });
+  } catch (e) {
+    const code = e.statusCode || e.status || 500;
+    if (code >= 500) console.error(e);
+    return res.status(code).json({ message: e.message || 'Server error' });
   }
 };

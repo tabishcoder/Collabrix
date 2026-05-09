@@ -52,10 +52,10 @@ export default function NotificationsBell() {
           <button
             type="button"
             aria-label="Close notifications"
-            className="fixed inset-0 z-40 cursor-default bg-transparent"
+            className="fixed inset-0 z-[190] cursor-default bg-transparent"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-50 mt-2 w-[min(calc(100vw-2rem),22rem)] overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+          <div className="absolute right-0 z-[210] mt-2 w-[min(calc(100vw-2rem),22rem)] overflow-hidden rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] shadow-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
             <div className="flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2">
               <span className="text-[12px] font-semibold text-[var(--color-text-primary)]">Notifications</span>
               <button
@@ -101,7 +101,7 @@ export default function NotificationsBell() {
               </ul>
             </div>
             <div className="border-t border-[var(--color-border)] px-3 py-2 text-center">
-              <Link to="/dashboard" className="text-[11px] font-medium text-[var(--color-primary)] hover:underline" onClick={() => setOpen(false)}>
+              <Link to="/welcome" className="text-[11px] font-medium text-[var(--color-primary)] hover:underline" onClick={() => setOpen(false)}>
                 Workspace home
               </Link>
             </div>

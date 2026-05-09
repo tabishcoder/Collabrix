@@ -31,3 +31,8 @@ export function deleteMessageApi(chatId, messageId) {
 export function deleteChatApi(chatId) {
   return api.delete(`/chats/${chatId}`);
 }
+
+/** Azure ACS group voice call scoped to this chat (audio-only in UI). */
+export function startChatVoiceCallApi(chatId) {
+  return api.post(`/chats/${chatId}/voice-call/start`);
+}

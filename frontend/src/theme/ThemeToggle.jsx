@@ -57,7 +57,7 @@ export default function ThemeToggle() {
 
       {open && (
         <ul
-          className="absolute right-0 z-[60] mt-1.5 w-40 overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] py-0.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]"
+          className="absolute right-0 z-[200] mt-1.5 w-40 overflow-hidden rounded-md border border-[var(--color-border-strong)] bg-[var(--color-dropdown-bg)] py-0.5 shadow-[var(--shadow-soft)] ring-1 ring-black/[0.03] dark:ring-white/[0.05]"
           role="listbox"
         >
           {OPTIONS.map(({ value, label, Icon }) => {
