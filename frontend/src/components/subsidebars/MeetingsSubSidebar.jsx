@@ -1,19 +1,87 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaCalendarAlt, FaPlus } from "react-icons/fa";
 import { loadRecentMeetings } from "../../features/meetings/recentMeetingsStorage";
+import { listMeetingsForProjectApi } from "../../features/meetings/meetingsApi";
+
+function isProjectMeetingLog(m) {
+  return (m?.callKind || 'meeting') !== 'chat_voice';
+}
+
+function mergeMeetingsFromApiAndRecent(apiList, recentList) {
+  const byId = new Map();
+  for (const m of apiList || []) {
+    if (m?._id) byId.set(String(m._id), { ...m });
+  }
+  for (const m of recentList || []) {
+    const id = String(m._id);
+    if (!byId.has(id)) {
+      byId.set(id, {
+        _id: id,
+        title: m.title,
+        status: m.status,
+        updatedAt: m.savedAt,
+      });
+    }
+  }
+  return Array.from(byId.values()).sort((a, b) => {
+    const ta = new Date(a.updatedAt || a.createdAt || 0).getTime();
+    const tb = new Date(b.updatedAt || b.createdAt || 0).getTime();
+    return tb - ta;
+  });
+}
+
+function statusLabel(status) {
+  if (status === "active") return "Live";
+  if (status === "ended") return "Ended";
+  return status ? String(status) : "";
+}
 
 export default function MeetingsSubSidebar({ collapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
   const activeProject = useSelector((s) => s.projects.activeProject);
 
-  const recent = useMemo(() => {
-    if (!activeProject?._id) return [];
-    return loadRecentMeetings(String(activeProject._id));
-    // pathname: re-read sessionStorage when navigating between meeting routes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pid = activeProject?._id ? String(activeProject._id) : null;
+    if (!pid) {
+      setMeetings([]);
+      setError(null);
+      setLoading(false);
+      return undefined;
+    }
+
+    setLoading(true);
+    setError(null);
+    listMeetingsForProjectApi(pid)
+      .then((res) => {
+        // console.log(res.data);
+        if (cancelled) return;
+        // const recent = loadRecentMeetings(pid);
+        const apiRows = (res.data?.meetings ?? []).filter(isProjectMeetingLog);
+        // setMeetings(mergeMeetingsFromApiAndRecent(apiRows, recent.filter(isProjectMeetingLog)));
+        setMeetings(apiRows);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const msg = err.response?.data?.message || err.message || "Could not load meetings";
+        setError(msg);
+        const recent = loadRecentMeetings(pid);
+        setMeetings(mergeMeetingsFromApiAndRecent([], recent.filter(isProjectMeetingLog)));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeProject?._id, location.pathname]);
 
   const openSchedule = () => {
@@ -48,25 +116,50 @@ export default function MeetingsSubSidebar({ collapsed }) {
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {!activeProject?._id ? (
           <p className="px-2 text-[11px] text-[var(--color-text-muted)]">
-            Pick a project in the header to see recent rooms.
+            Pick a project in the header to see meetings for that project.
           </p>
-        ) : recent.length === 0 ? (
-          <p className="px-2 text-[11px] text-[var(--color-text-muted)]">
-            Recent meetings for this project will appear here after you start or join one.
-          </p>
+        ) : loading ? (
+          <p className="px-2 text-[11px] text-[var(--color-text-muted)]">Loading meetings…</p>
         ) : (
-          recent.map((m) => (
-            <Link
-              key={m._id}
-              to={`/meetings/${m._id}`}
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
-            >
-              <FaCalendarAlt size={14} className="shrink-0 opacity-80" />
-              <span className="min-w-0 flex-1 truncate" title={m.title}>
-                {m.title}
-              </span>
-            </Link>
-          ))
+          <>
+            {error && (
+              <p className="rounded-lg bg-amber-500/10 px-2 py-1.5 text-[11px] text-amber-800 dark:text-amber-200" title={error}>
+                {error}
+              </p>
+            )}
+            {meetings.length === 0 ? (
+              <p className="px-2 text-[11px] text-[var(--color-text-muted)]">
+                No meetings yet for this project. Schedule one or start a room from the Meetings page.
+              </p>
+            ) : (
+              meetings.map((m) => {
+                const badge = statusLabel(m.status);
+                return (
+                  <Link
+                    key={String(m._id)}
+                    to={`/meetings/${m._id}`}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+                  >
+                    <FaCalendarAlt size={14} className="shrink-0 opacity-80" />
+                    <span className="min-w-0 flex-1 truncate" title={m.title}>
+                      {m.title || "Meeting"}
+                    </span>
+                    {badge && (
+                      <span
+                        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                          m.status === "active"
+                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                            : "bg-[var(--color-border)] text-[var(--color-text-muted)]"
+                        }`}
+                      >
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })
+            )}
+          </>
         )}
       </div>
 
