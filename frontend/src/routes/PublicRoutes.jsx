@@ -12,6 +12,6 @@ export default function PublicRoute() {
     );
   }
 
-  // Redirect logged-in users to dashboard
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />;
+  // Redirect logged-in users to app overview
+  return isAuthenticated ? <Navigate to="/welcome" replace /> : <Outlet />;
 }

@@ -18,11 +18,14 @@ import AIAssistantPage from "../features/modules/AIAssistantPage.jsx";
 import JoinWorkspace   from "../features/invites/JoinWorkspace.jsx";
 import ProfilePage     from "../features/profile/ProfilePage.jsx";
 import SettingsPage    from "../features/settings/SettingsPage.jsx";
+import FaqPage         from "../features/help/FaqPage.jsx";
 
 import ProtectedRoute  from "./ProtectedRoute";
 import PublicRoute     from "./PublicRoutes";
 import PublicLayout    from "../layouts/PublicLayout.jsx";
 import AppLayout       from "../layouts/AppLayout.jsx";
+import FeatureGate     from "./FeatureGate";
+import HomeEntry       from "./HomeEntry";
 import { AuthLoadingSkeleton } from "../components/ui/Skeleton";
 
 export default function AppRoutes() {
@@ -34,8 +37,8 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      {/* Marketing landing for guests; signed-in users bounce to the app */}
+      <Route path="/" element={<HomeEntry />} />
 
       {/* Workspace invite (public – works logged-in or out) */}
       <Route path="/join-workspace" element={<JoinWorkspace />} />
@@ -54,34 +57,38 @@ export default function AppRoutes() {
       {/* Protected app routes */}
       <Route element={<AppLayout />}>
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<WorkspaceDashboard />} />
-          <Route path="/admin" element={<PlatformAdminRoute />} />
+          <Route element={<FeatureGate />}>
+            <Route path="/dashboard" element={<WorkspaceDashboard />} />
+            <Route path="/welcome" element={<WorkspaceDashboard />} />
+            <Route path="/admin" element={<PlatformAdminRoute />} />
 
-          {/* Projects */}
-          <Route path="/projects" element={<ProjectsPage />}>
-            <Route
-              index
-              element={
-                <div className="p-6 text-[var(--color-text-secondary)]">
-                  Select a project from the{" "}
-                  <span className="font-medium text-[var(--color-text-primary)]">Project</span>{" "}
-                  menu in the header.
-                </div>
-              }
-            />
-            <Route path=":projectId"        element={<TasksBoard />} />
-            <Route path=":projectId/board"  element={<TasksBoard />} />
+            {/* Projects — boards are lg+ only (FeatureGate); routes remain for deep links */}
+            <Route path="/projects" element={<ProjectsPage />}>
+              <Route
+                index
+                element={
+                  <div className="p-6 text-[var(--color-text-secondary)]">
+                    Select a project from the{" "}
+                    <span className="font-medium text-[var(--color-text-primary)]">Project</span>{" "}
+                    menu in the header.
+                  </div>
+                }
+              />
+              <Route path=":projectId"        element={<TasksBoard />} />
+              <Route path=":projectId/board"  element={<TasksBoard />} />
+            </Route>
+
+            {/* Modules – scoped to active project (header picker) */}
+            <Route path="/chats"    element={<ChatsPage />} />
+            <Route path="/meetings" element={<MeetingsPage />} />
+            <Route path="/meetings/:meetingId" element={<MeetingRoomPage />} />
+            <Route path="/aibot"    element={<AIAssistantPage />} />
+
+            {/* User */}
+            <Route path="/profile"  element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help/faq" element={<FaqPage />} />
           </Route>
-
-          {/* Modules – scoped to active project (header picker) */}
-          <Route path="/chats"    element={<ChatsPage />} />
-          <Route path="/meetings" element={<MeetingsPage />} />
-          <Route path="/meetings/:meetingId" element={<MeetingRoomPage />} />
-          <Route path="/aibot"    element={<AIAssistantPage />} />
-
-          {/* User */}
-          <Route path="/profile"  element={<ProfilePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
 
