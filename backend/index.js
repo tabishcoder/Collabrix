@@ -23,6 +23,7 @@ const projectRoutes = require('./routes/projects.routes');
 const taskRoutes = require('./routes/tasks.routes');
 const historyRoutes = require('./routes/history.routes');
 const meetingRoutes = require('./routes/meetings.routes');
+const chatRoutes = require('./routes/chats.routes');
 const timeEntryRoutes = require('./routes/timeEntries.routes');
 const meetingService = require('./services/communication/meetingService');
 
@@ -106,6 +107,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/chats', chatRoutes);
 app.use('/api/time-entries', timeEntryRoutes);
 
 app.get("/", (req, res) => {

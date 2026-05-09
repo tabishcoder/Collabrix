@@ -1,8 +1,8 @@
 /**
- * Unified entry for real-time calls (meetings + future chat voice/video).
+ * Unified entry for real-time meetings.
  *
- * Future chat calls (not implemented): call createCall({ type: 'chat', maxParticipants: 5, ... })
- * and reuse acsService for ACS identities, groupId, and VoIP tokens — same pattern as meetings.
+ * Chat voice uses the same ACS VoIP tokens via `POST /chats/:chatId/voice-call/start`
+ * and `POST /meetings/:id/join` for refresh (`startOrGetChatVoiceMeeting`).
  */
 
 const meetingService = require('./meetingService');
@@ -12,10 +12,10 @@ const CALL_TYPES = {
   MEETING: 'meeting',
 };
 
-function notImplementedChat() {
-  const e = new Error('Chat calls are not implemented yet');
+function chatCallsViaHttp() {
+  const e = new Error('Use POST /chats/:chatId/voice-call/start for chat voice calls');
   e.statusCode = 501;
-  e.code = 'CHAT_CALLS_NOT_IMPLEMENTED';
+  e.code = 'CHAT_CALLS_USE_HTTP';
   return e;
 }
 
@@ -33,7 +33,7 @@ async function createCall(params) {
     });
   }
   if (type === CALL_TYPES.CHAT) {
-    throw notImplementedChat();
+    throw chatCallsViaHttp();
   }
   throw Object.assign(new Error('Invalid call type'), { statusCode: 400 });
 }
@@ -46,7 +46,7 @@ async function joinCall(params) {
     }
     return meetingService.joinMeeting(meetingId, userId);
   }
-  if (type === CALL_TYPES.CHAT) throw notImplementedChat();
+  if (type === CALL_TYPES.CHAT) throw chatCallsViaHttp();
   throw Object.assign(new Error('Invalid call type'), { statusCode: 400 });
 }
 
@@ -58,7 +58,7 @@ async function leaveCall(params) {
     }
     return meetingService.leaveMeeting(meetingId, userId);
   }
-  if (type === CALL_TYPES.CHAT) throw notImplementedChat();
+  if (type === CALL_TYPES.CHAT) throw chatCallsViaHttp();
   throw Object.assign(new Error('Invalid call type'), { statusCode: 400 });
 }
 
@@ -70,7 +70,7 @@ async function endCall(params) {
     }
     return meetingService.endMeeting(meetingId, userId);
   }
-  if (type === CALL_TYPES.CHAT) throw notImplementedChat();
+  if (type === CALL_TYPES.CHAT) throw chatCallsViaHttp();
   throw Object.assign(new Error('Invalid call type'), { statusCode: 400 });
 }
 
