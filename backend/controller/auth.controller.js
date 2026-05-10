@@ -9,9 +9,10 @@ const JWTService = require('../services/JWTService');
 
 const settings = {
     httpOnly: true,
+    path: '/',
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.SAME_SITE,
-}
+    sameSite: process.env.SAME_SITE || 'lax',
+};
 
 const OTP_TTL_MS = process.env.OTP_TTL_MS || 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = process.env.RESEND_COOLDOWN_MS || 60 * 1000;
@@ -128,7 +129,10 @@ module.exports.loginUser = async (req, res) => {
             name: user.name,
             email: user.email,
             platformRole: user.platformRole || 'user',
-            message: "Logged in Successfully"
+            message: "Logged in Successfully",
+            // Also returned for SPAs on a different origin than the API (cookies may not attach on XHR).
+            accessToken,
+            refreshToken,
         });
     } catch (err) {
         console.error(err?.message);
@@ -151,7 +155,7 @@ module.exports.logoutUser = async (req, res) => {
         res.clearCookie("accessToken", settings);
         res.clearCookie("refreshToken", settings);
 
-        return res.status(200).json({ message: "Logged out successfully" });
+        return res.status(200).json({ message: "Logged out successfully", clearedTokens: true });
 
     } catch (error) {
         console.error("Logout error:", error);
@@ -163,7 +167,7 @@ module.exports.logoutUser = async (req, res) => {
 // @route POST /api/auth/refresh
 // @access Private
 module.exports.refreshToken = async (req, res) => {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
     if (!refreshToken) {
         return res.status(402).json({ message: 'No refresh token provided.' });
@@ -176,7 +180,7 @@ module.exports.refreshToken = async (req, res) => {
 
     if (!storedToken) {
         // Clear cookie if token is invalid or expired
-        res.clearCookie('refreshToken');
+        res.clearCookie('refreshToken', { path: '/', ...settings });
         return res.status(403).json({ message: 'Refresh token invalid or expired. Please log in again.' });
     }
 
@@ -187,7 +191,10 @@ module.exports.refreshToken = async (req, res) => {
         maxAge: 15 * 60 * 1000,
     });
 
-    return res.status(200).json({ message: 'Access token refreshed' });
+    return res.status(200).json({
+        message: 'Access token refreshed',
+        accessToken: newAccessToken,
+    });
 }
 
 // @desc Verify the OTP

@@ -8,6 +8,7 @@ import {
   requestResetPasswordApi,
   verifyOtpApi,
 } from "./authApi";
+import { clearAuthTokens } from "../../services/authTokens";
 
 /* =========================
    LOGIN
@@ -15,7 +16,13 @@ import {
 export const login = createAsyncThunk("auth/login", async (data, thunkAPI) => {
   try {
     const res = await loginApi(data);
-    return res.data.data; // ✅ extract user only
+    const d = res.data;
+    return {
+      _id: d._id,
+      name: d.name,
+      email: d.email,
+      platformRole: d.platformRole || "user",
+    };
   } catch (err) {
     return thunkAPI.rejectWithValue(err.response?.data?.message || err.message);
   }
@@ -63,6 +70,8 @@ export const logout = createAsyncThunk(
       await logoutApi();
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message);
+    } finally {
+      clearAuthTokens();
     }
   },
 );

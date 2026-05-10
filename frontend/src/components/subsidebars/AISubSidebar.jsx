@@ -33,6 +33,7 @@ export default function AISubSidebar({ collapsed }) {
         <button
           type="button"
           className="flex w-full items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+          onClick={() => document.getElementById("ai-workspace-query-input")?.focus()}
         >
           <FaRobot size={14} />
           Ask AI
@@ -41,9 +42,10 @@ export default function AISubSidebar({ collapsed }) {
         <button
           type="button"
           className="flex w-full items-center gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors duration-150 hover:bg-[var(--color-surface-hover)] hover:text-[var(--color-text-primary)]"
+          onClick={() => window.dispatchEvent(new CustomEvent("collabrix:clear-ai-history"))}
         >
           <FaHistory size={14} />
-          History
+          Clear history
         </button>
       </div>
 

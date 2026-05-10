@@ -8,6 +8,7 @@ const {
   PROJECT_MANAGE_ROLES,
   PROJECT_WRITE_ROLES
 } = require('../utils/rbac');
+const { emitBoardActivity } = require('../services/aiKnowledgeEvents');
 const { ensureProjectChannel, syncProjectChannelParticipants } = require('../services/chatService');
 
 const getIO = (req) => req.app.get('io');
@@ -183,6 +184,8 @@ module.exports.updateBoardColumns = async (req, res) => {
       return res.status(400).json({ message: 'columns must be a non-empty array' });
     }
 
+    const previousColumns = JSON.stringify(project.boardColumns || []);
+
     // Validate each column has required fields + unique keys
     const keys = new Set();
     for (const col of columns) {
@@ -203,6 +206,19 @@ module.exports.updateBoardColumns = async (req, res) => {
     await project.save();
 
     await logHistory('project', project._id, 'columns_updated', req.user._id, { columns });
+
+    const newColsDesc = project.boardColumns
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((c) => `${c.name} (${c.key})`)
+      .join(', ');
+    if (JSON.stringify(project.boardColumns) !== previousColumns) {
+      emitBoardActivity(
+        project,
+        `Kanban board columns were updated. Current columns: ${newColsDesc}.`,
+        String(project._id),
+      );
+    }
 
     const populated = await populateProject(Project.findById(project._id));
     const io = getIO(req);

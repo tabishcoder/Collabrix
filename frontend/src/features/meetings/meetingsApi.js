@@ -23,3 +23,17 @@ export function endMeetingApi(meetingId) {
 export function getMeetingByIdApi(meetingId) {
   return api.get(`/meetings/${meetingId}`);
 }
+
+export function patchMeetingTranscriptApi(meetingId, body) {
+  return api.patch(`/meetings/${meetingId}/transcript`, body);
+}
+
+/** multipart field name: `audio` — Node proxies to local faster-whisper */
+export function uploadMeetingAudioApi(meetingId, blob, language) {
+  const fd = new FormData();
+  fd.append("audio", blob, "recording.webm");
+  return api.post(`/meetings/${meetingId}/audio`, fd, {
+    params: language ? { language } : {},
+    timeout: 600000,
+  });
+}

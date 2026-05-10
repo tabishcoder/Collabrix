@@ -1,0 +1,20 @@
+# Local PostgreSQL for the AI / RAG service (matches default DATABASE_URL in app).
+# From this folder: docker compose up -d
+# Stop: docker compose down
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: collabrix_ai_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: collabrix_ai
+    volumes:
+      - collabrix_ai_pgdata:/var/lib/postgresql/data
+
+volumes:
+  collabrix_ai_pgdata:

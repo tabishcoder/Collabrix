@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.deps import require_internal_secret
 from app.core.database import get_db
 from app.schemas.query import QueryRequest, QueryResponse, RetrievedContextItem
 from app.services.qa_service import QAService
 from app.services.retrieval_service import RetrievalService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_internal_secret)])
+
 
 @router.post("/")
 async def query_ai(payload: QueryRequest, db: Session = Depends(get_db)) -> QueryResponse:

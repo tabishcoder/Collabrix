@@ -1,8 +1,23 @@
 import axios from "axios";
+import {
+  setAuthTokens,
+  setAccessTokenOnly,
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+} from "./authTokens";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+});
+
+api.interceptors.request.use((config) => {
+  const access = getAccessToken();
+  if (access) {
+    config.headers.Authorization = `Bearer ${access}`;
+  }
+  return config;
 });
 
 // ------------------------------
@@ -23,30 +38,39 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// ------------------------------
-// RESPONSE INTERCEPTOR
-// ------------------------------
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const url = response.config?.url || "";
+    const d = response.data;
+    if (url.includes("/auth/login") && d?.accessToken && d?.refreshToken) {
+      setAuthTokens(d.accessToken, d.refreshToken);
+    } else if (url.includes("/auth/refresh") && d?.accessToken) {
+      setAccessTokenOnly(d.accessToken);
+    } else if (url.includes("/auth/logout") && d?.clearedTokens) {
+      clearAuthTokens();
+    }
+    return response;
+  },
 
   async (error) => {
     const originalRequest = error.config;
 
-    // If no response or not 401 → just reject
     if (!error.response) {
       return Promise.reject(error);
     }
 
-    // ------------------------------
-    // Handle 401 Unauthorized
-    // ------------------------------
+    if (error.response.status === 402) {
+      clearAuthTokens();
+      return Promise.reject(error);
+    }
+
     if (
       error.response.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      !String(originalRequest.url || "").includes("/auth/refresh")
     ) {
       originalRequest._retry = true;
 
-      // If already refreshing → queue request
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -58,18 +82,15 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Call refresh endpoint
-        await api.post("/auth/refresh");
+        const rt = getRefreshToken();
+        await api.post("/auth/refresh", rt ? { refreshToken: rt } : {});
 
         processQueue(null);
 
-        // Retry original request
         return api(originalRequest);
       } catch (err) {
         processQueue(err, null);
-
-        // OPTIONAL: clear user state here if needed
-        // window.location.href = "/login";
+        clearAuthTokens();
 
         return Promise.reject(err);
       } finally {

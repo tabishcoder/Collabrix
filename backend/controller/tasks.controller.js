@@ -3,6 +3,12 @@ const Task    = require('../models/Task');
 const History = require('../models/History');
 const { getProjectRole, PROJECT_WRITE_ROLES } = require('../utils/rbac');
 const { createNotification } = require('../utils/pushNotification');
+const {
+  emitTaskCreated,
+  emitTaskUpdated,
+  emitTaskCommentAdded,
+  emitBoardActivity,
+} = require('../services/aiKnowledgeEvents');
 
 const getIO = (req) => req.app.get('io');
 
@@ -136,6 +142,8 @@ module.exports.createTask = async (req, res) => {
 
     const populatedTask = await populateTask(Task.findById(task._id));
 
+    emitTaskCreated(project, populatedTask);
+
     const io = getIO(req);
     if (io) {
       const spaceId = project.spaceId;
@@ -256,6 +264,18 @@ module.exports.updateTask = async (req, res) => {
 
     const populatedTask = await populateTask(Task.findById(task._id));
 
+    emitTaskUpdated(project, populatedTask);
+    if (status && status !== oldStatus) {
+      const oldLabel = project.boardColumns?.find((c) => c.key === oldStatus)?.name || oldStatus;
+      const newLabel = project.boardColumns?.find((c) => c.key === status)?.name || status;
+      const tTitle = populatedTask.title || task.title || 'Task';
+      emitBoardActivity(
+        project,
+        `Task "${tTitle}" moved from column "${oldLabel}" to "${newLabel}".`,
+        String(task._id),
+      );
+    }
+
     const io = getIO(req);
     if (io) {
       const spaceId = project.spaceId;
@@ -312,6 +332,8 @@ module.exports.addTaskComment = async (req, res) => {
     });
 
     const populatedTask = await populateTask(Task.findById(task._id));
+
+    emitTaskCommentAdded(project, populatedTask, text.slice(0, 500));
 
     const io = getIO(req);
     if (io) {

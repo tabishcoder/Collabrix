@@ -44,10 +44,10 @@ class RetrievalService:
         if project_id is not None:
             stmt = stmt.where(KnowledgeItem.project_id == project_id)
 
-        # Fetch a bounded candidate set then rank in Python.
-        # This avoids requiring pgvector in local dev.
+        # Bounded candidate set — ranking is O(n) in Python; keep n modest for latency.
+        cap = min(settings.retrieval_candidate_limit, max(32, k * 12))
         candidates = list(
-            db.execute(stmt.order_by(KnowledgeItem.created_at.desc()).limit(max(200, k * 50))).scalars().all()
+            db.execute(stmt.order_by(KnowledgeItem.created_at.desc()).limit(cap)).scalars().all()
         )
         if not candidates:
             return []

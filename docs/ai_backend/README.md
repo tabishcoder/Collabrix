@@ -2,6 +2,8 @@
 
 FastAPI microservice that powers the **workspace intelligence agent** using **RAG** over workspace data (tasks, boards, documents, meeting summaries).
 
+The canonical copy for developers working in the service folder is [`ai_backend/README.md`](../../ai_backend/README.md); keep both in sync when you change setup or API docs.
+
 ## Tech
 
 - **API**: FastAPI + Uvicorn
@@ -59,6 +61,7 @@ CREATE DATABASE collabrix_ai;
 ```
 
 Notes:
+
 - If you use a different username/password/db name, update `DATABASE_URL` in `ai_backend/.env` accordingly.
 - The service creates tables automatically on startup.
 
@@ -180,4 +183,3 @@ irm http://127.0.0.1:8001/ai/ -Method Post -ContentType "application/json" -Body
   - Set `GEMINI_MODEL` to a model your key supports (example: `models/gemini-2.5-flash`).
 - **403 from `/events/` or `/ai/`**
   - If `INTERNAL_API_SECRET` is set in `.env`, ensure Node `AI_SERVICE_SECRET` matches and requests include `X-Internal-Secret`.
-

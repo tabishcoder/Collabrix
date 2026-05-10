@@ -1,12 +1,24 @@
 venv/
 .venv/
 .env
-.env.example
+.env.*
+!.env.example
 
 # Local tooling / exports
 Collabrix-AI-Backend.postman_collection.json
 requirements-whisper.txt
+docker-compose.override.yml
 
-# Python caches
+# Python caches / tooling
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+dist/
+build/

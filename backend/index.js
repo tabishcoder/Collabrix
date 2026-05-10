@@ -1,5 +1,6 @@
 // server/src/index.js
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -25,22 +26,30 @@ const historyRoutes = require('./routes/history.routes');
 const meetingRoutes = require('./routes/meetings.routes');
 const chatRoutes = require('./routes/chats.routes');
 const timeEntryRoutes = require('./routes/timeEntries.routes');
+const aiRoutes = require('./routes/ai.routes');
 const meetingService = require('./services/communication/meetingService');
+
+/** Comma-separated list (production). Dev allows any localhost / 127.0.0.1 port for Vite. */
+function buildProductionCorsOrigins() {
+  const raw = [process.env.CORS_ORIGINS, process.env.FRONTEND_URL].filter(Boolean).join(',');
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const isProduction = process.env.NODE_ENV === 'production';
+const productionOrigins = buildProductionCorsOrigins();
+
+const socketCors = isProduction
+  ? { origin: productionOrigins.length ? productionOrigins : false, credentials: true, methods: ['GET', 'POST'] }
+  : { origin: true, credentials: true, methods: ['GET', 'POST'] };
 
 const app = express();
 const server = http.createServer(app);
 
-// Socket.io setup with CORS
-const io = new Server(server, {
-  cors: {
-    origin: [
-      'http://localhost:5173',
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
-    credentials: true,
-    methods: ['GET', 'POST']
-  }
-});
+// Socket.io — in dev, allow any Vite port; in production use CORS_ORIGINS / FRONTEND_URL only.
+const io = new Server(server, { cors: socketCors });
 
 function getCookieValue(cookieHeader, name) {
   if (!cookieHeader) return null;
@@ -81,13 +90,18 @@ const connectDB = async () => {
 
 connectDB();
 
-app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        `${process.env.FRONTEND_URL}`
-    ],
-    credentials: true
-}));
+app.use(
+  isProduction
+    ? cors({
+        origin(origin, cb) {
+          if (!origin) return cb(null, true);
+          const ok = productionOrigins.includes(origin);
+          return cb(null, ok);
+        },
+        credentials: true,
+      })
+    : cors({ origin: true, credentials: true })
+);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -109,6 +123,7 @@ app.use('/api/history', historyRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/time-entries', timeEntryRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
@@ -222,4 +237,19 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(
+      `\n[server] Port ${PORT} is already in use — another Node process is listening (e.g. an older terminal still running npm start / nodemon).\n` +
+        `  Fix: close that terminal, or in PowerShell find and stop it:\n` +
+        `    netstat -ano | findstr ":${PORT} "\n` +
+        `    taskkill /PID <pid_from_LISTENING_row> /F\n` +
+        `  Or run on another port:  $env:PORT=3001; npm start\n`
+    );
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(PORT, () => console.log(`Server running on ${PORT}`));

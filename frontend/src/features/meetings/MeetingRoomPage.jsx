@@ -19,7 +19,9 @@ import {
   leaveMeeting,
   endMeeting,
 } from "./meetingsSlice";
+import { patchMeetingTranscriptApi, uploadMeetingAudioApi } from "./meetingsApi";
 import { useAcsGroupCall } from "./useAcsGroupCall";
+import { useMeetingTranscriptRecorder } from "./useMeetingTranscriptRecorder";
 import { pushRecentMeeting } from "./recentMeetingsStorage";
 
 function formatMeetingWhen(iso) {
@@ -49,6 +51,193 @@ function participantDisplayName(p) {
   const u = p?.user;
   if (u && typeof u === "object") return u.name || u.email || "User";
   return "User";
+}
+
+function EndedMeetingView({ meeting, meetingId, dispatch }) {
+  const [transcriptDraft, setTranscriptDraft] = useState(meeting.transcript || "");
+  const [language, setLanguage] = useState(meeting.transcriptLanguage || "en");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setTranscriptDraft(meeting.transcript || "");
+    setLanguage(meeting.transcriptLanguage || "en");
+  }, [meeting.transcript, meeting.transcriptLanguage, meeting._id]);
+
+  const hostName =
+    meeting.createdBy && typeof meeting.createdBy === "object"
+      ? meeting.createdBy.name || meeting.createdBy.email || "Host"
+      : "Host";
+  const duration = formatDuration(meeting.createdAt, meeting.endedAt);
+  const isChatVoice = (meeting.callKind || "meeting") === "chat_voice";
+  const canTranscript =
+    !isChatVoice && meeting.projectId && (meeting.callKind || "meeting") === "meeting";
+
+  const submitTranscript = async () => {
+    const t = transcriptDraft.trim();
+    if (!t) {
+      toast.error("Paste a transcript or notes first");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { data } = await patchMeetingTranscriptApi(meetingId, { transcript: t, language });
+      if (data?.aiSummaryWarning) {
+        toast(data.aiSummaryWarning, { duration: 9000, icon: "⚠️" });
+      } else {
+        toast.success("Transcript saved — AI summary generated");
+      }
+      await dispatch(fetchMeetingById(meetingId)).unwrap();
+    } catch (e) {
+      const msg = e.response?.data?.message || e.message || "Save failed";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-6">
+      <div>
+        <Link
+          to="/meetings"
+          className="text-[12px] font-medium text-indigo-600 hover:text-indigo-500"
+        >
+          Meetings
+        </Link>
+        <h1 className="mt-2 text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
+          {meeting.title || "Meeting"}
+        </h1>
+        <p className="mt-1 inline-flex rounded-md bg-[var(--color-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+          Ended
+        </p>
+      </div>
+
+      <dl className="grid gap-3 text-[13px] sm:grid-cols-2">
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+            Started
+          </dt>
+          <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.createdAt)}</dd>
+        </div>
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+            Ended
+          </dt>
+          <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.endedAt)}</dd>
+        </div>
+        {duration ? (
+          <div>
+            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+              Duration
+            </dt>
+            <dd className="mt-0.5 text-[var(--color-text-primary)]">{duration}</dd>
+          </div>
+        ) : null}
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+            Host
+          </dt>
+          <dd className="mt-0.5 text-[var(--color-text-primary)]">{hostName}</dd>
+        </div>
+      </dl>
+
+      <section className="rounded-lg border border-indigo-500/30 bg-indigo-500/[0.06] p-4">
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+          Meeting recap
+        </h2>
+        {meeting.aiSummary ? (
+          <div className="space-y-3">
+            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text-primary)]">
+              {meeting.aiSummary}
+            </p>
+            {meeting.aiActionItems ? (
+              <div className="border-t border-[var(--color-border)] pt-3">
+                <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+                  Action items
+                </h3>
+                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+                  {meeting.aiActionItems}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : canTranscript ? (
+          <p className="text-[13px] leading-relaxed text-[var(--color-text-muted)]">
+            {meeting.transcript?.trim()
+              ? "Transcript is saved; the AI summary will appear here once processing finishes. Refresh if it does not update."
+              : "No recap yet. The host can add a transcript, paste notes, or upload a recording after the call — the summary will show in this section for anyone who missed the meeting."}
+          </p>
+        ) : (
+          <p className="text-[13px] text-[var(--color-text-muted)]">No AI recap is stored for this meeting type.</p>
+        )}
+      </section>
+
+      <div>
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
+          Who joined
+        </h2>
+        <MeetingParticipantTable participants={meeting.participants} />
+      </div>
+
+      {canTranscript ? (
+        <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/60 p-4">
+          <h2 className="mb-1 text-sm font-semibold text-[var(--color-text-primary)]">
+            Meeting transcript (for AI)
+          </h2>
+          <p className="mb-3 text-[12px] text-[var(--color-text-muted)]">
+            Host or project manager can paste notes or a transcript, or use live recording during the call (host ends
+            the meeting to upload audio). Text is ingested into the workspace knowledge base (not private chat).
+            Transcription runs on your own machine via faster-whisper (no paid STT API).
+          </p>
+          {meeting.transcriptSource === "whisper_local" ? (
+            <p className="mb-3 text-[12px] text-emerald-700 dark:text-emerald-300">
+              Transcript source: local Whisper (free, self-hosted).
+            </p>
+          ) : null}
+          <label className="mb-1 block text-[11px] font-medium text-[var(--color-text-muted)]">Language hint</label>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="mb-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1.5 text-[12px]"
+          >
+            <option value="en">English</option>
+            <option value="ur">Urdu</option>
+            <option value="mixed">Mixed</option>
+          </select>
+          <textarea
+            value={transcriptDraft}
+            onChange={(e) => setTranscriptDraft(e.target.value)}
+            rows={8}
+            placeholder="Paste meeting notes or transcript…"
+            className="mb-3 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-[13px] text-[var(--color-text-primary)]"
+          />
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void submitTranscript()}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Save & summarize for AI"}
+          </button>
+        </div>
+      ) : isChatVoice ? (
+        <p className="text-[12px] text-[var(--color-text-muted)]">
+          Transcripts are not stored for chat voice calls.
+        </p>
+      ) : !meeting.projectId ? (
+        <p className="text-[12px] text-[var(--color-text-muted)]">
+          Link this meeting to a project to enable transcript ingestion for the AI bot.
+        </p>
+      ) : null}
+
+      <Link
+        to="/meetings"
+        className="inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-500"
+      >
+        Back to meetings
+      </Link>
+    </div>
+  );
 }
 
 function MeetingParticipantTable({ participants }) {
@@ -123,6 +312,10 @@ export default function MeetingRoomPage() {
     toggleCamera,
   } = useAcsGroupCall();
 
+  const transcriptRecorder = useMeetingTranscriptRecorder();
+  const [recordingForAi, setRecordingForAi] = useState(false);
+  const [transcriptLangHint, setTranscriptLangHint] = useState("mixed");
+
   const leavingRef = useRef(false);
   const joinAttemptedRef = useRef(false);
 
@@ -133,6 +326,12 @@ export default function MeetingRoomPage() {
         ? String(meeting.createdBy)
         : "";
   const isHost = user?._id && createdById && String(user._id) === createdById;
+
+  const canRecordForAi =
+    isHost &&
+    meeting?.projectId &&
+    (meeting.callKind || "meeting") !== "chat_voice" &&
+    typeof MediaRecorder !== "undefined";
 
   const goBackToHub = useCallback(() => {
     navigate("/meetings");
@@ -207,7 +406,8 @@ export default function MeetingRoomPage() {
       dispatch(applyMeetingFromSocket(payload));
       toast("Meeting ended");
       await disconnect(remoteHostRef.current);
-      navigate("/meetings");
+      navigate(`/meetings/${meetingId}`);
+      void dispatch(fetchMeetingById(meetingId));
     };
 
     socket.on("meeting:started", onStarted);
@@ -273,6 +473,10 @@ export default function MeetingRoomPage() {
     if (leavingRef.current) return;
     leavingRef.current = true;
     try {
+      if (recordingForAi) {
+        transcriptRecorder.discardRecording();
+        setRecordingForAi(false);
+      }
       await disconnect(remoteHostRef.current);
       await dispatch(leaveMeeting(meetingId)).unwrap();
       toast.success("You left the meeting");
@@ -287,15 +491,43 @@ export default function MeetingRoomPage() {
   const handleEndForAll = async () => {
     if (leavingRef.current) return;
     leavingRef.current = true;
+    let endedOk = false;
+    let blob = null;
     try {
+      if (recordingForAi) {
+        blob = await transcriptRecorder.stopRecording();
+        setRecordingForAi(false);
+      }
       await disconnect(remoteHostRef.current);
       await dispatch(endMeeting(meetingId)).unwrap();
+      endedOk = true;
       toast.success("Meeting ended");
+      if (blob && blob.size > 1024) {
+        const tid = "ai-upload";
+        toast.loading("Transcribing on your AI server (Whisper)…", { id: tid, duration: 600000 });
+        try {
+          const { data } = await uploadMeetingAudioApi(meetingId, blob, transcriptLangHint);
+          if (data?.aiSummaryWarning) {
+            toast(data.aiSummaryWarning, { duration: 9000, icon: "⚠️", id: tid });
+          } else {
+            toast.success("Transcript and summary saved", { id: tid });
+          }
+        } catch (e) {
+          const msg = e.response?.data?.message || e.message || "Audio upload failed";
+          toast.error(msg, { id: tid });
+        }
+      }
     } catch (e) {
-      toast.error(typeof e === "string" ? e : "Could not end meeting");
+      toast.error(typeof e === "string" ? e : e?.message || "Could not end meeting");
     } finally {
-      await teardown();
-      goBackToHub();
+      if (endedOk) {
+        navigate(`/meetings/${meetingId}`);
+        void dispatch(fetchMeetingById(meetingId));
+      } else {
+        await teardown();
+        navigate("/meetings");
+      }
+      leavingRef.current = false;
     }
   };
 
@@ -305,6 +537,16 @@ export default function MeetingRoomPage() {
       () => toast.success("Link copied"),
       () => toast.error("Could not copy link"),
     );
+  };
+
+  const handleStartAiRecording = async () => {
+    try {
+      await transcriptRecorder.startRecording();
+      setRecordingForAi(true);
+      toast.success("Recording for AI — share a tab with audio for best quality, or mic-only is used.");
+    } catch (e) {
+      toast.error(e?.message || "Could not start recording");
+    }
   };
 
   if (!meetingId) {
@@ -338,71 +580,8 @@ export default function MeetingRoomPage() {
   }
 
   if (meeting?.status === "ended") {
-    const hostName = meeting.createdBy && typeof meeting.createdBy === "object"
-      ? meeting.createdBy.name || meeting.createdBy.email || "Host"
-      : "Host";
-    const duration = formatDuration(meeting.createdAt, meeting.endedAt);
-
     return (
-      <div className="space-y-6 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-6">
-        <div>
-          <Link
-            to="/meetings"
-            className="text-[12px] font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            Meetings
-          </Link>
-          <h1 className="mt-2 text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">
-            {meeting.title || "Meeting"}
-          </h1>
-          <p className="mt-1 inline-flex rounded-md bg-[var(--color-border)] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-            Ended
-          </p>
-        </div>
-
-        <dl className="grid gap-3 text-[13px] sm:grid-cols-2">
-          <div>
-            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-              Started
-            </dt>
-            <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.createdAt)}</dd>
-          </div>
-          <div>
-            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-              Ended
-            </dt>
-            <dd className="mt-0.5 text-[var(--color-text-primary)]">{formatMeetingWhen(meeting.endedAt)}</dd>
-          </div>
-          {duration ? (
-            <div>
-              <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-                Duration
-              </dt>
-              <dd className="mt-0.5 text-[var(--color-text-primary)]">{duration}</dd>
-            </div>
-          ) : null}
-          <div>
-            <dt className="text-[11px] font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
-              Host
-            </dt>
-            <dd className="mt-0.5 text-[var(--color-text-primary)]">{hostName}</dd>
-          </div>
-        </dl>
-
-        <div>
-          <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-            Who joined
-          </h2>
-          <MeetingParticipantTable participants={meeting.participants} />
-        </div>
-
-        <Link
-          to="/meetings"
-          className="inline-flex text-sm font-medium text-indigo-600 hover:text-indigo-500"
-        >
-          Back to meetings
-        </Link>
-      </div>
+      <EndedMeetingView meeting={meeting} meetingId={meetingId} dispatch={dispatch} />
     );
   }
 
@@ -506,6 +685,60 @@ export default function MeetingRoomPage() {
           {acsError || joinUiError || loadError}
         </div>
       )}
+
+      {canRecordForAi ? (
+        <div className="rounded-lg border border-emerald-500/35 bg-emerald-500/[0.06] p-4">
+          <h2 className="mb-1 text-sm font-semibold text-[var(--color-text-primary)]">
+            AI transcript (free, local Whisper)
+          </h2>
+          <p className="mb-3 text-[12px] text-[var(--color-text-muted)]">
+            Start recording during the call. When you use &quot;End for everyone&quot;, audio uploads to your FastAPI
+            server (faster-whisper) — no paid speech API. For everyone&apos;s voices in the recording, share a Chrome
+            tab and turn on &quot;Share tab audio&quot;; otherwise only your microphone is captured.
+          </p>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-medium text-[var(--color-text-muted)]">Language hint</span>
+            <select
+              value={transcriptLangHint}
+              onChange={(e) => setTranscriptLangHint(e.target.value)}
+              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 py-1.5 text-[12px]"
+            >
+              <option value="mixed">Auto (mixed)</option>
+              <option value="en">English</option>
+              <option value="ur">Urdu</option>
+            </select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {!recordingForAi ? (
+              <button
+                type="button"
+                onClick={() => void handleStartAiRecording()}
+                className="rounded-lg bg-emerald-600 px-3 py-2 text-[12px] font-medium text-white hover:bg-emerald-700"
+              >
+                Start recording for AI
+              </button>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-2 rounded-md bg-red-500/15 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:text-red-300">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" aria-hidden />
+                  Recording
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    transcriptRecorder.discardRecording();
+                    setRecordingForAi(false);
+                    toast("Recording discarded");
+                  }}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-[12px] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+                >
+                  Discard recording
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
         <div className="space-y-2">

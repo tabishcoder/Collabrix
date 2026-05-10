@@ -1,9 +1,16 @@
 const JWTService = require('../services/JWTService')
 const User = require('../models/User')
 
+function bearerFromHeader(req) {
+  const h = req.headers.authorization;
+  if (!h || typeof h !== 'string') return null;
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  return m ? m[1].trim() : null;
+}
+
 module.exports.auth = async (req, res, next) => {
   try {
-    const { accessToken } = req.cookies;
+    const accessToken = req.cookies?.accessToken || bearerFromHeader(req);
 
     if (!accessToken) {
       res.status(401);
