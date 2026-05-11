@@ -5,8 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "npm install",
-    "smoke": "node scripts/api-smoke.js"
+    "build": "npm install"
   },
   "dependencies": {
     "@azure/communication-identity": "^1.3.1",

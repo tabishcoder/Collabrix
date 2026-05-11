@@ -274,7 +274,7 @@ export default function ChatThread() {
               return (
                 <div key={m._id} className={`group/msg flex shrink-0 ${mine ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`relative max-w-[88%] rounded-2xl py-2 text-[13px] leading-relaxed sm:max-w-[72%] ${
+                    className={`relative max-w-[88%] rounded-2xl py-2 my-1 text-[13px] leading-relaxed sm:max-w-[72%] ${
                       mine
                         ? "bg-indigo-600 pl-3 pr-7 text-white"
                         : "bg-[color-mix(in_oklab,var(--color-surface-hover)_88%,transparent)] px-3 text-[var(--color-text-primary)]"
@@ -293,7 +293,7 @@ export default function ChatThread() {
                       <p className="whitespace-pre-wrap break-words">{m.content}</p>
                     )}
                     <div
-                      className={`mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-0.5 text-[10px] ${
+                      className={`mt-1 flex flex-wrap items-center justify-end gap-x-2 gap-y-1.5 text-[10px] ${
                         mine ? "text-indigo-100/90" : "text-[var(--color-text-muted)]"
                       }`}
                     >
