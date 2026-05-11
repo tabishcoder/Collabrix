@@ -82,7 +82,12 @@ export default function TopNavbar({ onToggleSidebar }) {
   const shouldKeepRouteWhenSwitchingProject = (pathname) => {
     if (!pathname) return false;
     // These modules are project-scoped but don't carry projectId in the URL.
-    return pathname.startsWith("/chats") || pathname.startsWith("/meetings") || pathname.startsWith("/aibot");
+    return (
+      pathname.startsWith("/chats") ||
+      pathname.startsWith("/meetings") ||
+      pathname.startsWith("/aibot") ||
+      pathname.startsWith("/admin")
+    );
   };
 
   return (

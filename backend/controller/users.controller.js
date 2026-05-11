@@ -12,7 +12,8 @@ module.exports.getMe = async (req, res) => {
         _id: req.user._id,
         name: req.user.name,
         email: req.user.email,
-        platformRole: req.user.platformRole || 'user',
+        role: req.user.role || 'member',
+        isActive: req.user.isActive !== false,
     }
     res.json(userDTO);
 }

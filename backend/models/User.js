@@ -8,13 +8,17 @@ const UserSchema = new mongoose.Schema({
   avatar: { type: String },
   isVerified: { type: Boolean, default: false },
 
-  /** Platform operator (Collabrix staff). Not workspace owner/admin. */
-  platformRole: {
+  /** Platform-wide role (Collabrix governance). Workspace owner is on Space.owner, not here. */
+  role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user',
+    enum: ['member', 'admin'],
+    default: 'member',
     index: true,
   },
+
+  isActive: { type: Boolean, default: true, index: true },
+  deactivatedAt: { type: Date, default: null },
+  lastLoginAt: { type: Date, default: null },
 
   // for password and email verification
   meta: {

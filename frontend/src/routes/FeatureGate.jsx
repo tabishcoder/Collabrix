@@ -24,7 +24,7 @@ export default function FeatureGate() {
     const allowTiny =
       path === "/dashboard" ||
       path === "/welcome" ||
-      (platformAdmin && path === "/admin");
+      (platformAdmin && path.startsWith("/admin"));
     return allowTiny ? <Outlet /> : <Navigate to="/welcome" replace />;
   }
 
@@ -36,7 +36,7 @@ export default function FeatureGate() {
       path === "/profile" ||
       path === "/settings" ||
       path === "/help/faq" ||
-      (platformAdmin && path === "/admin");
+      (platformAdmin && path.startsWith("/admin"));
     return allowNoWorkspace ? <Outlet /> : <Navigate to="/welcome" replace />;
   }
 
@@ -50,7 +50,8 @@ export default function FeatureGate() {
       path.startsWith("/aibot") ||
       path === "/profile" ||
       path === "/settings" ||
-      path === "/help/faq";
+      path === "/help/faq" ||
+      (platformAdmin && path.startsWith("/admin"));
     return allowBetween ? <Outlet /> : <Navigate to="/welcome" replace />;
   }
 

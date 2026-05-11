@@ -7,8 +7,14 @@ import {
   getRefreshToken,
 } from "./authTokens";
 
+// Must include /api prefix (or full API origin). If unset, /api works with Vite proxy in dev.
+const apiBase =
+  import.meta.env.VITE_API_URL != null && String(import.meta.env.VITE_API_URL).trim() !== ""
+    ? import.meta.env.VITE_API_URL
+    : "/api";
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: apiBase,
   withCredentials: true,
 });
 

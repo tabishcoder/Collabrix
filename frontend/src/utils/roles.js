@@ -23,7 +23,7 @@ export const canManageProject = (role) => PROJECT_MANAGE_ROLES.includes(role);
 export const canWriteTasks = (role) => PROJECT_WRITE_ROLES.includes(role);
 
 /** Collabrix platform operator (separate from workspace roles). */
-export const isPlatformAdmin = (user) => (user?.platformRole || "user") === "admin";
+export const isPlatformAdmin = (user) => (user?.role || "member") === "admin";
 
 /** Human-readable label for a workspace role. */
 export const spaceRoleLabel = (role) => {
