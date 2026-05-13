@@ -26,7 +26,7 @@ export default function Sidebar({ collapsed, setCollapsed, onNavigate }) {
 
   const navItems = useMemo(() => {
     const dashboard = { label: "Overview", to: "/welcome", icon: FaTachometerAlt };
-    const platform = { label: "Platform", to: "/admin", icon: FaShieldAlt };
+    const platform = { label: "Platform", to: "/admin/dashboard", icon: FaShieldAlt };
     const projects = { label: "Projects", to: projectsTo, icon: FaProjectDiagram };
     const chats = { label: "Chats", to: "/chats", icon: FaComments };
     const meetings = { label: "Meetings", to: "/meetings", icon: FaUsers };
@@ -96,7 +96,9 @@ export default function Sidebar({ collapsed, setCollapsed, onNavigate }) {
                     ? pathname.startsWith("/projects")
                     : item.label === "Overview"
                       ? pathname === "/welcome" || pathname === "/dashboard"
-                      : isActive;
+                      : item.label === "Platform"
+                        ? pathname.startsWith("/admin")
+                        : isActive;
                 return `
                 flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium
                 transition-colors duration-150

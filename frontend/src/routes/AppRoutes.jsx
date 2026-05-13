@@ -9,6 +9,12 @@ import ResetPassword   from "../features/auth/pages/ResetPassword.jsx";
 
 import WorkspaceDashboard from "../features/dashboard/WorkspaceDashboard";
 import PlatformAdminRoute from "./PlatformAdminRoute";
+import AdminLayout from "../features/admin/AdminLayout";
+import AdminDashboardPage from "../features/admin/AdminDashboardPage";
+import AdminUsersPage from "../features/admin/AdminUsersPage";
+import AdminWorkspacesPage from "../features/admin/AdminWorkspacesPage";
+import AdminWorkspaceDetailPage from "../features/admin/AdminWorkspaceDetailPage";
+import AdminAnalyticsPage from "../features/admin/AdminAnalyticsPage";
 import ProjectsPage    from "../features/projects/ProjectsPage.jsx";
 import TasksBoard      from "../features/tasks/TasksBoard.jsx";
 import ChatsPage       from "../features/modules/ChatsPage.jsx";
@@ -60,7 +66,17 @@ export default function AppRoutes() {
           <Route element={<FeatureGate />}>
             <Route path="/dashboard" element={<WorkspaceDashboard />} />
             <Route path="/welcome" element={<WorkspaceDashboard />} />
-            <Route path="/admin" element={<PlatformAdminRoute />} />
+
+            <Route path="/admin" element={<PlatformAdminRoute />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboardPage />} />
+                <Route path="users" element={<AdminUsersPage />} />
+                <Route path="workspaces" element={<AdminWorkspacesPage />} />
+                <Route path="workspaces/:workspaceId" element={<AdminWorkspaceDetailPage />} />
+                <Route path="analytics" element={<AdminAnalyticsPage />} />
+              </Route>
+            </Route>
 
             {/* Projects — boards are lg+ only (FeatureGate); routes remain for deep links */}
             <Route path="/projects" element={<ProjectsPage />}>

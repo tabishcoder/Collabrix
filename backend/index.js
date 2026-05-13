@@ -27,6 +27,7 @@ const meetingRoutes = require('./routes/meetings.routes');
 const chatRoutes = require('./routes/chats.routes');
 const timeEntryRoutes = require('./routes/timeEntries.routes');
 const aiRoutes = require('./routes/ai.routes');
+const adminRoutes = require('./routes/admin.routes');
 const meetingService = require('./services/communication/meetingService');
 
 /** Comma-separated list (production). Dev allows any localhost / 127.0.0.1 port for Vite. */
@@ -78,17 +79,15 @@ io.use(async (socket, next) => {
   }
 });
 
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-        console.log('MongoDB connected');
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
-    }
-};
+const { migrateUserRoles } = require('./services/migrateUserRoles');
+const { syncModelIndexes } = require('./services/syncModelIndexes');
 
-connectDB();
+const connectDB = async () => {
+  await mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  console.log('MongoDB connected');
+  await migrateUserRoles();
+  await syncModelIndexes();
+};
 
 app.use(
   isProduction
@@ -124,6 +123,7 @@ app.use('/api/meetings', meetingRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/time-entries', timeEntryRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get("/", (req, res) => {
     res.send("The base route is working");
@@ -252,4 +252,11 @@ server.on('error', (err) => {
   throw err;
 });
 
-server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+connectDB()
+  .then(() => {
+    server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  })
+  .catch((err) => {
+    console.error('MongoDB / startup failed:', err);
+    process.exit(1);
+  });

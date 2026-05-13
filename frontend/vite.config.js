@@ -17,11 +17,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:3000",
+        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:5000",
         changeOrigin: true,
       },
       "/socket.io": {
-        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:3000",
+        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:5000",
         ws: true,
         changeOrigin: true,
       },

@@ -107,12 +107,18 @@ module.exports.loginUser = async (req, res) => {
         const isMatch = await user.matchPassword(password);
         if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
 
+        if (user.isActive === false) {
+            return res.status(403).json({ message: 'Account has been deactivated. Contact an administrator.' });
+        }
+
         if (!user.isVerified) return res.status(403).json({ message: 'Email not verified' });
 
         const accessToken = JWTService.signAccessToken({ _id: user._id });
         const refreshToken = JWTService.signRefreshToken({ _id: user._id });
 
         JWTService.storeRefreshToken(refreshToken, user._id);
+
+        await User.findByIdAndUpdate(user._id, { $set: { lastLoginAt: new Date() } });
 
         res.cookie('accessToken', accessToken, {
             ...settings,
@@ -128,7 +134,7 @@ module.exports.loginUser = async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
-            platformRole: user.platformRole || 'user',
+            role: user.role || 'member',
             message: "Logged in Successfully",
             // Also returned for SPAs on a different origin than the API (cookies may not attach on XHR).
             accessToken,
@@ -182,6 +188,13 @@ module.exports.refreshToken = async (req, res) => {
         // Clear cookie if token is invalid or expired
         res.clearCookie('refreshToken', { path: '/', ...settings });
         return res.status(403).json({ message: 'Refresh token invalid or expired. Please log in again.' });
+    }
+
+    const refreshUser = await User.findById(decoded._id).select('isActive');
+    if (refreshUser && refreshUser.isActive === false) {
+        res.clearCookie('refreshToken', { path: '/', ...settings });
+        res.clearCookie('accessToken', { path: '/', ...settings });
+        return res.status(403).json({ message: 'Account has been deactivated. Please sign in again.' });
     }
 
     const newAccessToken = JWTService.signAccessToken({ _id: decoded._id });
